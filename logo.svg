@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1200"
+   height="628"
+   viewBox="0 0 1200 628"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.1 (91b66b0783, 2023-11-16)"
+   sodipodi:docname="bwlogo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="px"
+     inkscape:zoom="1.5792051"
+     inkscape:cx="356.19185"
+     inkscape:cy="261.52397"
+     inkscape:window-width="3706"
+     inkscape:window-height="2126"
+     inkscape:window-x="123"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient9"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop9" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop10" />
+    </linearGradient>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 314 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="1200 : 314 : 1"
+       inkscape:persp3d-origin="600 : 209.33333 : 1"
+       id="perspective1" />
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter19"
+       x="-0.00096852468"
+       y="-0.0005932264"
+       width="1.001937"
+       height="1.0011865">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.044266727"
+         id="feGaussianBlur19" />
+    </filter>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke-width:9.314;stroke-linecap:round"
+       id="rect6"
+       width="1281.6575"
+       height="721.88214"
+       x="-40.526718"
+       y="-38.627026"
+       sodipodi:insensitive="true" />
+    <text
+       xml:space="preserve"
+       style="font-size:150.069px;font-family:'方正俊黑简体_粗';-inkscape-font-specification:'方正俊黑简体_粗';fill:#000000;fill-opacity:1;stroke-width:95.3002;stroke-linecap:round"
+       x="394.70303"
+       y="364.60278"
+       id="text6"><tspan
+         sodipodi:role="line"
+         id="tspan6"
+         x="394.70303"
+         y="364.60278"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Clear Sans Medium';-inkscape-font-specification:'Clear Sans Medium, ';fill:#000000;fill-opacity:1;stroke-width:95.3002">BlockWorld</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48px;font-family:Bahnschrift;-inkscape-font-specification:Bahnschrift;fill:#000000;fill-opacity:1;stroke-width:9.314;stroke-linecap:round"
+       x="435.02896"
+       y="447.69357"
+       id="text9"><tspan
+         sodipodi:role="line"
+         id="tspan9"
+         x="435.02896"
+         y="447.69357"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48px;font-family:'Clear Sans Medium';-inkscape-font-specification:'Clear Sans Medium, '">A New Minecraft Implementation</tspan></text>
+    <rect
+       style="fill:#fefefe;fill-opacity:1;stroke:#000000;stroke-width:9.314;stroke-linecap:round;stroke-opacity:1"
+       id="rect9"
+       width="250.75906"
+       height="250.75906"
+       x="54.457775"
+       y="212.76526" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:38.3494px;font-family:'Clear Sans Medium';-inkscape-font-specification:'Clear Sans Medium, ';mix-blend-mode:normal;fill:#fefefe;fill-opacity:1;stroke:#000000;stroke-width:15.8478;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter19)"
+       x="83.47908"
+       y="278.0015"
+       id="text15"><tspan
+         sodipodi:role="line"
+         id="tspan15"
+         x="83.47908"
+         y="278.0015"
+         style="font-size:38.3494px;fill:#0e0e0e;fill-opacity:1;stroke:none;stroke-width:15.8478">Where</tspan><tspan
+         sodipodi:role="line"
+         x="83.47908"
+         y="325.93823"
+         id="tspan16"
+         style="font-size:38.3494px;fill:#0e0e0e;fill-opacity:1;stroke:none;stroke-width:15.8478">is</tspan><tspan
+         sodipodi:role="line"
+         x="83.47908"
+         y="373.875"
+         id="tspan18"
+         style="font-size:38.3494px;fill:#0e0e0e;fill-opacity:1;stroke:none;stroke-width:15.8478">our</tspan><tspan
+         sodipodi:role="line"
+         x="83.47908"
+         y="421.81174"
+         id="tspan19"
+         style="font-size:38.3494px;fill:#0e0e0e;fill-opacity:1;stroke:none;stroke-width:15.8478">logo?</tspan></text>
+  </g>
+</svg>
