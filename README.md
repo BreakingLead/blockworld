@@ -1,4 +1,9 @@
 # Blockworld
+
+(Currently Indev & Not Playable)
+
+![](./logo.svg)
+
 TL;DR:
 Blockworld is a modern **minecraft (java version) implementation** which has better performance, and minecraft modders can easily port their mods into this minecraft implementation.
 
