@@ -1,0 +1,27 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build and test server
+      run: cd blockworld-server && cargo build && cargo test && cd ..
+    - name: Build and test client
+      run: cd blockworld-client && cargo build && cargo test && cd ..
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v3
+      with:
+          name: debug builds
+          path: blockworld-client/target/debug/* && blockworld-server/target/debug/*
