@@ -1,5 +1,3 @@
-mod renderer;
-
 fn main() {
-    renderer::run();
+    pollster::block_on(blockworld_client::run());
 }
