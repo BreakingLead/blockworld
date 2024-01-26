@@ -1,5 +1,5 @@
 mod renderer;
 
 fn main() {
-    renderer::run();
+    pollster::block_on(renderer::run());
 }
