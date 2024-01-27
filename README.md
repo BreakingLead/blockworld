@@ -9,15 +9,16 @@ Blockworld is a modern **minecraft (java version) implementation** which has bet
 
 ## What does Blockworld do
 - Provide better minecraft experience for players.
-- Modular design, which means you can use Blockworld as a voxel game engine.
+- Modular design, which means you can use Blockworld as a voxel game engine. Official updates will be provide like a mod (1.20 mod 1.16 mod etc.)
 - Provide easy api to mod the game.
-- Looks like minecraft.
+- Looks like minecraft. So it's not like what minetest did.
 - No code obfuscation: everyone can modify the source code.
 - Port your minecraft world into Blockworld easily.
 - Fix some major bugs in minecraft. However some bugs which is useful(like quasi-connection) won't be deleted.
-- Multi-threading.
+- **Multi-threading.**
 - Cross-platform.
-- Be able to write mods in your favorite programming language.
+- **Vulkan, Metal support.**
+- Be able to write mods in your favorite programming language by **WASM as a IR**.
 
 ## What doesn't Blockworld do
 - Use the same data format(like named binary tag) as minecraft. However we will provide a converter
