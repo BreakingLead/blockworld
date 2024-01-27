@@ -4,6 +4,9 @@
 
 ![](./logo.svg)
 
+The path currently planned:
+Rewrite GT: New Horizons?
+
 TL;DR:
 Blockworld is a modern **minecraft (java version) implementation** which has better performance, and minecraft modders can easily port their mods into this minecraft implementation.
 
