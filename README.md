@@ -23,7 +23,7 @@ Blockworld is a modern **minecraft (java version) implementation** which has bet
 ## What doesn't Blockworld do
 - Use the same data format(like named binary tag) as minecraft. However we will provide a converter
 - Reimplement every detail of minecraft.
-- Follow the offical update of minecraft. We think the content of 1.12.2 is enough. But the content of higher version of minecraft will be maintained by community.
+- Follow the offical update of minecraft. We think the content of 1.12.2 is enough. But the content of higher version of minecraft may be maintained by mods.
 
 
 ## Minecraft is Dying
