@@ -5,6 +5,7 @@ mod vertex;
 
 use glam::{vec3, Quat, Vec3};
 use instance::Instance;
+use texture::Texture;
 use wgpu::util::DeviceExt;
 use winit::{
     event::{Event, WindowEvent},
@@ -14,17 +15,18 @@ use winit::{
 };
 use winit_input_helper::WinitInputHelper;
 
-
-use std::{f32::consts::PI, sync::Arc, time::{Duration, Instant}};
-
+use std::{
+    f32::consts::PI,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
 const INSTANCE_DISPLACEMENT: Vec3 = vec3(
     NUM_INSTANCES_PER_ROW as f32 * 0.5,
-    0.0, NUM_INSTANCES_PER_ROW as f32 * 0.5
+    0.0,
+    NUM_INSTANCES_PER_ROW as f32 * 0.5,
 );
-
-
 
 use std::iter;
 
@@ -54,6 +56,8 @@ pub struct State<'win> {
 
     pub instances: Vec<Instance>,
     pub instance_buffer: wgpu::Buffer,
+
+    pub depth_texture: texture::Texture,
 }
 
 impl State<'_> {
@@ -151,11 +155,11 @@ impl State<'_> {
         });
 
         // TODO: Here!
-        let camera = camera::Camera::new(Vec3::ZERO,PI,0.0);
-        let projection = camera::Projection::new(config.width, config.height, PI/2.0, 0.1, 100.0);
-        let camera_controller = camera::CameraController::new(5.0,0.4);
+        let camera = camera::Camera::new(Vec3::ZERO, PI, 0.0);
+        let projection = camera::Projection::new(config.width, config.height, PI / 2.0, 0.1, 100.0);
+        let camera_controller = camera::CameraController::new(5.0, 0.4);
         let mut camera_uniform = camera::CameraUniform::new();
-        camera_uniform.update(&camera,&projection);
+        camera_uniform.update(&camera, &projection);
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -187,32 +191,30 @@ impl State<'_> {
             label: Some("camera_bind_group"),
         });
 
-        let instances = (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
-            (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                let position = vec3(x as _, 0.0, z as _) - INSTANCE_DISPLACEMENT;
+        let instances = (0..NUM_INSTANCES_PER_ROW)
+            .flat_map(|z| {
+                (0..NUM_INSTANCES_PER_ROW).map(move |x| {
+                    let position = vec3(x as _, 0.0, z as _) - INSTANCE_DISPLACEMENT;
 
-                let rotation = if position.dot(position).abs() < 0.001 {
-                    // this is needed so an object at (0, 0, 0) won't get scaled to zero
-                    // as Quaternions can affect scale if they're not created correctly
-                    Quat::from_axis_angle(Vec3::Z, 0.0)
-                } else {
-                    Quat::from_axis_angle(position.normalize(), PI/4.0)
-                };
+                    let rotation = if position.dot(position).abs() < 0.001 {
+                        // this is needed so an object at (0, 0, 0) won't get scaled to zero
+                        // as Quaternions can affect scale if they're not created correctly
+                        Quat::from_axis_angle(Vec3::Z, 0.0)
+                    } else {
+                        Quat::from_axis_angle(position.normalize(), PI / 4.0)
+                    };
 
-                Instance {
-                    position, rotation,
-                }
+                    Instance { position, rotation }
+                })
             })
-        }).collect::<Vec<_>>();
+            .collect::<Vec<_>>();
 
         let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let instance_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&instance_data),
-                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            }
-        );
+        let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Instance Buffer"),
+            contents: bytemuck::cast_slice(&instance_data),
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        });
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -225,6 +227,9 @@ impl State<'_> {
                 bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
                 push_constant_ranges: &[],
             });
+
+        // Z-Buffer
+        let depth_texture = texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
@@ -252,7 +257,15 @@ impl State<'_> {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(
+                wgpu::DepthStencilState {
+                    format: texture::Texture::DEPTH_FORMAT,
+                    depth_write_enabled: true,
+                    depth_compare: wgpu::CompareFunction::Less,
+                    stencil: wgpu::StencilState::default(),
+                    bias: wgpu::DepthBiasState::default(),
+                }
+            ),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -275,30 +288,29 @@ impl State<'_> {
 
         let num_indices = crate::vertex::INDICES.len() as u32;
 
-
-
-            return Self {
-                window: window.clone(),
-                surface,
-                device,
-                queue,
-                config,
-                size,
-                render_pipeline,
-                vertex_buffer,
-                index_buffer,
-                num_indices,
-                diffuse_bind_group,
-                diffuse_texture,
-                camera,
-                projection,
-                camera_controller,
-                camera_bind_group,
-                camera_buffer,
-                camera_uniform,
-                instances,
-                instance_buffer,
-            };
+        return Self {
+            window: window.clone(),
+            surface,
+            device,
+            queue,
+            config,
+            size,
+            render_pipeline,
+            vertex_buffer,
+            index_buffer,
+            num_indices,
+            diffuse_bind_group,
+            diffuse_texture,
+            camera,
+            projection,
+            camera_controller,
+            camera_bind_group,
+            camera_buffer,
+            camera_uniform,
+            depth_texture,
+            instances,
+            instance_buffer,
+        };
     }
 
     pub fn window(&self) -> &Window {
@@ -311,7 +323,8 @@ impl State<'_> {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.projection.resize(new_size.width,new_size.height);
+            self.projection.resize(new_size.width, new_size.height);
+            self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
     }
 
@@ -373,7 +386,18 @@ impl State<'_> {
                         store: wgpu::StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(
+                    wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.depth_texture.view,
+                        depth_ops: Some(
+                            wgpu::Operations {
+                                load:wgpu::LoadOp::Clear(1.0),
+                                store: wgpu::StoreOp::Store,
+                            }
+                        ),
+                        stencil_ops: None,
+                    },
+                ),
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });

@@ -8,14 +8,11 @@ pub struct Instance {
 impl Instance {
     pub fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
-            model: (
-                Mat4::from_translation(self.position) * Mat4::from_quat(self.rotation)
-            ).to_cols_array_2d(),
+            model: (Mat4::from_translation(self.position) * Mat4::from_quat(self.rotation))
+                .to_cols_array_2d(),
         }
     }
 }
-
-
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]

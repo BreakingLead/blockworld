@@ -22,11 +22,7 @@ pub const OPENGL_TO_WGPU_MATRIX: Mat4 = mat4(
 );
 
 impl Camera {
-    pub fn new(
-        position: Vec3,
-        yaw: Radian,
-        pitch: Radian,
-    ) -> Self {
+    pub fn new(position: Vec3, yaw: Radian, pitch: Radian) -> Self {
         Self {
             position,
             yaw: yaw,
@@ -35,16 +31,15 @@ impl Camera {
     }
 
     pub fn get_gaze(&self) -> Vec3 {
-        let (sin_yaw,cos_yaw) = self.yaw.sin_cos();
-        let (sin_pitch,cos_pitch) = self.pitch.sin_cos();
-        vec3(cos_pitch*cos_yaw, sin_pitch, cos_pitch* sin_yaw).normalize()
+        let (sin_yaw, cos_yaw) = self.yaw.sin_cos();
+        let (sin_pitch, cos_pitch) = self.pitch.sin_cos();
+        vec3(cos_pitch * cos_yaw, sin_pitch, cos_pitch * sin_yaw).normalize()
     }
 
     pub fn get_model_view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position,self.get_gaze() , Vec3::Y)
+        Mat4::look_to_rh(self.position, self.get_gaze(), Vec3::Y)
     }
 }
-
 
 #[derive(Debug)]
 pub struct Projection {
@@ -55,13 +50,7 @@ pub struct Projection {
 }
 
 impl Projection {
-    pub fn new(
-        width: u32,
-        height: u32,
-        fovy: Radian,
-        znear: f32,
-        zfar: f32,
-    ) -> Self {
+    pub fn new(width: u32, height: u32, fovy: Radian, znear: f32, zfar: f32) -> Self {
         Self {
             aspect: width as f32 / height as f32,
             fovy: fovy.into(),
@@ -75,7 +64,7 @@ impl Projection {
     }
 
     pub fn get_projection_matrix(&self) -> Mat4 {
-        let fovydiv = self.fovy /2.0;
+        let fovydiv = self.fovy / 2.0;
         let f = fovydiv.cos() / fovydiv.sin();
         let a = (self.zfar + self.znear) / (self.znear - self.zfar);
         let b = (2.0 * self.zfar * self.znear) / (self.znear - self.zfar);
@@ -87,10 +76,9 @@ impl Projection {
         //     vec4(0.0,0.0,b,0.0),
         // )
 
-        Mat4::perspective_rh(self.fovy,self.aspect,self.znear,self.zfar)
+        Mat4::perspective_rh(self.fovy, self.aspect, self.znear, self.zfar)
     }
 }
-
 
 #[derive(Debug)]
 pub struct CameraController {
@@ -124,7 +112,7 @@ impl CameraController {
         }
     }
 
-    pub fn process_input(&mut self,input: &WinitInputHelper) {
+    pub fn process_input(&mut self, input: &WinitInputHelper) {
         use winit::keyboard::KeyCode;
         if input.key_held(KeyCode::KeyW) {
             self.is_forward = true;
@@ -146,11 +134,11 @@ impl CameraController {
             self.is_up = false;
             self.is_down = false;
         }
-        (self.rotate_horizontal,self.rotate_vertical) = input.mouse_diff();
+        (self.rotate_horizontal, self.rotate_vertical) = input.mouse_diff();
     }
 
     pub fn update_camera(&mut self, camera: &mut Camera, dt: std::time::Duration) {
-        log::info!("{:#?}",camera);
+        log::info!("{:#?}", camera);
         let mut forward = camera.get_gaze().normalize();
         forward.y = 0.0;
         let right = camera.get_gaze().cross(Vec3::Y).normalize();
@@ -209,28 +197,29 @@ impl CameraUniform {
 
     pub fn update(&mut self, camera: &Camera, projection: &Projection) {
         // self.view_position = camera.position.extend(1.0).into();
-        self.view_proj = (projection.get_projection_matrix() * camera.get_model_view_matrix()).to_cols_array_2d();
+        self.view_proj = (projection.get_projection_matrix() * camera.get_model_view_matrix())
+            .to_cols_array_2d();
     }
 }
 
 #[test]
 fn mat4test() {
     let mut cu = CameraUniform::new();
-    let cam = Camera::new(vec3(5.0,6.0,7.0),0.0,0.0);
-    let proj = Projection::new(100,200,PI/4.0,0.1,100.0);
+    let cam = Camera::new(vec3(5.0, 6.0, 7.0), 0.0, 0.0);
+    let proj = Projection::new(100, 200, PI / 4.0, 0.1, 100.0);
     cu.update(&cam, &proj);
     dbg!(cu);
 }
 
 #[test]
 fn proj() {
-    let p =Projection::new(100,400,PI/4.0,7.0,100.0);
+    let p = Projection::new(100, 400, PI / 4.0, 7.0, 100.0);
     dbg!(&p);
     dbg!(p.get_projection_matrix());
 }
 
 #[test]
 fn mvmat() {
-    let c = Camera::new(vec3(0.0, 2.0, 0.0),0.0,PI/4.0);
+    let c = Camera::new(vec3(0.0, 2.0, 0.0), 0.0, PI / 4.0);
     dbg!(c.get_model_view_matrix());
 }

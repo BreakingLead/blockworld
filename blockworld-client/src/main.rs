@@ -1,6 +1,10 @@
 use std::sync::Arc;
 
-use winit::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+};
 use winit_input_helper::WinitInputHelper;
 
 fn main() {
@@ -18,7 +22,9 @@ async fn run() {
             .unwrap(),
     );
     window.set_cursor_visible(false);
-    window.set_cursor_grab(winit::window::CursorGrabMode::Confined).unwrap();
+    window
+        .set_cursor_grab(winit::window::CursorGrabMode::Confined)
+        .unwrap();
 
     event_loop.set_control_flow(ControlFlow::Poll);
 
@@ -42,11 +48,15 @@ async fn run() {
             state.update(input_helper.delta_time().unwrap());
 
             match state.render() {
-                Ok(_) => {},
-                    // Reconfigure the surface if it's lost or outdated
-                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => state.resize(state.size),
+                Ok(_) => {}
+                // Reconfigure the surface if it's lost or outdated
+                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                    state.resize(state.size)
+                }
                 // The system is out of memory, we should probably quit
-                Err(wgpu::SurfaceError::OutOfMemory) => {elwt.exit();},
+                Err(wgpu::SurfaceError::OutOfMemory) => {
+                    elwt.exit();
+                }
                 // We're ignoring timeouts
                 Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
             }
