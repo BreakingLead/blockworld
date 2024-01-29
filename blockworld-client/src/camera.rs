@@ -80,12 +80,14 @@ impl Projection {
         let a = (self.zfar + self.znear) / (self.znear - self.zfar);
         let b = (2.0 * self.zfar * self.znear) / (self.znear - self.zfar);
 
-        OPENGL_TO_WGPU_MATRIX * mat4(
-            vec4(f/self.aspect,0.0,0.0,0.0),
-            vec4(0.0,f,0.0,0.0),
-            vec4(0.0,0.0,a,-1.0),
-            vec4(0.0,0.0,b,0.0),
-        )
+        // OPENGL_TO_WGPU_MATRIX * mat4(
+        //     vec4(f/self.aspect,0.0,0.0,0.0),
+        //     vec4(0.0,f,0.0,0.0),
+        //     vec4(0.0,0.0,a,-1.0),
+        //     vec4(0.0,0.0,b,0.0),
+        // )
+
+        Mat4::perspective_rh(self.fovy,self.aspect,self.znear,self.zfar)
     }
 }
 
