@@ -1,12 +1,17 @@
+/// Describe a struct which can be used as a vertex.
+pub trait AsVertex {
+    fn buffer_layout<'a>() -> wgpu::VertexBufferLayout<'a>;
+} 
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    position: [f32; 3],
-    tex_coords: [f32; 2],
+    pub position: [f32; 3],
+    pub tex_coords: [f32; 2],
 }
 
-impl Vertex {
-    pub fn desc() -> wgpu::VertexBufferLayout<'static> {
+impl AsVertex for Vertex {
+    fn buffer_layout<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
@@ -26,24 +31,61 @@ impl Vertex {
     }
 }
 
-// Changed
 pub const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.5, 0.5, 0.0],
+        // ULB
+        position: [0.0, 1.0, 0.0],
         tex_coords: [0.0, 0.0],
-    }, // A
+    },
     Vertex {
-        position: [0.5, 0.5, 0.0],
+        // URB
+        position: [1.0, 1.0, 0.0],
         tex_coords: [1.0, 0.0],
-    }, // B
+    },
     Vertex {
-        position: [-0.5, -0.5, 0.0],
-        tex_coords: [0.0, 1.0],
-    }, // C
-    Vertex {
-        position: [0.5, -0.5, 0.0],
+        // URF
+        position: [1.0, 1.0, 1.0],
         tex_coords: [1.0, 1.0],
-    }, // D
+    },
+    Vertex {
+        // ULF
+        position: [0.0, 1.0, 1.0],
+        tex_coords: [0.0, 1.0],
+    },
+    Vertex {
+        // DLB
+        position: [0.0, 0.0, 0.0],
+        tex_coords: [0.0, 1.0],
+    },
+    Vertex {
+        // DRB
+        position: [1.0, 0.0, 0.0],
+        tex_coords: [1.0, 1.0],
+    },
+    Vertex {
+        // DRF
+        position: [1.0, 0.0, 1.0],
+        tex_coords: [1.0, 0.0],
+    },
+    Vertex {
+        // DLF
+        position: [0.0, 0.0, 1.0],
+        tex_coords: [0.0, 0.0],
+    },
 ];
 
-pub const INDICES: &[u16] = &[2, 1, 0, 3, 1, 2];
+// Second for test
+pub const INDICES: &[u16] = &[
+    // UP
+    3,1,0,3,2,1,
+    // DOWN
+    4,6,7,4,5,6,
+    // EAST
+    6,1,2,6,5,1,
+    // SOUTH
+    7,2,3,7,6,2,
+    // WEST
+    4,3,0,4,7,3,
+    // NORTH
+    5,0,1,5,4,0,
+];

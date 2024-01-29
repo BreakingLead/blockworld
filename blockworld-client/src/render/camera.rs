@@ -4,6 +4,8 @@ use glam::{mat4, vec3, vec4, Mat4, Vec3};
 use winit_input_helper::WinitInputHelper;
 type Radian = f32;
 
+
+/// A camera data struct.
 #[derive(Debug)]
 pub struct Camera {
     pub position: Vec3,
@@ -12,14 +14,6 @@ pub struct Camera {
     // Perseved roll
     // roll: Rad<f32>,
 }
-
-#[rustfmt::skip]
-pub const OPENGL_TO_WGPU_MATRIX: Mat4 = mat4(
-    vec4(1.0,0.0,0.0,0.0),
-    vec4(0.0,1.0,0.0,0.0),
-    vec4(0.0,0.0,0.5,0.5),
-    vec4(0.0,0.0,0.0,1.0),
-);
 
 impl Camera {
     pub fn new(position: Vec3, yaw: Radian, pitch: Radian) -> Self {
@@ -30,6 +24,7 @@ impl Camera {
         }
     }
 
+    /// Returns the direction of the camera.
     pub fn get_gaze(&self) -> Vec3 {
         let (sin_yaw, cos_yaw) = self.yaw.sin_cos();
         let (sin_pitch, cos_pitch) = self.pitch.sin_cos();
@@ -41,6 +36,7 @@ impl Camera {
     }
 }
 
+/// The struct to create projection matrix.
 #[derive(Debug)]
 pub struct Projection {
     aspect: f32,
@@ -100,6 +96,7 @@ impl CameraController {
         }
     }
 
+    // FIXME: If we press 2 keys simultaneously there will be a bug.
     pub fn process_input(&mut self, input: &WinitInputHelper) {
         use winit::keyboard::KeyCode;
         if input.key_held(KeyCode::KeyW) {
@@ -133,18 +130,18 @@ impl CameraController {
 
         let direction = {
             let fb_val = {
-                let f_val = if self.is_forward { 1.0 } else { 0.0 };
-                let b_val = if self.is_backward { -1.0 } else { 0.0 };
+                let f_val = f32::from(self.is_forward);
+                let b_val = -f32::from(self.is_backward);
                 ((f_val + b_val) * forward).normalize_or_zero()
             };
             let rl_val = {
-                let r_val = if self.is_right { 1.0 } else { 0.0 };
-                let l_val = if self.is_left { -1.0 } else { 0.0 };
+                let r_val = f32::from(self.is_right);
+                let l_val = -f32::from(self.is_left);
                 ((l_val + r_val) * right).normalize_or_zero()
             };
             let ud_val = {
-                let u_val = if self.is_up { 1.0 } else { 0.0 };
-                let d_val = if self.is_down { -1.0 } else { 0.0 };
+                let u_val = f32::from(self.is_up);
+                let d_val = -f32::from(self.is_down);
                 ((u_val + d_val) * Vec3::Y).normalize_or_zero()
             };
 
@@ -188,26 +185,4 @@ impl CameraUniform {
         self.view_proj = (projection.get_projection_matrix() * camera.get_model_view_matrix())
             .to_cols_array_2d();
     }
-}
-
-#[test]
-fn mat4test() {
-    let mut cu = CameraUniform::new();
-    let cam = Camera::new(vec3(5.0, 6.0, 7.0), 0.0, 0.0);
-    let proj = Projection::new(100, 200, PI / 4.0, 0.1, 100.0);
-    cu.update(&cam, &proj);
-    dbg!(cu);
-}
-
-#[test]
-fn proj() {
-    let p = Projection::new(100, 400, PI / 4.0, 7.0, 100.0);
-    dbg!(&p);
-    dbg!(p.get_projection_matrix());
-}
-
-#[test]
-fn mvmat() {
-    let c = Camera::new(vec3(0.0, 2.0, 0.0), 0.0, PI / 4.0);
-    dbg!(c.get_model_view_matrix());
 }
