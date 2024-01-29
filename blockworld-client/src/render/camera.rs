@@ -1,6 +1,6 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
-use glam::{mat4, vec3, vec4, Mat4, Vec3, Vec4};
+use glam::{mat4, vec3, vec4, Mat4, Vec3};
 use winit_input_helper::WinitInputHelper;
 type Radian = f32;
 
@@ -64,18 +64,6 @@ impl Projection {
     }
 
     pub fn get_projection_matrix(&self) -> Mat4 {
-        let fovydiv = self.fovy / 2.0;
-        let f = fovydiv.cos() / fovydiv.sin();
-        let a = (self.zfar + self.znear) / (self.znear - self.zfar);
-        let b = (2.0 * self.zfar * self.znear) / (self.znear - self.zfar);
-
-        // OPENGL_TO_WGPU_MATRIX * mat4(
-        //     vec4(f/self.aspect,0.0,0.0,0.0),
-        //     vec4(0.0,f,0.0,0.0),
-        //     vec4(0.0,0.0,a,-1.0),
-        //     vec4(0.0,0.0,b,0.0),
-        // )
-
         Mat4::perspective_rh(self.fovy, self.aspect, self.znear, self.zfar)
     }
 }
@@ -172,7 +160,7 @@ impl CameraController {
         if camera.pitch < -(SAFE_FRAC_PI_2) {
             camera.pitch = -(SAFE_FRAC_PI_2);
         } else if camera.pitch > (SAFE_FRAC_PI_2) {
-            camera.pitch = (SAFE_FRAC_PI_2);
+            camera.pitch = SAFE_FRAC_PI_2;
         }
 
         self.rotate_horizontal = 0.0;

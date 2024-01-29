@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use winit::{
-    event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
@@ -28,7 +27,7 @@ async fn run() {
 
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut state = blockworld_client::State::new(Arc::clone(&window)).await;
+    let mut state = blockworld_client::render::state::State::new(Arc::clone(&window)).await;
 
     let mut input_helper = WinitInputHelper::new();
 
