@@ -3,18 +3,18 @@ use std::{iter, sync::Arc};
 use glam::{vec3, Quat, Vec3};
 use winit::window::Window;
 
-use super::{camera, instance::{self, Instance}, texture, vertex::Vertex};
-
+use super::{
+    camera,
+    instance::{self, Instance},
+    texture,
+    vertex::Vertex,
+};
 
 use wgpu::util::DeviceExt;
 
 use winit_input_helper::WinitInputHelper;
 
-use std::{
-    f32::consts::PI,
-    time::Duration,
-};
-
+use std::{f32::consts::PI, time::Duration};
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
 const INSTANCE_DISPLACEMENT: Vec3 = vec3(
@@ -29,6 +29,7 @@ pub struct State<'win> {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
+
     pub window: Arc<Window>,
 
     pub camera: camera::Camera,
@@ -60,7 +61,7 @@ impl State<'_> {
             ..Default::default()
         });
 
-        let surface = instance.create_surface(window.clone()) .unwrap();
+        let surface = instance.create_surface(window.clone()).unwrap();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -104,7 +105,7 @@ impl State<'_> {
 
         surface.configure(&device, &config);
 
-        let diffuse_bytes = include_bytes!("../../oak_planks.png");
+        let diffuse_bytes = include_bytes!("../../resourcepacks/assets/minecraft/textures/block/stone.png");
         let diffuse_texture =
             texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "oak_planks.png").unwrap();
 
@@ -145,7 +146,6 @@ impl State<'_> {
             label: Some("Diffuse Bind Group"),
         });
 
-        // TODO: Here!
         let camera = camera::Camera::new(Vec3::ZERO, PI, 0.0);
         let projection = camera::Projection::new(config.width, config.height, PI / 2.0, 0.1, 100.0);
         let camera_controller = camera::CameraController::new(5.0, 0.4);
@@ -220,7 +220,8 @@ impl State<'_> {
             });
 
         // Z-Buffer
-        let depth_texture = texture::Texture::create_depth_texture(&device, &config, "depth_texture");
+        let depth_texture =
+            texture::Texture::create_zbuffer_texture(&device, &config, "depth_texture");
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
@@ -228,7 +229,7 @@ impl State<'_> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::desc(), instance::InstanceRaw::desc()],
+                buffers: &[Vertex::buffer_layout(), instance::InstanceRaw::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -248,15 +249,13 @@ impl State<'_> {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: Some(
-                wgpu::DepthStencilState {
-                    format: texture::Texture::DEPTH_FORMAT,
-                    depth_write_enabled: true,
-                    depth_compare: wgpu::CompareFunction::Less,
-                    stencil: wgpu::StencilState::default(),
-                    bias: wgpu::DepthBiasState::default(),
-                }
-            ),
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: texture::Texture::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -265,6 +264,7 @@ impl State<'_> {
             multiview: None,
         });
 
+        // The method `create_buffer_init` has already calculated the size of vertices's buffer, so happy!
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(crate::render::vertex::VERTICES),
@@ -315,7 +315,8 @@ impl State<'_> {
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
             self.projection.resize(new_size.width, new_size.height);
-            self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
+            self.depth_texture =
+                texture::Texture::create_zbuffer_texture(&self.device, &self.config, "depth_texture");
         }
     }
 
@@ -334,38 +335,27 @@ impl State<'_> {
             0,
             bytemuck::cast_slice(&[self.camera_uniform]),
         );
-
-        // // Temporary
-        // for inst in &mut self.instances {
-        //     let amount = cgmath::Quaternion::from_angle_y(cgmath::Rad(0.05));
-        //     let current = inst.rotation;
-        //     inst.rotation = amount * current;
-        // }
-        // let instance_data = self.instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-        // self.queue.write_buffer(
-        //     &self.instance_buffer,
-        //     0,
-        //     bytemuck::cast_slice(&instance_data),
-        // )
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
-        let view = output
+
+        let texture_view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
+        // This encoder will record what commands we will send to GPU.
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
+                label: Some("Render Command Encoder"),
             });
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view: &texture_view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -377,18 +367,14 @@ impl State<'_> {
                         store: wgpu::StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: Some(
-                    wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture.view,
-                        depth_ops: Some(
-                            wgpu::Operations {
-                                load:wgpu::LoadOp::Clear(1.0),
-                                store: wgpu::StoreOp::Store,
-                            }
-                        ),
-                        stencil_ops: None,
-                    },
-                ),
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
@@ -406,6 +392,9 @@ impl State<'_> {
         }
 
         self.queue.submit(iter::once(encoder.finish()));
+
+        // Submitted commands so we can drop the encoder.
+
         output.present();
 
         Ok(())

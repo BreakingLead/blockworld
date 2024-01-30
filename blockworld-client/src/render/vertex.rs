@@ -1,12 +1,17 @@
+/// Describe a struct which can be used as a vertex.
+pub trait AsVertex {
+    fn buffer_layout<'a>() -> wgpu::VertexBufferLayout<'a>;
+} 
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    position: [f32; 3],
-    tex_coords: [f32; 2],
+    pub position: [f32; 3],
+    pub tex_coords: [f32; 2],
 }
 
-impl Vertex {
-    pub fn desc() -> wgpu::VertexBufferLayout<'static> {
+impl AsVertex for Vertex {
+    fn buffer_layout<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
@@ -26,7 +31,6 @@ impl Vertex {
     }
 }
 
-// Changed
 pub const VERTICES: &[Vertex] = &[
     Vertex {
         position: [-0.5, 0.5, 0.0],
@@ -47,3 +51,13 @@ pub const VERTICES: &[Vertex] = &[
 ];
 
 pub const INDICES: &[u16] = &[2, 1, 0, 3, 1, 2];
+
+/// Note: You shouldn't use this function directly, you have to modify the texture coordinates by yourself then.
+impl From<[f32;3]> for Vertex {
+    fn from(value: [f32;3]) -> Self {
+        Self {
+            position: value,
+            tex_coords: [0.0,0.0],
+        }
+    }
+}
