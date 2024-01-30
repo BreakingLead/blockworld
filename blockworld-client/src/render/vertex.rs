@@ -33,31 +33,59 @@ impl AsVertex for Vertex {
 
 pub const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.5, 0.5, 0.0],
+        // ULB
+        position: [0.0, 1.0, 0.0],
         tex_coords: [0.0, 0.0],
-    }, // A
+    },
     Vertex {
-        position: [0.5, 0.5, 0.0],
+        // URB
+        position: [1.0, 1.0, 0.0],
         tex_coords: [1.0, 0.0],
-    }, // B
+    },
     Vertex {
-        position: [-0.5, -0.5, 0.0],
-        tex_coords: [0.0, 1.0],
-    }, // C
-    Vertex {
-        position: [0.5, -0.5, 0.0],
+        // URF
+        position: [1.0, 1.0, 1.0],
         tex_coords: [1.0, 1.0],
-    }, // D
+    },
+    Vertex {
+        // ULF
+        position: [0.0, 1.0, 1.0],
+        tex_coords: [0.0, 1.0],
+    },
+    Vertex {
+        // DLB
+        position: [0.0, 0.0, 0.0],
+        tex_coords: [0.0, 1.0],
+    },
+    Vertex {
+        // DRB
+        position: [1.0, 0.0, 0.0],
+        tex_coords: [1.0, 1.0],
+    },
+    Vertex {
+        // DRF
+        position: [1.0, 0.0, 1.0],
+        tex_coords: [1.0, 0.0],
+    },
+    Vertex {
+        // DLF
+        position: [0.0, 0.0, 1.0],
+        tex_coords: [0.0, 0.0],
+    },
 ];
 
-pub const INDICES: &[u16] = &[2, 1, 0, 3, 1, 2];
-
-/// Note: You shouldn't use this function directly, you have to modify the texture coordinates by yourself then.
-impl From<[f32;3]> for Vertex {
-    fn from(value: [f32;3]) -> Self {
-        Self {
-            position: value,
-            tex_coords: [0.0,0.0],
-        }
-    }
-}
+// Second for test
+pub const INDICES: &[u16] = &[
+    // UP
+    3,1,0,3,2,1,
+    // DOWN
+    4,6,7,4,5,6,
+    // EAST
+    6,1,2,6,5,1,
+    // SOUTH
+    7,2,3,7,6,2,
+    // WEST
+    4,3,0,4,7,3,
+    // NORTH
+    5,0,1,5,4,0,
+];

@@ -28,7 +28,7 @@ impl RenderableBlock {
 
 #[derive(Copy, Clone, Debug)]
 pub enum BlockFaceDirection {
-    UP,DOWN,NORTH,EAST,SOUTH,WEST
+    UP,DOWN,EAST,SOUTH,WEST,NORTH
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -41,8 +41,10 @@ pub struct BlockFace {
 impl BlockFace {
     /// Vertex arranged in clockwise direction like this:
     /// ```
-    /// 1 2
-    /// 4 3
+    /// 0--0 1
+    /// | / /|
+    /// |/ / |
+    /// 3 2--2
     /// ```
     pub fn new(pos: BlockCoordinate, face_dir: BlockFaceDirection) -> Self {
         let (x,y,z) = (pos[0] as f32,pos[1] as f32,pos[2] as f32);

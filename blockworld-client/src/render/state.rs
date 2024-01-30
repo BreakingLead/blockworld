@@ -7,7 +7,7 @@ use super::{
     camera,
     instance::{self, Instance},
     texture,
-    vertex::Vertex,
+    vertex::{AsVertex, Vertex},
 };
 
 use wgpu::util::DeviceExt;
@@ -40,7 +40,7 @@ pub struct State<'win> {
     pub camera_bind_group: wgpu::BindGroup,
 
     pub render_pipeline: wgpu::RenderPipeline,
-    pub vertex_buffer: wgpu::Buffer,
+    pub block_vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub num_indices: u32,
     pub diffuse_bind_group: wgpu::BindGroup,
@@ -105,7 +105,7 @@ impl State<'_> {
 
         surface.configure(&device, &config);
 
-        let diffuse_bytes = include_bytes!("../../resourcepacks/assets/minecraft/textures/block/stone.png");
+        let diffuse_bytes = include_bytes!("../../resourcepacks/assets/minecraft/textures/block/carved_pumpkin.png");
         let diffuse_texture =
             texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "oak_planks.png").unwrap();
 
@@ -182,23 +182,17 @@ impl State<'_> {
             label: Some("camera_bind_group"),
         });
 
-        let instances = (0..NUM_INSTANCES_PER_ROW)
-            .flat_map(|z| {
-                (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                    let position = vec3(x as _, 0.0, z as _) - INSTANCE_DISPLACEMENT;
-
-                    let rotation = if position.dot(position).abs() < 0.001 {
-                        // this is needed so an object at (0, 0, 0) won't get scaled to zero
-                        // as Quaternions can affect scale if they're not created correctly
-                        Quat::from_axis_angle(Vec3::Z, 0.0)
-                    } else {
-                        Quat::from_axis_angle(position.normalize(), PI / 4.0)
-                    };
-
-                    Instance { position, rotation }
-                })
-            })
-            .collect::<Vec<_>>();
+        let instances = {
+            let mut v = Vec::new();
+            for i in 0..5 {
+                for j in 0..4 {
+                    v.push(Instance {
+                        position: glam::ivec3(i,0,j),
+                    })
+                }
+            }
+            v
+        };
 
         let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
         let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -229,7 +223,7 @@ impl State<'_> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::buffer_layout(), instance::InstanceRaw::desc()],
+                buffers: &[Vertex::buffer_layout(), instance::InstanceRaw::get_buffer_layout()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -265,8 +259,8 @@ impl State<'_> {
         });
 
         // The method `create_buffer_init` has already calculated the size of vertices's buffer, so happy!
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
+        let block_vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Block Vertex Buffer"),
             contents: bytemuck::cast_slice(crate::render::vertex::VERTICES),
             usage: wgpu::BufferUsages::VERTEX,
         });
@@ -287,7 +281,7 @@ impl State<'_> {
             config,
             size,
             render_pipeline,
-            vertex_buffer,
+            block_vertex_buffer,
             index_buffer,
             num_indices,
             diffuse_bind_group,
@@ -383,7 +377,7 @@ impl State<'_> {
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
 
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(0, self.block_vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
 
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
@@ -392,8 +386,6 @@ impl State<'_> {
         }
 
         self.queue.submit(iter::once(encoder.finish()));
-
-        // Submitted commands so we can drop the encoder.
 
         output.present();
 

@@ -28,6 +28,9 @@ Blockworld is a modern **minecraft (java version) implementation** which has bet
 - Reimplement every detail of minecraft.
 - Follow the offical update of minecraft. We think the content of 1.12.2 is enough. But the content of higher version of minecraft may be maintained by mods.
 
+## Current Progress:
+![](./preview.png)
+
 
 ## Minecraft is Dying
 

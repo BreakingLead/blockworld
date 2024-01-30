@@ -60,16 +60,7 @@ impl Texture {
         );
 
         let view = texture.create_view(&TextureViewDescriptor::default());
-        // let view = texture.create_view(&TextureViewDescriptor {
-        //     label: Some("texture_view"),
-        //     format: None,
-        //     dimension: Some(wgpu::TextureViewDimension::Cube),
-        //     aspect: wgpu::TextureAspect::All,
-        //     base_mip_level: Default::default(),
-        //     mip_level_count: None,
-        //     base_array_layer: Default::default(),
-        //     array_layer_count: None,
-        // });
+        
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
