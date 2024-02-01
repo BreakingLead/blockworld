@@ -1,4 +1,4 @@
-use glam::{IVec3, Mat4, Quat, Vec3};
+use glam::IVec3;
 
 pub struct Instance {
     pub position: IVec3,

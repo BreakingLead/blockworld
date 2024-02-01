@@ -7,7 +7,7 @@ use super::{
     camera,
     instance::{self, Instance},
     texture,
-    vertex::{AsVertex, Vertex},
+    vertex::{AsVertex, BlockVertex},
 };
 
 use wgpu::util::DeviceExt;
@@ -217,13 +217,13 @@ impl State<'_> {
         let depth_texture =
             texture::Texture::create_zbuffer_texture(&device, &config, "depth_texture");
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let block_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::buffer_layout(), instance::InstanceRaw::get_buffer_layout()],
+                buffers: &[BlockVertex::buffer_layout(), instance::InstanceRaw::get_buffer_layout()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -259,19 +259,22 @@ impl State<'_> {
         });
 
         // The method `create_buffer_init` has already calculated the size of vertices's buffer, so happy!
+        // TODO: fix this
         let block_vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Block Vertex Buffer"),
-            contents: bytemuck::cast_slice(crate::render::vertex::VERTICES),
+            // contents: bytemuck::cast_slice(todo!()),
+            contents: bytemuck::cast_slice(&[0]),
             usage: wgpu::BufferUsages::VERTEX,
         });
 
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(crate::render::vertex::INDICES),
+            contents: bytemuck::cast_slice(&[0]),
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        let num_indices = crate::render::vertex::INDICES.len() as u32;
+        // let num_indices = crate::render::vertex::CANONICAL_BLOCK_INDICES.len() as u32;
+        let num_indices = 0;
 
         return Self {
             window: window.clone(),
@@ -280,7 +283,7 @@ impl State<'_> {
             queue,
             config,
             size,
-            render_pipeline,
+            render_pipeline: block_render_pipeline,
             block_vertex_buffer,
             index_buffer,
             num_indices,
@@ -378,11 +381,10 @@ impl State<'_> {
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
 
             render_pass.set_vertex_buffer(0, self.block_vertex_buffer.slice(..));
-            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
 
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
 
         self.queue.submit(iter::once(encoder.finish()));
