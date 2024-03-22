@@ -1,4 +1,5 @@
 The development is still in progress.
+We won't give up this project but the maintainer is busy recently.
 
 # Blockworld
 
