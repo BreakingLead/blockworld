@@ -1,7 +1,8 @@
+mod camera;
+mod draw;
+mod texture;
+mod vertex;
+mod window_init;
 fn main() {
-    let s 
+    pollster::block_on(window_init::run());
 }
-
-fn () -> i32
-
-
