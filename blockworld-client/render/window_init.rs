@@ -2,9 +2,9 @@ use crate::render::draw::{self, State};
 use log::info;
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
-use winit::event::WindowEvent;
+use winit::event::{DeviceEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::KeyCode;
+use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowButtons, WindowId};
 
 impl<'a> ApplicationHandler for State<'a> {
@@ -18,7 +18,19 @@ impl<'a> ApplicationHandler for State<'a> {
         device_id: winit::event::DeviceId,
         event: winit::event::DeviceEvent,
     ) {
-        self.device_input(&event, event_loop);
+        match event {
+            DeviceEvent::MouseMotion { delta } => {
+                let sensitivity = 0.002;
+                self.camera.yaw -= delta.0 as f32 * sensitivity;
+                self.camera.pitch -= delta.1 as f32 * sensitivity;
+                if self.camera.pitch >= f32::to_radians(89.9) {
+                    self.camera.pitch = f32::to_radians(89.0);
+                } else if self.camera.pitch <= f32::to_radians(-89.9) {
+                    self.camera.pitch = f32::to_radians(-89.9);
+                }
+            }
+            _ => (),
+        }
     }
 
     fn window_event(
@@ -38,9 +50,14 @@ impl<'a> ApplicationHandler for State<'a> {
             }
             WindowEvent::Resized(size) => {
                 self.resize(size);
-                info!("Resized to {size:?}");
             }
-            event => self.window_input(&event, event_loop),
+            WindowEvent::KeyboardInput { event, .. } => {
+                if event.physical_key == KeyCode::Escape {
+                    event_loop.exit();
+                }
+                self.pressed_keys.handle_event(&event);
+            }
+            _ => (),
         }
     }
 }
