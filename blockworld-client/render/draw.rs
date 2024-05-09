@@ -13,9 +13,12 @@ use winit::{
 };
 
 use crate::{
-    render::camera::{Camera, MatrixUniform},
-    render::texture,
-    render::vertex::{Vertex, INDICES, VERTICES},
+    game::player_state::PlayerState,
+    render::{
+        camera::{Camera, MatrixUniform},
+        texture,
+        vertex::{Vertex, INDICES, VERTICES},
+    },
 };
 
 pub struct State<'a> {
@@ -39,6 +42,8 @@ pub struct State<'a> {
     pub matrix_buffer: wgpu::Buffer,
     pub matrix_bind_group: wgpu::BindGroup,
 
+    // States
+    pub player_state: PlayerState,
     pub pressed_keys: crate::io::input_helper::InputState,
 
     pub timer: u64,
@@ -55,6 +60,7 @@ impl<'a> State<'a> {
         window.set_cursor_visible(false);
 
         let pressed_keys = Default::default();
+        let player_state = Default::default();
 
         let size = window.inner_size();
         // \-------------------
@@ -291,6 +297,8 @@ impl<'a> State<'a> {
             matrix_bind_group,
 
             timer: 0,
+
+            player_state,
             pressed_keys,
         }
     }
@@ -311,44 +319,14 @@ impl<'a> State<'a> {
         // if self.timer % 50 == 0 {
         //     dbg!(self.camera.position);
         // }
+        self.player_state.update(&self.pressed_keys);
+        self.camera.update(&self.player_state);
         self.matrix_uniform.update_matrix(&self.camera);
         self.queue.write_buffer(
             &self.matrix_buffer,
             0,
             bytemuck::cast_slice(&[self.matrix_uniform]),
         );
-
-        if self
-            .pressed_keys
-            .is_key_pressing(Key::Character("w".into()))
-        {
-            self.camera.go_forward(1.0);
-        } else if self
-            .pressed_keys
-            .is_key_pressing(Key::Character("a".into()))
-        {
-            self.camera.go_right(-1.0);
-        } else if self
-            .pressed_keys
-            .is_key_pressing(Key::Character("s".into()))
-        {
-            self.camera.go_forward(-1.0);
-        } else if self
-            .pressed_keys
-            .is_key_pressing(Key::Character("d".into()))
-        {
-            self.camera.go_right(1.0);
-        } else if self
-            .pressed_keys
-            .is_key_pressing(Key::Named(NamedKey::Space))
-        {
-            self.camera.go_up(1.0);
-        } else if self
-            .pressed_keys
-            .is_key_pressing(Key::Named(NamedKey::Shift))
-        {
-            self.camera.go_up(-1.0);
-        }
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {

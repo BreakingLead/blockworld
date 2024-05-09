@@ -5,6 +5,7 @@ use winit::{
     keyboard::Key,
 };
 
+/// Tracker for the pressing keys
 #[derive(Default)]
 pub struct InputState {
     pressing_keys: HashSet<Key>,

@@ -1,3 +1,4 @@
+mod game;
 mod io;
 mod render;
 fn main() {
