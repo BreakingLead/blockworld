@@ -2,6 +2,8 @@ use std::f32::consts::PI;
 
 use glam::*;
 use log::{debug, info};
+
+use crate::game::player_state::PlayerState;
 pub struct Camera {
     pub position: Vec3,
     up: Vec3,
@@ -49,22 +51,43 @@ impl Camera {
         projection * view
     }
 
+    pub fn update(&mut self, player_state: &PlayerState) {
+        if player_state.forward {
+            self.go_forward(1.0);
+        }
+        if player_state.backward {
+            self.go_forward(-1.0);
+        }
+        if player_state.left {
+            self.go_right(-1.0);
+        }
+        if player_state.right {
+            self.go_right(1.0);
+        }
+        if player_state.ascend {
+            self.go_up(1.0);
+        }
+        if player_state.descend {
+            self.go_up(-1.0);
+        }
+    }
+
     pub fn get_forward_direction(&self) -> Vec3 {
         vec3(self.yaw.sin(), 0.0, self.yaw.cos())
     }
 
-    pub fn go_forward(&mut self, step: f32) {
+    fn go_forward(&mut self, step: f32) {
         let f = self.get_forward_direction();
         self.position += f * step * self.speed;
     }
 
-    pub fn go_right(&mut self, step: f32) {
+    fn go_right(&mut self, step: f32) {
         let f = self.get_forward_direction();
         let r = f.cross(self.up).normalize();
         self.position += r * step * self.speed;
     }
 
-    pub fn go_up(&mut self, step: f32) {
+    fn go_up(&mut self, step: f32) {
         self.position += self.up * step * self.speed;
     }
 
