@@ -11,12 +11,13 @@ pub struct Camera {
     fovy: f32,
     znear: f32,
     zfar: f32,
+    speed: f32,
 }
 
 impl Camera {
     pub fn new(aspect_ratio: f32) -> Self {
         Self {
-            position: vec3(0.0, 0.0, -5.0),
+            position: vec3(0.0, 0.0, 5.0),
             up: vec3(0.0, 1.0, 0.0),
             yaw: PI,
             pitch: 0.0,
@@ -24,6 +25,7 @@ impl Camera {
             fovy: PI / 2.0,
             znear: 0.1,
             zfar: 100.0,
+            speed: 0.15,
         }
     }
 
@@ -45,6 +47,25 @@ impl Camera {
         let projection = Mat4::perspective_rh(self.fovy, self.aspect_ratio, self.znear, self.zfar);
 
         projection * view
+    }
+
+    pub fn get_forward_direction(&self) -> Vec3 {
+        vec3(self.yaw.sin(), 0.0, self.yaw.cos())
+    }
+
+    pub fn go_forward(&mut self, step: f32) {
+        let f = self.get_forward_direction();
+        self.position += f * step * self.speed;
+    }
+
+    pub fn go_right(&mut self, step: f32) {
+        let f = self.get_forward_direction();
+        let r = f.cross(self.up).normalize();
+        self.position += r * step * self.speed;
+    }
+
+    pub fn go_up(&mut self, step: f32) {
+        self.position += self.up * step * self.speed;
     }
 
     pub fn shift(&mut self, dir: Vec3) {

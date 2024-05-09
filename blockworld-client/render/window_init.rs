@@ -1,4 +1,4 @@
-use crate::draw::{self, State};
+use crate::render::draw::{self, State};
 use log::info;
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -10,6 +10,15 @@ use winit::window::{Window, WindowButtons, WindowId};
 impl<'a> ApplicationHandler for State<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         info!("Resumed!");
+    }
+
+    fn device_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        device_id: winit::event::DeviceId,
+        event: winit::event::DeviceEvent,
+    ) {
+        self.device_input(&event, event_loop);
     }
 
     fn window_event(
@@ -31,7 +40,7 @@ impl<'a> ApplicationHandler for State<'a> {
                 self.resize(size);
                 info!("Resized to {size:?}");
             }
-            event => self.input(&event),
+            event => self.window_input(&event, event_loop),
         }
     }
 }

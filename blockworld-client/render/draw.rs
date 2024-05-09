@@ -1,16 +1,21 @@
+use std::f32::consts::PI;
+
 use glam::vec3;
+use log::info;
 use wgpu::{include_wgsl, util::DeviceExt};
 use winit::{
-    event::{KeyEvent, WindowEvent},
-    event_loop::EventLoop,
-    keyboard::{KeyCode, PhysicalKey},
+    application::ApplicationHandler,
+    event::{DeviceEvent, KeyEvent, WindowEvent},
+    event_loop::{ActiveEventLoop, EventLoop},
+    keyboard::{Key, KeyCode, PhysicalKey},
+    platform::modifier_supplement::KeyEventExtModifierSupplement,
     window::Window,
 };
 
 use crate::{
-    camera::{Camera, MatrixUniform},
-    texture,
-    vertex::{Vertex, INDICES, VERTICES},
+    render::camera::{Camera, MatrixUniform},
+    render::texture,
+    render::vertex::{Vertex, INDICES, VERTICES},
 };
 
 pub struct State<'a> {
@@ -45,6 +50,8 @@ impl<'a> State<'a> {
             let window = event_loop
                 .create_window(Window::default_attributes().with_title("Blockworld Indev"))
                 .unwrap();
+            window.set_cursor_grab(winit::window::CursorGrabMode::Confined);
+            window.set_cursor_visible(false);
 
             let size = window.inner_size();
             // \-------------------
@@ -149,10 +156,10 @@ impl<'a> State<'a> {
 
             // /-------------------
             // Texture & its bind group
-            let texture = crate::texture::Texture::from_bytes(
+            let texture = crate::render::texture::Texture::from_bytes(
                 &device,
                 &queue,
-                include_bytes!("assets/brick.png"),
+                include_bytes!("../assets/brick.png"),
                 "assets/brick.png",
             )
             .unwrap();
@@ -294,21 +301,71 @@ impl<'a> State<'a> {
         }
     }
 
-    pub fn input(&mut self, window_event: &WindowEvent) {
+    pub fn device_input(&mut self, device_event: &DeviceEvent, event_loop: &ActiveEventLoop) {
+        match device_event {
+            DeviceEvent::MouseMotion { delta } => {
+                let sensitivity = 0.002;
+                self.camera.yaw -= delta.0 as f32 * sensitivity;
+                self.camera.pitch -= delta.1 as f32 * sensitivity;
+                if self.camera.pitch >= f32::to_radians(89.9) {
+                    self.camera.pitch = f32::to_radians(89.0);
+                } else if self.camera.pitch <= f32::to_radians(-89.9) {
+                    self.camera.pitch = f32::to_radians(-89.9);
+                }
+            }
+            _ => (),
+        }
+    }
+    pub fn window_input(&mut self, window_event: &WindowEvent, event_loop: &ActiveEventLoop) {
         match window_event {
-            WindowEvent::KeyboardInput { event, .. } => match event.physical_key {
-                PhysicalKey::Code(c) => {}
-                _ => (),
-            },
+            WindowEvent::MouseInput {
+                device_id,
+                state,
+                button,
+            } => {
+                if state.is_pressed() {
+                    match button {
+                        winit::event::MouseButton::Left => {
+                            info!("Left clicked!");
+                        }
+                        _ => (),
+                    }
+                }
+            }
+            WindowEvent::KeyboardInput {
+                device_id,
+                event,
+                is_synthetic,
+            } => {
+                if event.physical_key == PhysicalKey::Code(KeyCode::Escape) {
+                    event_loop.exit();
+                }
+
+                match event.key_without_modifiers().as_ref() {
+                    Key::Character("w") => {
+                        self.camera.go_forward(1.0);
+                    }
+                    Key::Character("a") => {
+                        self.camera.go_right(-1.0);
+                    }
+                    Key::Character("s") => {
+                        self.camera.go_forward(-1.0);
+                    }
+                    Key::Character("d") => {
+                        self.camera.go_right(1.0);
+                    }
+                    _ => (),
+                }
+            }
             _ => (),
         }
     }
 
     pub fn update(&mut self) {
         self.timer += 1;
-        let k = self.timer as f32 / 50.0;
-        let scale = 3.0;
-        self.camera.position = (vec3(k.sin() * scale, 1.0, k.cos() * scale));
+        // if self.timer % 50 == 0 {
+        //     dbg!(self.camera.position);
+        // }
         self.matrix_uniform.update_matrix(&self.camera);
         self.queue.write_buffer(
             &self.matrix_buffer,

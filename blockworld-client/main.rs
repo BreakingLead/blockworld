@@ -1,8 +1,5 @@
-mod camera;
-mod draw;
-mod texture;
-mod vertex;
-mod window_init;
+mod io;
+mod render;
 fn main() {
-    pollster::block_on(window_init::run());
+    pollster::block_on(render::window_init::run());
 }
