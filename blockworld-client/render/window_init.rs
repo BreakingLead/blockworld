@@ -24,7 +24,7 @@ impl<'a> ApplicationHandler for State<'a> {
                 self.camera.yaw -= delta.0 as f32 * sensitivity;
                 self.camera.pitch -= delta.1 as f32 * sensitivity;
                 if self.camera.pitch >= f32::to_radians(89.9) {
-                    self.camera.pitch = f32::to_radians(89.0);
+                    self.camera.pitch = f32::to_radians(89.9);
                 } else if self.camera.pitch <= f32::to_radians(-89.9) {
                     self.camera.pitch = f32::to_radians(-89.9);
                 }

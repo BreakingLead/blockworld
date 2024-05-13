@@ -1,8 +1,8 @@
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Zeroable, bytemuck::Pod)]
 pub struct Vertex {
-    position: [f32; 3],
-    uv: [f32; 2],
+    pub position: [f32; 3],
+    pub uv: [f32; 2],
 }
 
 impl Vertex {
