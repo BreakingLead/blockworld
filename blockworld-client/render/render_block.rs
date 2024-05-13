@@ -1,4 +1,4 @@
-use glam::{Vec2, Vec3};
+use glam::{vec3, Vec2, Vec3};
 
 use super::vertex::Vertex;
 
@@ -21,6 +21,31 @@ pub struct AxisDirection {
     sign: Sign,
 }
 
+pub const XP: AxisDirection = AxisDirection {
+    axis: Axis::X,
+    sign: Sign::Pos,
+};
+pub const YP: AxisDirection = AxisDirection {
+    axis: Axis::Y,
+    sign: Sign::Pos,
+};
+pub const ZP: AxisDirection = AxisDirection {
+    axis: Axis::Z,
+    sign: Sign::Pos,
+};
+pub const XN: AxisDirection = AxisDirection {
+    axis: Axis::X,
+    sign: Sign::Neg,
+};
+pub const YN: AxisDirection = AxisDirection {
+    axis: Axis::Y,
+    sign: Sign::Neg,
+};
+pub const ZN: AxisDirection = AxisDirection {
+    axis: Axis::Z,
+    sign: Sign::Neg,
+};
+
 impl AxisDirection {
     /// Generate direction vector.
     fn direction_vec(&self) -> Vec3 {
@@ -35,67 +60,73 @@ impl AxisDirection {
         }
     }
 
-    /// Get the four vectors along the axis and prependicular to self.
-    fn get_four_normals(&self) -> [Vec3; 4] {
-        // Fancy trick
-
-        // Flip bits: (-1 0 0) -> (0 1 1) and so on
-        let n1 = self
-            .direction_vec()
-            .to_array()
-            .map(|v| if v != 0.0 { 0.0 } else { 1.0 });
-
-        // (0 -1 -1)
-        let n2 = n1.map(|x| -x);
-
-        // (0 -1 1)
-        let mut n3 = n1;
-        for i in &mut n3 {
-            if *i == 1.0 {
-                *i = -1.0;
-                break;
-            }
+    /// Get the four vectors prependicular to self
+    /// and along the crossline of the face in order to move vertices.
+    /// return order:
+    /// 2 1
+    ///  o
+    /// 3 4
+    #[rustfmt::skip]
+    fn get_four_vtx(&self) -> [Vec3; 4] {
+        let a = vec3( 0.5, 0.5,-0.5);
+        let b = vec3(-0.5, 0.5,-0.5);
+        let c = vec3(-0.5, 0.5, 0.5);
+        let d = vec3( 0.5, 0.5, 0.5);
+        let e = vec3( 0.5,-0.5,-0.5);
+        let f = vec3(-0.5,-0.5,-0.5);
+        let g = vec3(-0.5,-0.5, 0.5);
+        let h = vec3( 0.5,-0.5, 0.5);
+        match self.sign {
+            Sign::Pos => match self.axis {
+                Axis::X =>  [a,d,h,e],
+                Axis::Y => [a,b,c,d],
+                Axis::Z => [d,c,g,h],
+            },
+            Sign::Neg => match self.axis {
+                Axis::X => [c,b,f,g],
+                Axis::Y => [h,g,f,e],
+                Axis::Z => [b,a,e,f],
+            },
         }
-
-        // (0 1 -1)
-        let mut n4 = n2;
-        for i in &mut n4 {
-            if *i == -1.0 {
-                *i = 1.0;
-                break;
-            }
-        }
-
-        [n1.into(), n2.into(), n3.into(), n4.into()]
     }
 }
 
 /// Generate and add a face's mesh into some vertex buffer
-pub fn add_face_mesh(bukkit: &mut Vec<Vertex>, direction: AxisDirection, coord: Vec3, uv: Vec2) {
+pub fn push_face_mesh(bukkit: &mut Vec<Vertex>, direction: AxisDirection, coord: Vec3, uv: Vec2) {
     // Center coord
     let mut c = coord;
-    let mut vs = [coord; 4];
 
-    let d = direction.direction_vec();
+    let mut n = direction.get_four_vtx();
+    n.iter_mut().for_each(|x| *x = *x + c);
 
-    let mut n = direction.get_four_normals();
-
-    // Move the vertices into target face's center.
-    vs = vs.map(|x| x + d);
-    n = n.map(|normal| normal * 0.5);
-
-    let vs = n
-        .iter()
-        .zip(vs.iter())
-        .map(|(v, n)| *v + *n)
-        .collect::<Vec<Vec3>>();
-    let mut vs = vs
-        .iter()
-        .map(|v| Vertex {
-            position: v.to_array(),
+    // b - a d
+    // | / / |
+    // c e - f
+    let mut res = vec![
+        Vertex {
+            position: n[0].to_array(),
+            uv: [1.0, 1.0],
+        },
+        Vertex {
+            position: n[1].to_array(),
+            uv: [0.0, 1.0],
+        },
+        Vertex {
+            position: n[2].to_array(),
             uv: [0.0, 0.0],
-        })
-        .collect();
-
-    bukkit.append(&mut vs);
+        },
+        Vertex {
+            position: n[0].to_array(),
+            uv: [1.0, 1.0],
+        },
+        Vertex {
+            position: n[2].to_array(),
+            uv: [0.0, 0.0],
+        },
+        Vertex {
+            position: n[3].to_array(),
+            uv: [1.0, 0.0],
+        },
+    ];
+    bukkit.append(&mut res);
 }

@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use glam::vec3;
+use glam::{vec2, vec3};
 use log::info;
 use wgpu::{include_wgsl, util::DeviceExt};
 use winit::{
@@ -17,9 +17,11 @@ use crate::{
     render::{
         camera::{Camera, MatrixUniform},
         texture,
-        vertex::{Vertex, INDICES, VERTICES},
+        vertex::Vertex,
     },
 };
+
+use super::{render_block::*, render_chunk::RenderChunk};
 
 pub struct State<'a> {
     pub window: Window,
@@ -31,8 +33,7 @@ pub struct State<'a> {
     pub size: winit::dpi::PhysicalSize<u32>,
     pub render_pipeline: wgpu::RenderPipeline,
 
-    pub vertex_buffer: wgpu::Buffer,
-    pub index_buffer: wgpu::Buffer,
+    pub render_chunk: RenderChunk,
 
     pub texture: texture::Texture,
     pub texture_bind_group: wgpu::BindGroup,
@@ -216,6 +217,16 @@ impl<'a> State<'a> {
         });
         // \-------------------
 
+        let mut vertices = Vec::new();
+        push_face_mesh(&mut vertices, YP, vec3(0.0, 0.0, 0.0), vec2(0.0, 0.0));
+        push_face_mesh(&mut vertices, XP, vec3(0.0, 0.0, 0.0), vec2(0.0, 0.0));
+        push_face_mesh(&mut vertices, ZP, vec3(0.0, 0.0, 0.0), vec2(0.0, 0.0));
+        push_face_mesh(&mut vertices, YN, vec3(0.0, 3.0, 0.0), vec2(0.0, 0.0));
+        push_face_mesh(&mut vertices, XN, vec3(0.0, 3.0, 0.0), vec2(0.0, 0.0));
+        push_face_mesh(&mut vertices, ZN, vec3(0.0, 3.0, 0.0), vec2(0.0, 0.0));
+        let render_chunk = RenderChunk::new(&device, vertices);
+        dbg!(&render_chunk);
+
         let shader = device.create_shader_module(include_wgsl!("shaders/default_shader.wgsl"));
 
         let render_pipeline_layout =
@@ -248,7 +259,7 @@ impl<'a> State<'a> {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
+                cull_mode: None,
                 unclipped_depth: false,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
@@ -262,19 +273,6 @@ impl<'a> State<'a> {
             multiview: None,
         });
 
-        // Create the vertex buffer.
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-
         Self {
             window,
 
@@ -285,11 +283,10 @@ impl<'a> State<'a> {
             size,
             render_pipeline,
 
-            vertex_buffer,
-            index_buffer,
-
             texture,
             texture_bind_group,
+
+            render_chunk,
 
             camera,
             matrix_buffer,
@@ -364,9 +361,8 @@ impl<'a> State<'a> {
             render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
             render_pass.set_bind_group(1, &self.matrix_bind_group, &[]);
 
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-            render_pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
+            render_pass.set_vertex_buffer(0, self.render_chunk.vertex_buffer.slice(..));
+            render_pass.draw(0..self.render_chunk.vertex_count, 0..1);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

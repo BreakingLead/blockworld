@@ -3,6 +3,7 @@ use wgpu::util::DeviceExt;
 
 use super::vertex::Vertex;
 
+#[derive(Debug)]
 pub struct RenderChunk {
     pub vertex_count: u32,
     pub vertex_buffer: wgpu::Buffer,
@@ -10,6 +11,7 @@ pub struct RenderChunk {
 
 impl RenderChunk {
     pub fn new(device: &wgpu::Device, vertices: Vec<Vertex>) -> Self {
+        dbg!(&vertices);
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Chunk Vertex Buffer"),
             contents: bytemuck::cast_slice(&vertices),
