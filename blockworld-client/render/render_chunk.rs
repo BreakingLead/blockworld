@@ -1,7 +1,9 @@
-use glam::IVec2;
+use glam::{vec2, vec3, IVec2};
 use wgpu::util::DeviceExt;
 
-use super::vertex::Vertex;
+use crate::game::chunk::{Chunk, CHUNK_HEIGHT, CHUNK_SIZE};
+
+use super::{render_block::*, vertex::Vertex};
 
 #[derive(Debug)]
 pub struct RenderChunk {
@@ -10,8 +12,59 @@ pub struct RenderChunk {
 }
 
 impl RenderChunk {
-    pub fn new(device: &wgpu::Device, vertices: Vec<Vertex>) -> Self {
-        dbg!(&vertices);
+    pub fn new(device: &wgpu::Device, chunk: &Chunk) -> Self {
+        let mut vertices: Vec<Vertex> = Vec::new();
+        for x in (0..CHUNK_SIZE) {
+            for y in (0..CHUNK_HEIGHT) {
+                for z in (0..CHUNK_SIZE) {
+                    let (ax, az) = (
+                        (chunk.coord.x * CHUNK_SIZE as i32 + x as i32) as f32,
+                        (chunk.coord.y * CHUNK_SIZE as i32 + z as i32) as f32,
+                    );
+                    match chunk.blocks[Chunk::index_from_xyz(x, y, z)].domain {
+                        crate::game::block::BlockType::Air => {}
+                        crate::game::block::BlockType::Stone => {
+                            push_face_mesh(
+                                &mut vertices,
+                                XN,
+                                vec3(ax, y as f32, az),
+                                vec2(0.0, 0.0),
+                            );
+                            push_face_mesh(
+                                &mut vertices,
+                                XP,
+                                vec3(ax, y as f32, az),
+                                vec2(0.0, 0.0),
+                            );
+                            push_face_mesh(
+                                &mut vertices,
+                                YN,
+                                vec3(ax, y as f32, az),
+                                vec2(0.0, 0.0),
+                            );
+                            push_face_mesh(
+                                &mut vertices,
+                                YP,
+                                vec3(ax, y as f32, az),
+                                vec2(0.0, 0.0),
+                            );
+                            push_face_mesh(
+                                &mut vertices,
+                                ZN,
+                                vec3(ax, y as f32, az),
+                                vec2(0.0, 0.0),
+                            );
+                            push_face_mesh(
+                                &mut vertices,
+                                ZP,
+                                vec3(ax, y as f32, az),
+                                vec2(0.0, 0.0),
+                            );
+                        }
+                    }
+                }
+            }
+        }
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Chunk Vertex Buffer"),
             contents: bytemuck::cast_slice(&vertices),
@@ -23,4 +76,5 @@ impl RenderChunk {
             vertex_buffer,
         }
     }
+    // pub fn update_mesh(&mut self, device: &wgpu::Device)
 }

@@ -94,6 +94,7 @@ impl AxisDirection {
 /// Generate and add a face's mesh into some vertex buffer
 pub fn push_face_mesh(bukkit: &mut Vec<Vertex>, direction: AxisDirection, coord: Vec3, uv: Vec2) {
     // Center coord
+
     let mut c = coord;
 
     let mut n = direction.get_four_vtx();
