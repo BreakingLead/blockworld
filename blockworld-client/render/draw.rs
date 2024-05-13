@@ -13,7 +13,7 @@ use winit::{
 };
 
 use crate::{
-    game::player_state::PlayerState,
+    game::{chunk::Chunk, player_state::PlayerState},
     render::{
         camera::{Camera, MatrixUniform},
         texture,
@@ -37,6 +37,8 @@ pub struct State<'a> {
 
     pub texture: texture::Texture,
     pub texture_bind_group: wgpu::BindGroup,
+
+    pub depth_texture: texture::Texture,
 
     pub camera: Camera,
     pub matrix_uniform: MatrixUniform,
@@ -171,8 +173,8 @@ impl<'a> State<'a> {
         let texture = crate::render::texture::Texture::from_bytes(
             &device,
             &queue,
-            include_bytes!("../assets/brick.png"),
-            "assets/brick.png",
+            include_bytes!("../assets/F8thful/assets/minecraft/textures/block/redstone_block.png"),
+            "Iron Texture",
         )
         .unwrap();
 
@@ -215,17 +217,12 @@ impl<'a> State<'a> {
             ],
             label: Some("diffuse_bind_group"),
         });
+
+        let depth_texture = texture::Texture::create_depth_texture(&device, &config);
         // \-------------------
 
-        let mut vertices = Vec::new();
-        push_face_mesh(&mut vertices, YP, vec3(0.0, 0.0, 0.0), vec2(0.0, 0.0));
-        push_face_mesh(&mut vertices, XP, vec3(0.0, 0.0, 0.0), vec2(0.0, 0.0));
-        push_face_mesh(&mut vertices, ZP, vec3(0.0, 0.0, 0.0), vec2(0.0, 0.0));
-        push_face_mesh(&mut vertices, YN, vec3(0.0, 3.0, 0.0), vec2(0.0, 0.0));
-        push_face_mesh(&mut vertices, XN, vec3(0.0, 3.0, 0.0), vec2(0.0, 0.0));
-        push_face_mesh(&mut vertices, ZN, vec3(0.0, 3.0, 0.0), vec2(0.0, 0.0));
-        let render_chunk = RenderChunk::new(&device, vertices);
-        dbg!(&render_chunk);
+        let chunk = Chunk::new();
+        let render_chunk = RenderChunk::new(&device, &chunk);
 
         let shader = device.create_shader_module(include_wgsl!("shaders/default_shader.wgsl"));
 
@@ -259,12 +256,18 @@ impl<'a> State<'a> {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: None,
+                cull_mode: Some(wgpu::Face::Back),
                 unclipped_depth: false,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -285,6 +288,8 @@ impl<'a> State<'a> {
 
             texture,
             texture_bind_group,
+
+            depth_texture,
 
             render_chunk,
 
@@ -308,6 +313,7 @@ impl<'a> State<'a> {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
+            self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config);
         }
     }
 
@@ -352,7 +358,14 @@ impl<'a> State<'a> {
                         store: wgpu::StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
