@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use glam::{vec2, vec3};
-use log::info;
+use log::{debug, info};
 use wgpu::{include_wgsl, util::DeviceExt};
 use winit::{
     application::ApplicationHandler,
@@ -13,7 +13,13 @@ use winit::{
 };
 
 use crate::{
-    game::{chunk::Chunk, player_state::PlayerState},
+    game::{
+        block::{BlockMeta, BlockType},
+        chunk::Chunk,
+        player_state::PlayerState,
+        RegisterTable,
+    },
+    io::atlas_helper::{self, AtlasMeta},
     render::{
         camera::{Camera, MatrixUniform},
         texture,
@@ -21,7 +27,7 @@ use crate::{
     },
 };
 
-use super::{render_block::*, render_chunk::RenderChunk};
+use super::{render_block::*, render_chunk::RenderChunk, texture::AtlasCoordinate};
 
 pub struct State<'a> {
     pub window: Window,
@@ -47,7 +53,9 @@ pub struct State<'a> {
 
     // States
     pub player_state: PlayerState,
-    pub pressed_keys: crate::io::input_helper::InputState,
+    pub input_state: crate::io::input_helper::InputState,
+
+    pub register_table: RegisterTable,
 
     pub timer: u64,
 }
@@ -62,7 +70,7 @@ impl<'a> State<'a> {
         window.set_cursor_grab(winit::window::CursorGrabMode::Confined);
         window.set_cursor_visible(false);
 
-        let pressed_keys = Default::default();
+        let input_state = Default::default();
         let player_state = Default::default();
 
         let size = window.inner_size();
@@ -173,7 +181,7 @@ impl<'a> State<'a> {
         let texture = crate::render::texture::Texture::from_bytes(
             &device,
             &queue,
-            include_bytes!("../assets/F8thful/assets/minecraft/textures/block/redstone_block.png"),
+            include_bytes!("../assets/atlas.png"),
             "Iron Texture",
         )
         .unwrap();
@@ -220,9 +228,6 @@ impl<'a> State<'a> {
 
         let depth_texture = texture::Texture::create_depth_texture(&device, &config);
         // \-------------------
-
-        let chunk = Chunk::new();
-        let render_chunk = RenderChunk::new(&device, &chunk);
 
         let shader = device.create_shader_module(include_wgsl!("shaders/default_shader.wgsl"));
 
@@ -276,6 +281,64 @@ impl<'a> State<'a> {
             multiview: None,
         });
 
+        // ---------------------------------
+        // Game Initialize
+
+        let (image_w, image_h) = image::io::Reader::open("assets/atlas.png")
+            .unwrap()
+            .into_dimensions()
+            .unwrap();
+        let atlas_meta = AtlasMeta {
+            tile_w: 16,
+            tile_h: 16,
+            image_w,
+            image_h,
+        };
+        let mut register_table = RegisterTable::new();
+        register_table.register_block(
+            1,
+            BlockMeta {
+                name: "stone".to_string(),
+                ty: BlockType::Solid,
+                atlas_coord: [atlas_meta.get(8, 5).unwrap(); 6],
+            },
+        );
+        register_table.register_block(
+            2,
+            BlockMeta {
+                name: "test_a".to_string(),
+                ty: BlockType::Solid,
+                atlas_coord: [atlas_meta.get(8, 11).unwrap(); 6],
+            },
+        );
+        register_table.register_block(
+            3,
+            BlockMeta {
+                name: "test_a".to_string(),
+                ty: BlockType::Solid,
+                atlas_coord: [atlas_meta.get(8, 12).unwrap(); 6],
+            },
+        );
+        register_table.register_block(
+            4,
+            BlockMeta {
+                name: "test_a".to_string(),
+                ty: BlockType::Solid,
+                atlas_coord: [atlas_meta.get(0, 11).unwrap(); 6],
+            },
+        );
+        register_table.register_block(
+            5,
+            BlockMeta {
+                name: "test_a".to_string(),
+                ty: BlockType::Solid,
+                atlas_coord: [atlas_meta.get(3, 17).unwrap(); 6],
+            },
+        );
+
+        let chunk = Chunk::new();
+        let render_chunk = RenderChunk::new(&device, &chunk, &register_table, &atlas_meta);
+
         Self {
             window,
 
@@ -301,7 +364,9 @@ impl<'a> State<'a> {
             timer: 0,
 
             player_state,
-            pressed_keys,
+            input_state,
+
+            register_table,
         }
     }
 
@@ -319,10 +384,7 @@ impl<'a> State<'a> {
 
     pub fn update(&mut self) {
         self.timer += 1;
-        // if self.timer % 50 == 0 {
-        //     dbg!(self.camera.position);
-        // }
-        self.player_state.update(&self.pressed_keys);
+        self.player_state.update(&self.input_state);
         self.camera.update(&self.player_state);
         self.matrix_uniform.update_matrix(&self.camera);
         self.queue.write_buffer(

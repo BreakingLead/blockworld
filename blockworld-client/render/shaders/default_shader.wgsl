@@ -33,6 +33,8 @@ var s_diffuse: sampler;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return textureSample(t_diffuse, s_diffuse, in.uv);
+    let u = in.uv.x;
+    let v = in.uv.y;
+    return textureSample(t_diffuse, s_diffuse, vec2<f32>(u, v));
 }
 

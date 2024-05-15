@@ -1,6 +1,6 @@
 use glam::{vec3, Vec2, Vec3};
 
-use super::vertex::Vertex;
+use super::{texture::AtlasCoordinate, vertex::Vertex};
 
 /// Which axis
 pub enum Axis {
@@ -92,7 +92,12 @@ impl AxisDirection {
 }
 
 /// Generate and add a face's mesh into some vertex buffer
-pub fn push_face_mesh(bukkit: &mut Vec<Vertex>, direction: AxisDirection, coord: Vec3, uv: Vec2) {
+pub fn push_face_mesh(
+    bukkit: &mut Vec<Vertex>,
+    direction: AxisDirection,
+    coord: Vec3,
+    uv: AtlasCoordinate,
+) {
     // Center coord
 
     let mut c = coord;
@@ -103,30 +108,32 @@ pub fn push_face_mesh(bukkit: &mut Vec<Vertex>, direction: AxisDirection, coord:
     // b - a d
     // | / / |
     // c e - f
+    let aa = uv.aa();
+    let bb = uv.bb();
     let mut res = vec![
         Vertex {
             position: n[0].to_array(),
-            uv: [1.0, 1.0],
+            uv: [bb.x, bb.y],
         },
         Vertex {
             position: n[1].to_array(),
-            uv: [0.0, 1.0],
+            uv: [aa.x, bb.y],
         },
         Vertex {
             position: n[2].to_array(),
-            uv: [0.0, 0.0],
+            uv: [aa.x, aa.y],
         },
         Vertex {
             position: n[0].to_array(),
-            uv: [1.0, 1.0],
+            uv: [bb.x, bb.y],
         },
         Vertex {
             position: n[2].to_array(),
-            uv: [0.0, 0.0],
+            uv: [aa.x, aa.y],
         },
         Vertex {
             position: n[3].to_array(),
-            uv: [1.0, 0.0],
+            uv: [bb.x, aa.y],
         },
     ];
     bukkit.append(&mut res);
