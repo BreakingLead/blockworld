@@ -20,9 +20,9 @@ impl Chunk {
     pub fn new() -> Self {
         let mut blocks = Box::new([Block::default(); 65536]);
         for x in (0..CHUNK_SIZE) {
-            for y in (0..1) {
+            for y in (1..5) {
                 for z in (0..CHUNK_SIZE) {
-                    blocks[Self::index_from_xyz(x, y, z)] = Block::new(BlockType::Stone);
+                    blocks[Self::index_from_xyz(x, y, z)] = Block { id: y as u32 };
                 }
             }
         }

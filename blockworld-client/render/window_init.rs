@@ -55,7 +55,7 @@ impl<'a> ApplicationHandler for State<'a> {
                 if event.physical_key == KeyCode::Escape {
                     event_loop.exit();
                 }
-                self.pressed_keys.handle_event(&event);
+                self.input_state.handle_event(&event);
             }
             _ => (),
         }

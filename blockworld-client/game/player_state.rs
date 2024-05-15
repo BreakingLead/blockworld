@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use winit::keyboard::{Key, KeyCode, NamedKey};
 
-use crate::io::input_helper::InputState;
+use crate::{io::input_helper::InputState, render::draw::State};
 
 // Best not to pub here
 // I'd like to change it later
@@ -17,29 +17,29 @@ pub struct PlayerState {
 }
 
 impl PlayerState {
-    pub fn update(&mut self, input: &InputState) {
+    pub fn update(&mut self, state: &InputState) {
         self.ascend = false;
         self.descend = false;
         self.left = false;
         self.right = false;
         self.forward = false;
         self.backward = false;
-        if input.is_key_pressing(Key::Character("w".into())) {
+        if state.is_key_pressing(Key::Character("w".into())) {
             self.forward = true;
         }
-        if input.is_key_pressing(Key::Character("a".into())) {
+        if state.is_key_pressing(Key::Character("a".into())) {
             self.left = true;
         }
-        if input.is_key_pressing(Key::Character("s".into())) {
+        if state.is_key_pressing(Key::Character("s".into())) {
             self.backward = true;
         }
-        if input.is_key_pressing(Key::Character("d".into())) {
+        if state.is_key_pressing(Key::Character("d".into())) {
             self.right = true;
         }
-        if input.is_key_pressing(Key::Named(NamedKey::Space)) {
+        if state.is_key_pressing(Key::Named(NamedKey::Space)) {
             self.ascend = true;
         }
-        if input.is_key_pressing(Key::Named(NamedKey::Shift)) {
+        if state.is_key_pressing(Key::Named(NamedKey::Shift)) {
             self.descend = true;
         }
     }
