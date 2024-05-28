@@ -30,7 +30,7 @@ impl RenderChunk {
                         (chunk.coord.x * CHUNK_SIZE as i32 + x as i32) as f32,
                         (chunk.coord.y * CHUNK_SIZE as i32 + z as i32) as f32,
                     );
-                    let block_id = chunk.blocks[Chunk::index_from_xyz(x, y, z)].id;
+                    let block_id = chunk.blocks[Chunk::index(x, y, z)].id;
                     // info!("Block: {}", block_id);
                     // Only render queried blocks so we blocks like air won't be rendered.
                     if let Some(meta) = register_table.query_block(block_id) {

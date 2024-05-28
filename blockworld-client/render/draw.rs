@@ -14,7 +14,7 @@ use winit::{
 
 use crate::{
     game::{
-        block::{BlockMeta, BlockType},
+        block::{BlockMeta, BlockType, ResourceLocation},
         chunk::Chunk,
         player_state::PlayerState,
         register::RegisterTable,
@@ -300,7 +300,19 @@ impl<'a> State<'a> {
         register_table.register_block(
             1,
             BlockMeta {
-                name: "stone",
+                name: ResourceLocation {
+                    id: "stone".to_string(),
+                },
+                ty: BlockType::Solid,
+                atlas_coord: [atlas_meta.get(8, 5).unwrap(); 6],
+            },
+        );
+        register_table.register_block(
+            2,
+            BlockMeta {
+                name: ResourceLocation {
+                    id: "stone".to_string(),
+                },
                 ty: BlockType::Solid,
                 atlas_coord: [atlas_meta.get(8, 5).unwrap(); 6],
             },
