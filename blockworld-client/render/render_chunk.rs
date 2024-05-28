@@ -27,8 +27,8 @@ impl RenderChunk {
             for y in (0..CHUNK_HEIGHT) {
                 for z in (0..CHUNK_SIZE) {
                     let (ax, az) = (
-                        (chunk.coord.x * CHUNK_SIZE as i32 + x as i32) as f32,
-                        (chunk.coord.y * CHUNK_SIZE as i32 + z as i32) as f32,
+                        (chunk.x_pos * CHUNK_SIZE as i32 + x as i32) as f32,
+                        (chunk.z_pos * CHUNK_SIZE as i32 + z as i32) as f32,
                     );
                     let block_id = chunk.blocks[Chunk::index(x, y, z)].id;
                     // info!("Block: {}", block_id);

@@ -300,25 +300,21 @@ impl<'a> State<'a> {
         register_table.register_block(
             1,
             BlockMeta {
-                name: ResourceLocation {
-                    id: "stone".to_string(),
-                },
+                name: ResourceLocation::new("test_a"),
                 ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(8, 5).unwrap(); 6],
+                atlas_coord: [atlas_meta.get(6, 15).unwrap(); 6],
             },
         );
         register_table.register_block(
             2,
             BlockMeta {
-                name: ResourceLocation {
-                    id: "stone".to_string(),
-                },
+                name: ResourceLocation::new("test_b"),
                 ty: BlockType::Solid,
                 atlas_coord: [atlas_meta.get(8, 5).unwrap(); 6],
             },
         );
 
-        let chunk = Chunk::new();
+        let chunk = Chunk::default();
         let render_chunk = RenderChunk::new(&device, &chunk, &register_table, &atlas_meta);
 
         let game = Game::default();
