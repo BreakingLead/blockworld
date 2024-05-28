@@ -1,6 +1,8 @@
 use glam::{vec3, Vec2, Vec3};
 
-use super::{texture::AtlasCoordinate, vertex::Vertex};
+use crate::io::atlas_helper::AtlasCoordinate;
+
+use super::vertex::Vertex;
 
 /// Which axis
 pub enum Axis {
@@ -113,27 +115,27 @@ pub fn push_face_mesh(
     let mut res = vec![
         Vertex {
             position: n[0].to_array(),
-            uv: [bb.x, bb.y],
+            uv: [bb.x, aa.y],
         },
         Vertex {
             position: n[1].to_array(),
+            uv: [aa.x, aa.y],
+        },
+        Vertex {
+            position: n[2].to_array(),
             uv: [aa.x, bb.y],
         },
         Vertex {
-            position: n[2].to_array(),
-            uv: [aa.x, aa.y],
-        },
-        Vertex {
             position: n[0].to_array(),
-            uv: [bb.x, bb.y],
+            uv: [bb.x, aa.y],
         },
         Vertex {
             position: n[2].to_array(),
-            uv: [aa.x, aa.y],
+            uv: [aa.x, bb.y],
         },
         Vertex {
             position: n[3].to_array(),
-            uv: [bb.x, aa.y],
+            uv: [bb.x, bb.y],
         },
     ];
     bukkit.append(&mut res);

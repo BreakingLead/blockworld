@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
 
-members = ["blockworld-client", "blockworld-server"]
+members = ["blockworld-client", "blockworld-utils", "blockworld-server"]

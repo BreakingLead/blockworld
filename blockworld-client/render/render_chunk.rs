@@ -3,11 +3,7 @@ use log::info;
 use wgpu::{util::DeviceExt, Device};
 
 use crate::{
-    game::{
-        block,
-        chunk::{Chunk, CHUNK_HEIGHT, CHUNK_SIZE},
-        RegisterTable,
-    },
+    game::{block, chunk::*, register::RegisterTable},
     io::atlas_helper::AtlasMeta,
 };
 

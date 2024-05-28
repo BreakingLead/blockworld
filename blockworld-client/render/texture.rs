@@ -130,25 +130,3 @@ impl Texture {
         }
     }
 }
-
-#[derive(Debug, Clone, Copy)]
-pub struct AtlasCoordinate {
-    aa: Vec2,
-    bb: Vec2,
-}
-
-impl AtlasCoordinate {
-    pub fn new(aa: Vec2, bb: Vec2) -> Self {
-        aa.clamp(vec2(0., 0.), vec2(1., 1.));
-        bb.clamp(vec2(0., 0.), vec2(1., 1.));
-        Self { aa, bb }
-    }
-
-    pub fn aa(&self) -> Vec2 {
-        self.aa
-    }
-
-    pub fn bb(&self) -> Vec2 {
-        self.bb
-    }
-}

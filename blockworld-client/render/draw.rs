@@ -17,9 +17,10 @@ use crate::{
         block::{BlockMeta, BlockType},
         chunk::Chunk,
         player_state::PlayerState,
-        RegisterTable,
+        register::RegisterTable,
+        Game,
     },
-    io::atlas_helper::{self, AtlasMeta},
+    io::{atlas_helper::AtlasMeta, input_helper::InputState},
     render::{
         camera::{Camera, MatrixUniform},
         texture,
@@ -27,7 +28,8 @@ use crate::{
     },
 };
 
-use super::{render_block::*, render_chunk::RenderChunk, texture::AtlasCoordinate};
+use super::render_chunk::RenderChunk;
+use crate::io::atlas_helper::AtlasCoordinate;
 
 pub struct State<'a> {
     pub window: Window,
@@ -51,8 +53,8 @@ pub struct State<'a> {
     pub matrix_buffer: wgpu::Buffer,
     pub matrix_bind_group: wgpu::BindGroup,
 
-    // States
-    pub player_state: PlayerState,
+    // The Game
+    pub game: Game,
     pub input_state: crate::io::input_helper::InputState,
 
     pub register_table: RegisterTable,
@@ -62,7 +64,7 @@ pub struct State<'a> {
 
 impl<'a> State<'a> {
     pub async fn new(event_loop: &EventLoop<()>) -> State<'a> {
-        // /-------------------
+        // /-------------------../assets/atlas.png
         // Create the window
         let window = event_loop
             .create_window(Window::default_attributes().with_title("Blockworld Indev"))
@@ -70,8 +72,7 @@ impl<'a> State<'a> {
         window.set_cursor_grab(winit::window::CursorGrabMode::Confined);
         window.set_cursor_visible(false);
 
-        let input_state = Default::default();
-        let player_state = Default::default();
+        let player_state: PlayerState = Default::default();
 
         let size = window.inner_size();
         // \-------------------
@@ -182,7 +183,7 @@ impl<'a> State<'a> {
             &device,
             &queue,
             include_bytes!("../assets/atlas.png"),
-            "Iron Texture",
+            "Block Texture",
         )
         .unwrap();
 
@@ -281,10 +282,11 @@ impl<'a> State<'a> {
             multiview: None,
         });
 
-        // ---------------------------------
-        // Game Initialize
+        // -------------------
+        // | Game Initialize |
+        // -------------------
 
-        let (image_w, image_h) = image::io::Reader::open("assets/atlas.png")
+        let (image_w, image_h) = image::io::Reader::open("../assets/atlas.png")
             .unwrap()
             .into_dimensions()
             .unwrap();
@@ -298,46 +300,17 @@ impl<'a> State<'a> {
         register_table.register_block(
             1,
             BlockMeta {
-                name: "stone".to_string(),
+                name: "stone",
                 ty: BlockType::Solid,
                 atlas_coord: [atlas_meta.get(8, 5).unwrap(); 6],
-            },
-        );
-        register_table.register_block(
-            2,
-            BlockMeta {
-                name: "test_a".to_string(),
-                ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(8, 11).unwrap(); 6],
-            },
-        );
-        register_table.register_block(
-            3,
-            BlockMeta {
-                name: "test_a".to_string(),
-                ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(8, 12).unwrap(); 6],
-            },
-        );
-        register_table.register_block(
-            4,
-            BlockMeta {
-                name: "test_a".to_string(),
-                ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(0, 11).unwrap(); 6],
-            },
-        );
-        register_table.register_block(
-            5,
-            BlockMeta {
-                name: "test_a".to_string(),
-                ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(3, 17).unwrap(); 6],
             },
         );
 
         let chunk = Chunk::new();
         let render_chunk = RenderChunk::new(&device, &chunk, &register_table, &atlas_meta);
+
+        let game = Game::default();
+        let input_state = InputState::default();
 
         Self {
             window,
@@ -363,8 +336,8 @@ impl<'a> State<'a> {
 
             timer: 0,
 
-            player_state,
             input_state,
+            game,
 
             register_table,
         }
@@ -384,8 +357,8 @@ impl<'a> State<'a> {
 
     pub fn update(&mut self) {
         self.timer += 1;
-        self.player_state.update(&self.input_state);
-        self.camera.update(&self.player_state);
+        self.game.update(&self.input_state);
+        self.camera.update(&self.game.player_state);
         self.matrix_uniform.update_matrix(&self.camera);
         self.queue.write_buffer(
             &self.matrix_buffer,

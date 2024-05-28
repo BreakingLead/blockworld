@@ -2,18 +2,20 @@ use std::default;
 
 use glam::Vec3;
 
-use crate::render::texture::AtlasCoordinate;
+use crate::io::atlas_helper::AtlasCoordinate;
 
-pub type BlockID = u32;
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash)]
+struct ResourceLocation(&'static str);
+
+pub type BlockID = ResourceLocation;
 #[derive(Default, Clone, Copy)]
 pub struct Block {
     pub id: BlockID,
 }
 
 /// Metadata for query from id
-#[derive(Debug)]
 pub struct BlockMeta {
-    pub name: String,
+    pub name: ResourceLocation,
     pub ty: BlockType,
     /// Attention:
     /// - 0: Up

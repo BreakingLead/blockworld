@@ -1,38 +1,19 @@
-use std::collections::HashMap;
+use crate::io::input_helper::InputState;
 
-use anyhow::Error;
-use glam::{IVec2, Vec2};
-
-use self::block::{BlockID, BlockMeta};
+use self::player_state::PlayerState;
 
 pub mod block;
 pub mod chunk;
 pub mod player_state;
+pub mod register;
 
-// Single Instance Mode
-// ! The value of the hashmap is temporary.
-pub struct RegisterTable {
-    table_block: HashMap<BlockID, BlockMeta>,
+#[derive(Default)]
+pub struct Game {
+    pub player_state: PlayerState,
 }
 
-impl RegisterTable {
-    pub fn new() -> Self {
-        Self {
-            table_block: Default::default(),
-        }
-    }
-
-    pub fn register_block(&mut self, id: BlockID, meta: BlockMeta) -> Result<(), Error> {
-        if let Some(v) = self.table_block.insert(id, meta) {
-            Err(Error::msg("ID Exists"))
-        } else {
-            Ok(())
-        }
-    }
-
-
-
-    pub fn query_block(&self, id: BlockID) -> Option<&BlockMeta> {
-        self.table_block.get(&id)
+impl Game {
+    pub fn update(&mut self, state: &InputState) {
+        self.player_state.update(state);
     }
 }
