@@ -6,3 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+futures-util = "0.3.30"
+slab = "0.4.9"
+tokio = "1.37.0"
+tokio-tungstenite = "0.21.0"

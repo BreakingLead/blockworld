@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, fmt::format};
+use std::{f32::consts::PI, fmt::format, io::BufRead};
 
 use anyhow::*;
 use glam::{vec2, vec3};
@@ -10,11 +10,7 @@ use winit::{
 
 use crate::{
     game::{
-        block::{BlockMeta, BlockType, ResourceLocation},
-        chunk::Chunk,
-        player_state::PlayerState,
-        register::RegisterTable,
-        Game,
+        block::{BlockMeta, BlockType, ResourceLocation}, chunk::Chunk, console_instr::match_command, player_state::PlayerState, register::RegisterTable, Game
     },
     io::{atlas_helper::AtlasMeta, input_helper::InputState},
     render::{
@@ -27,6 +23,7 @@ use crate::{
 use super::render_chunk::RenderChunk;
 use crate::io::atlas_helper::AtlasCoordinate;
 
+/// state contains all things the game needs
 pub struct State<'a> {
     pub window: Window,
 
@@ -46,6 +43,8 @@ pub struct State<'a> {
 
     pub camera: Camera,
     pub matrix_uniform: MatrixUniform,
+
+    /// matrix_buffer represents a gpu buffer
     pub matrix_buffer: wgpu::Buffer,
     pub matrix_bind_group: wgpu::BindGroup,
 
@@ -55,6 +54,8 @@ pub struct State<'a> {
 
     pub register_table: RegisterTable,
 
+    /// Q: function as frame counter ? How about rename it to frame_counter ?  
+    /// Do this means that if I have high framerate I can move faster? Or briefly, do move speed(m/s) binds with framerate?
     pub timer: u64,
 }
 
@@ -425,5 +426,14 @@ impl<'a> State<'a> {
         output.present();
 
         std::result::Result::Ok(())
+    }
+
+    pub fn try_exec_single_instr_from_console(&mut self) -> Result<()>{
+        let stdin = std::io::stdin();
+        let mut handle = stdin.lock();
+        let mut console_string = String::new();
+        handle.read_line(&mut console_string);
+        match_command(console_string, self)?;
+        Ok(())
     }
 }

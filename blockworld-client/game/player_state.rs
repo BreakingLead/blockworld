@@ -17,6 +17,9 @@ pub struct PlayerState {
 }
 
 impl PlayerState {
+    /// **MENTION:**
+    /// player_state should be first to call in all Updates  
+    /// Because it will read keyboard to set some states which is depended by other update methods
     pub fn update(&mut self, state: &InputState) {
         self.ascend = false;
         self.descend = false;

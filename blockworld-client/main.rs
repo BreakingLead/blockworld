@@ -16,6 +16,5 @@ pub struct BootArgs {
 }
 
 fn main() {
-    let a = (3,2);
     pollster::block_on(render::window_init::run());
 }

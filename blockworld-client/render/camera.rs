@@ -51,6 +51,7 @@ impl Camera {
         projection * view
     }
 
+    /// update camera state by 1 unit according to player_state
     pub fn update(&mut self, player_state: &PlayerState) {
         if player_state.forward {
             self.go_forward(1.0);
