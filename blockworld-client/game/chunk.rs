@@ -1,11 +1,12 @@
-use glam::{ivec2, ivec3, vec3, IVec2};
+use glam::*;
 
 use crate::render::render_block::*;
 
-use super::block::{Block, BlockType, ResourceLocation};
+use super::block::Block;
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_HEIGHT: usize = 256;
+pub const CHUNK_BLOCK_NUM: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT;
 
 pub struct Chunk {
     pub blocks: Box<[Block; CHUNK_HEIGHT * CHUNK_SIZE * CHUNK_SIZE]>,
@@ -91,19 +92,19 @@ impl Default for Chunk {
     // JUST FOR TEST
     // REMEMBER TO DELETE THOSE CODE
     fn default() -> Self {
-        let mut blocks = Box::new([Block::default(); 65536]);
-        for x in (0..CHUNK_SIZE as i32) {
-            for y in (0..3) {
-                for z in (0..CHUNK_SIZE as i32) {
+        let mut blocks = Box::new([Block::default(); CHUNK_BLOCK_NUM]);
+        for x in 0..CHUNK_SIZE as i32 {
+            for y in 0..3 {
+                for z in 0..CHUNK_SIZE as i32 {
                     blocks[Chunk::index(x, y, z)] = match y {
                         _ => Block { id: 1 },
                     }
                 }
             }
         }
-        for x in (0..CHUNK_SIZE as i32) {
-            for y in (5..40) {
-                for z in (0..CHUNK_SIZE as i32) {
+        for x in 0..CHUNK_SIZE as i32 {
+            for y in 5..40 {
+                for z in 0..CHUNK_SIZE as i32 {
                     if (vec3(x as f32, y as f32, z as f32) - vec3(7.0, 15.0, 7.0)).length() <= 7.0 {
                         blocks[Chunk::index(x, y, z)] = match y {
                             _ => Block { id: 2 },

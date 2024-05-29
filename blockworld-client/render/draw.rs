@@ -1,27 +1,38 @@
-use std::{f32::consts::PI, fmt::format, io::BufRead};
+use std::{io::BufRead, time::Instant};
 
 use anyhow::*;
-use glam::{vec2, vec3};
-use log::{debug, info};
+use glam::*;
 use wgpu::{include_wgsl, util::DeviceExt};
+use wgpu_text::{
+    glyph_brush::{ab_glyph::FontRef, Layout, OwnedSection, Section, Text},
+    TextBrush,
+};
 use winit::{
-    application::ApplicationHandler, dpi::PhysicalSize, event::{DeviceEvent, KeyEvent, WindowEvent}, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{Key, KeyCode, NamedKey, PhysicalKey}, platform::modifier_supplement::KeyEventExtModifierSupplement, window::{self, Fullscreen, Window, WindowAttributes}
+    dpi::PhysicalSize,
+    event_loop::EventLoop,
+    window::{Fullscreen, Window},
 };
 
 use crate::{
     game::{
-        block::{BlockMeta, BlockType, ResourceLocation}, chunk::Chunk, console_instr::match_command, player_state::PlayerState, register::RegisterTable, Game
+        block::{BlockMeta, BlockType, ResourceLocation},
+        chunk::Chunk,
+        console_instr::exec_instr_from_string,
+        player_state::PlayerState,
+        register::RegisterTable,
+        settings::Settings,
+        Game,
     },
     io::{atlas_helper::AtlasMeta, input_helper::InputState},
     render::{
         camera::{Camera, MatrixUniform},
         texture,
         vertex::Vertex,
-    }, BootArgs,
+    },
+    BootArgs,
 };
 
 use super::render_chunk::RenderChunk;
-use crate::io::atlas_helper::AtlasCoordinate;
 
 /// state contains all things the game needs
 pub struct State<'a> {
@@ -48,35 +59,42 @@ pub struct State<'a> {
     pub matrix_buffer: wgpu::Buffer,
     pub matrix_bind_group: wgpu::BindGroup,
 
+    // IO
+    pub input_state: InputState,
+
     // The Game
     pub game: Game,
-    pub input_state: crate::io::input_helper::InputState,
+    pub fps: f32,
+    pub dt_timer: Instant,
+    pub global_timer: Instant,
+
+    // UI
+    pub fps_text_section: OwnedSection,
+    pub brush: TextBrush<FontRef<'a>>,
+
+    // Settings
+    pub settings: Settings<'a>,
 
     pub register_table: RegisterTable,
-
-    /// Q: function as frame counter ? How about rename it to frame_counter ?  
-    /// Do this means that if I have high framerate I can move faster? Or briefly, do move speed(m/s) binds with framerate?
-    pub timer: u64,
 }
 
 impl<'a> State<'a> {
-    pub async fn new(event_loop: &EventLoop<()>, boot_args:&BootArgs) -> Result<State<'a>> {
+    pub async fn new(event_loop: &EventLoop<()>, boot_args: &BootArgs) -> Result<State<'a>> {
         // /-------------------../assets/atlas.png
         // Create the window
-        let mut window_attrs = Window::default_attributes()
-                .with_title("Blockworld Indev");
-        // set screen size based on boot_args 
-        if boot_args.full_screen{
+        let mut window_attrs = Window::default_attributes().with_title("Blockworld Indev");
+        // set screen size based on boot_args
+        if boot_args.full_screen {
             window_attrs = window_attrs.with_fullscreen(Some(Fullscreen::Borderless(None)));
-        }else{
-            window_attrs = window_attrs.with_inner_size(PhysicalSize::new(boot_args.width,boot_args.height))
+        } else {
+            window_attrs =
+                window_attrs.with_inner_size(PhysicalSize::new(boot_args.width, boot_args.height))
         }
-        let window = event_loop
-            .create_window(window_attrs)?;
-        window.set_cursor_grab(winit::window::CursorGrabMode::Confined);
+        let window = event_loop.create_window(window_attrs)?;
+        window.set_cursor_grab(winit::window::CursorGrabMode::Confined)?;
         window.set_cursor_visible(false);
 
-        let player_state: PlayerState = Default::default();
+        let _player_state: PlayerState = Default::default();
 
         let size = window.inner_size();
         // \-------------------
@@ -91,10 +109,7 @@ impl<'a> State<'a> {
 
         // /-------------------
         // Generate & Configure the surface
-        let surface = unsafe {
-            instance
-                .create_surface(&*(&window as *const Window))?
-        };
+        let surface = unsafe { instance.create_surface(&*(&window as *const Window))? };
 
         // Adapter is used to create device and queue.
         let adapter = instance
@@ -103,7 +118,8 @@ impl<'a> State<'a> {
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
-            .await.with_context(|| format!("adapter created error for problem with wgpu"))?;            
+            .await
+            .with_context(|| format!("adapter created error for problem with wgpu"))?;
 
         // Device is the abstraction of the GPU. Queue is the command queue to send to GPU.
         let (device, queue) = adapter
@@ -116,7 +132,6 @@ impl<'a> State<'a> {
                 None,
             )
             .await?;
-            
 
         let surface_caps = surface.get_capabilities(&adapter);
         let surface_format = surface_caps
@@ -187,7 +202,6 @@ impl<'a> State<'a> {
             include_bytes!("../assets/atlas.png"),
             "Block Texture",
         )?;
-        
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -284,13 +298,15 @@ impl<'a> State<'a> {
             multiview: None,
         });
 
+        dbg!("Help me!");
         // -------------------
         // | Game Initialize |
         // -------------------
 
-        let (image_w, image_h) = image::io::Reader::open("../assets/atlas.png")?
+        let (image_w, image_h) = image::io::Reader::open("../assets/atlas.png")
+            .unwrap()
             .into_dimensions()?;
-            
+
         let atlas_meta = AtlasMeta {
             tile_w: 16,
             tile_h: 16,
@@ -305,7 +321,7 @@ impl<'a> State<'a> {
                 ty: BlockType::Solid,
                 atlas_coord: [atlas_meta.get(6, 19)?; 6],
             },
-        );
+        )?;
         register_table.register_block(
             2,
             BlockMeta {
@@ -313,7 +329,7 @@ impl<'a> State<'a> {
                 ty: BlockType::Solid,
                 atlas_coord: [atlas_meta.get(16, 6)?; 6],
             },
-        );
+        )?;
 
         let chunk = Chunk::default();
         let render_chunk = RenderChunk::new(&device, &chunk, &register_table);
@@ -321,6 +337,26 @@ impl<'a> State<'a> {
         let game = Game::default();
         let input_state = InputState::default();
 
+        let settings = Settings {
+            font: include_bytes!("../assets/fonts/Minecraft.otf"),
+            font_size: 18.0,
+        };
+
+        let brush = wgpu_text::BrushBuilder::using_font_bytes(settings.font)
+            .unwrap()
+            .build(&device, config.width, config.height, config.format);
+
+        let fps_text_section = Section::default()
+            .add_text(
+                Text::new("Some Text Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum")
+                    .with_scale(30.0)
+                    .with_color([1.0, 1.0, 1.0, 1.0]),
+            )
+            .with_layout(Layout::default().v_align(wgpu_text::glyph_brush::VerticalAlign::Center))
+            .with_screen_position((50.0, config.height as f32 * 0.5))
+            .to_owned();
+
+        dbg!("Help me!");
         Ok(Self {
             window,
 
@@ -343,7 +379,13 @@ impl<'a> State<'a> {
             matrix_uniform,
             matrix_bind_group,
 
-            timer: 0,
+            brush,
+            settings,
+            fps: 0.0,
+            dt_timer: Instant::now(),
+            global_timer: Instant::now(),
+
+            fps_text_section,
 
             input_state,
             game,
@@ -356,17 +398,46 @@ impl<'a> State<'a> {
         if new_size.width > 0 && new_size.height > 0 {
             self.camera
                 .update_aspect_ratio(new_size.width as f32 / new_size.height as f32);
+
+            self.brush
+                .resize_view(new_size.width as f32, new_size.height as f32, &self.queue);
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
+
             self.surface.configure(&self.device, &self.config);
             self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config);
         }
     }
 
     pub fn update(&mut self) {
-        self.timer += 1;
+        // Time between this and the previous frame
+        let delta_time = self.dt_timer.elapsed();
+        // Set the timer to 0
+        self.dt_timer = Instant::now();
+
+        // Game Update
         self.game.update(&self.input_state);
+
+        // FPS Text Update
+        // self.fps_text_section.text[0] = OwnedText::new(
+        //     format!(
+        //         "delta time: {}\nfps: {}",
+        //         delta_time.as_secs_f32(),
+        //         1.0 / delta_time.as_secs_f32()
+        //     )
+        //     .to_string(),
+        // );
+
+        self.window.set_title(
+            format!(
+                "Blockworld Dev [fps: {:.0}]",
+                1.0 / delta_time.as_secs_f32()
+            )
+            .as_str(),
+        );
+
+        // Camera Update
         self.camera.update(&self.game.player_state);
         self.matrix_uniform.update_matrix(&self.camera);
         self.queue.write_buffer(
@@ -378,14 +449,26 @@ impl<'a> State<'a> {
 
     pub fn render(&mut self) -> std::result::Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
+
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
+
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
+
+        // match self
+        //     .brush
+        //     .queue(&self.device, &self.queue, vec![self.fps_text_section])
+        // {
+        //     Ok(_) => (),
+        //     Err(err) => {
+        //         panic!("{err}");
+        //     }
+        // };
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
@@ -419,6 +502,7 @@ impl<'a> State<'a> {
             render_pass.set_bind_group(1, &self.matrix_bind_group, &[]);
 
             render_pass.set_vertex_buffer(0, self.render_chunk.vertex_buffer.slice(..));
+            self.brush.draw(&mut render_pass);
             render_pass.draw(0..self.render_chunk.vertex_count, 0..1);
         }
 
@@ -428,12 +512,12 @@ impl<'a> State<'a> {
         std::result::Result::Ok(())
     }
 
-    pub fn try_exec_single_instr_from_console(&mut self) -> Result<()>{
+    pub fn try_exec_single_instr_from_console(&mut self) -> Result<()> {
         let stdin = std::io::stdin();
         let mut handle = stdin.lock();
         let mut console_string = String::new();
-        handle.read_line(&mut console_string);
-        match_command(console_string, self)?;
+        handle.read_line(&mut console_string)?;
+        exec_instr_from_string(console_string, self)?;
         Ok(())
     }
 }

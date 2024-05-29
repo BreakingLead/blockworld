@@ -1,10 +1,5 @@
-use std::collections::HashMap;
-
 use anyhow::*;
-use glam::*;
 use image::GenericImageView;
-
-use crate::game::block::BlockType;
 
 pub struct Texture {
     pub texture: wgpu::Texture,

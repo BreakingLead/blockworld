@@ -1,14 +1,10 @@
 use super::render_block::*;
-use glam::{vec2, vec3, IVec2};
-use log::info;
+use glam::*;
 use wgpu::{util::DeviceExt, Device};
 
-use crate::{
-    game::{block, chunk::*, register::RegisterTable},
-    io::atlas_helper::AtlasMeta,
-};
+use crate::game::{chunk::*, register::RegisterTable};
 
-use super::{draw::State, render_block::*, vertex::Vertex};
+use super::vertex::Vertex;
 
 #[derive(Debug)]
 pub struct RenderChunk {
@@ -19,9 +15,9 @@ pub struct RenderChunk {
 impl RenderChunk {
     pub fn new(device: &Device, chunk: &Chunk, register_table: &RegisterTable) -> Self {
         let mut vertices: Vec<Vertex> = Vec::new();
-        for x in (0..CHUNK_SIZE as i32) {
-            for y in (0..CHUNK_HEIGHT as i32) {
-                for z in (0..CHUNK_SIZE as i32) {
+        for x in 0..CHUNK_SIZE as i32 {
+            for y in 0..CHUNK_HEIGHT as i32 {
+                for z in 0..CHUNK_SIZE as i32 {
                     let (abs_x, abs_z) = (
                         (chunk.x_pos * CHUNK_SIZE as i32 + x as i32) as f32,
                         (chunk.z_pos * CHUNK_SIZE as i32 + z as i32) as f32,

@@ -1,5 +1,7 @@
+use anyhow::*;
 use clap::Parser;
 
+mod debug;
 mod game;
 mod io;
 mod render;
@@ -8,13 +10,14 @@ mod render;
 #[command(author, version, about)]
 pub struct BootArgs {
     #[arg(long, default_value = "600")]
-    height : u32,
+    height: u32,
     #[arg(long, default_value = "800")]
-    width : u32,
+    width: u32,
     #[arg(long, default_value = "false")]
-    full_screen : bool
+    full_screen: bool,
 }
 
-fn main() {
-    pollster::block_on(render::window_init::run());
+fn main() -> Result<()> {
+    pollster::block_on(render::window_init::run())?;
+    Ok(())
 }

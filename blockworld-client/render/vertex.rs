@@ -1,5 +1,3 @@
-use glam::Vec3;
-
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Zeroable, bytemuck::Pod)]
 pub struct Vertex {

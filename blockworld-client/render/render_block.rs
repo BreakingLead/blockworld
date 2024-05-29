@@ -1,4 +1,4 @@
-use glam::{vec3, Vec2, Vec3};
+use glam::*;
 
 use crate::io::atlas_helper::AtlasCoordinate;
 
@@ -114,7 +114,7 @@ pub fn push_face_mesh(
 ) {
     // Center coord
 
-    let mut c = coord;
+    let c = coord;
 
     let mut n = direction.get_four_vtx();
     n.iter_mut().for_each(|x| *x = *x + c);

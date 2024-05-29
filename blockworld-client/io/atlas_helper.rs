@@ -9,8 +9,8 @@ pub struct AtlasCoordinate {
 
 impl AtlasCoordinate {
     pub fn new(aa: Vec2, bb: Vec2) -> Self {
-        aa.clamp(vec2(0., 0.), vec2(1., 1.));
-        bb.clamp(vec2(0., 0.), vec2(1., 1.));
+        let aa = aa.clamp(vec2(0., 0.), vec2(1., 1.));
+        let bb = bb.clamp(vec2(0., 0.), vec2(1., 1.));
         Self { aa, bb }
     }
 

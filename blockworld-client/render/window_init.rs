@@ -1,14 +1,13 @@
-use crate::render::draw::{self, State};
+use crate::render::draw::State;
 use crate::BootArgs;
-use clap::Parser;
-use log::{debug, info};
 use anyhow::*;
+use clap::Parser;
+use log::*;
 use winit::application::ApplicationHandler;
-use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::{KeyCode, PhysicalKey};
-use winit::window::{Window, WindowButtons, WindowId};
+use winit::keyboard::KeyCode;
+use winit::window::WindowId;
 
 impl<'a> ApplicationHandler for State<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
@@ -35,6 +34,7 @@ impl<'a> ApplicationHandler for State<'a> {
             _ => (),
         }
     }
+    fn user_event(&mut self, event_loop: &ActiveEventLoop, event: ()) {}
 
     fn window_event(
         &mut self,
@@ -48,8 +48,12 @@ impl<'a> ApplicationHandler for State<'a> {
             }
             WindowEvent::RedrawRequested => {
                 self.update();
-                self.render();
-                self.try_exec_single_instr_from_console();
+                self.render().expect("Render Error!");
+                // self.try_exec_single_instr_from_console().inspect_err(
+                //     |e| {
+                //         error!("err when try_exec_single_instr_from_console {e:?}")
+                //     }
+                // );
                 self.window.request_redraw();
             }
             WindowEvent::Resized(size) => {
@@ -66,7 +70,7 @@ impl<'a> ApplicationHandler for State<'a> {
     }
 }
 
-pub async fn run() -> Result<()>{
+pub async fn run() -> Result<()> {
     env_logger::init();
     let boot_args = BootArgs::parse();
 
@@ -75,7 +79,9 @@ pub async fn run() -> Result<()>{
 
     let mut state = State::new(&event_loop, &boot_args).await?;
 
-    event_loop.run_app(&mut state).with_context(|| format!("Failed to run app"))?;
+    event_loop
+        .run_app(&mut state)
+        .with_context(|| format!("Failed to run app"))?;
 
     Ok(())
 }
