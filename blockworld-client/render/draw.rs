@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, fmt::format};
+use std::{f32::consts::PI, fmt::format, io::BufRead};
 
 use anyhow::*;
 use glam::{vec2, vec3};
@@ -10,11 +10,7 @@ use winit::{
 
 use crate::{
     game::{
-        block::{BlockMeta, BlockType, ResourceLocation},
-        chunk::Chunk,
-        player_state::PlayerState,
-        register::RegisterTable,
-        Game,
+        block::{BlockMeta, BlockType, ResourceLocation}, chunk::Chunk, console_instr::match_command, player_state::PlayerState, register::RegisterTable, Game
     },
     io::{atlas_helper::AtlasMeta, input_helper::InputState},
     render::{
@@ -430,5 +426,14 @@ impl<'a> State<'a> {
         output.present();
 
         std::result::Result::Ok(())
+    }
+
+    pub fn try_exec_single_instr_from_console(&mut self) -> Result<()>{
+        let stdin = std::io::stdin();
+        let mut handle = stdin.lock();
+        let mut console_string = String::new();
+        handle.read_line(&mut console_string);
+        match_command(console_string, self)?;
+        Ok(())
     }
 }

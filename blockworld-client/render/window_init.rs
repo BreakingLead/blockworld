@@ -49,6 +49,7 @@ impl<'a> ApplicationHandler for State<'a> {
             WindowEvent::RedrawRequested => {
                 self.update();
                 self.render();
+                self.try_exec_single_instr_from_console();
                 self.window.request_redraw();
             }
             WindowEvent::Resized(size) => {
