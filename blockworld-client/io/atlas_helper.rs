@@ -47,7 +47,6 @@ impl AtlasMeta {
                     ((y + 1) as f32 * self.tile_h as f32) / self.image_h as f32,
                 ),
             ));
-            dbg!(&r);
             r
         }
     }

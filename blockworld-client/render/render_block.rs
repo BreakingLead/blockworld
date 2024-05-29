@@ -48,6 +48,18 @@ pub const ZN: AxisDirection = AxisDirection {
     sign: Sign::Neg,
 };
 
+/// Bitflag for face cull
+/// should render "0" faces,
+/// and skip "1" faces,
+pub type AxisDirectionBinary = u32;
+
+pub const XP_B: u32 = 0b000001;
+pub const YP_B: u32 = 0b000010;
+pub const ZP_B: u32 = 0b000100;
+pub const XN_B: u32 = 0b001000;
+pub const YN_B: u32 = 0b010000;
+pub const ZN_B: u32 = 0b100000;
+
 impl AxisDirection {
     /// Generate direction vector.
     fn direction_vec(&self) -> Vec3 {
