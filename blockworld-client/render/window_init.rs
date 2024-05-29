@@ -1,5 +1,8 @@
 use crate::render::draw::{self, State};
-use log::info;
+use crate::BootArgs;
+use clap::Parser;
+use anyhow::{Context, Result};
+use log::{debug, info};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, WindowEvent};
@@ -62,13 +65,15 @@ impl<'a> ApplicationHandler for State<'a> {
     }
 }
 
-pub async fn run() {
+pub async fn run() -> Result<()>{
     env_logger::init();
+    let boot_args = BootArgs::parse();
 
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut state = State::new(&event_loop).await;
+    let mut state = State::new(&event_loop, &boot_args).await;
 
-    event_loop.run_app(&mut state).expect("Failed to run app.");
+    event_loop.run_app(&mut state).with_context(|| format!("Failed to run app"))?;
+    Ok(())
 }

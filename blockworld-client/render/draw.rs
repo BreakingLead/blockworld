@@ -4,12 +4,7 @@ use glam::{vec2, vec3};
 use log::{debug, info};
 use wgpu::{include_wgsl, util::DeviceExt};
 use winit::{
-    application::ApplicationHandler,
-    event::{DeviceEvent, KeyEvent, WindowEvent},
-    event_loop::{ActiveEventLoop, EventLoop},
-    keyboard::{Key, KeyCode, NamedKey, PhysicalKey},
-    platform::modifier_supplement::KeyEventExtModifierSupplement,
-    window::Window,
+    application::ApplicationHandler, dpi::PhysicalSize, event::{DeviceEvent, KeyEvent, WindowEvent}, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{Key, KeyCode, NamedKey, PhysicalKey}, platform::modifier_supplement::KeyEventExtModifierSupplement, window::{self, Fullscreen, Window, WindowAttributes}
 };
 
 use crate::{
@@ -25,7 +20,7 @@ use crate::{
         camera::{Camera, MatrixUniform},
         texture,
         vertex::Vertex,
-    },
+    }, BootArgs,
 };
 
 use super::render_chunk::RenderChunk;
@@ -63,12 +58,21 @@ pub struct State<'a> {
 }
 
 impl<'a> State<'a> {
-    pub async fn new(event_loop: &EventLoop<()>) -> State<'a> {
+    pub async fn new(event_loop: &EventLoop<()>, boot_args:&BootArgs) -> State<'a> {
         // /-------------------../assets/atlas.png
         // Create the window
+        let mut window_attrs = Window::default_attributes()
+                .with_title("Blockworld Indev");
+        // set screen size based on boot_args 
+        if boot_args.full_screen{
+            window_attrs = window_attrs.with_fullscreen(Some(Fullscreen::Borderless(None)));
+        }else{
+            window_attrs = window_attrs.with_inner_size(PhysicalSize::new(boot_args.width,boot_args.height))
+        }
         let window = event_loop
-            .create_window(Window::default_attributes().with_title("Blockworld Indev"))
+            .create_window(window_attrs)
             .unwrap();
+
         window.set_cursor_grab(winit::window::CursorGrabMode::Confined);
         window.set_cursor_visible(false);
 
