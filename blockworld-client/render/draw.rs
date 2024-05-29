@@ -5,19 +5,31 @@ use glam::{vec2, vec3};
 use log::{debug, info};
 use wgpu::{include_wgsl, util::DeviceExt};
 use winit::{
-    application::ApplicationHandler, dpi::PhysicalSize, event::{DeviceEvent, KeyEvent, WindowEvent}, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{Key, KeyCode, NamedKey, PhysicalKey}, platform::modifier_supplement::KeyEventExtModifierSupplement, window::{self, Fullscreen, Window, WindowAttributes}
+    application::ApplicationHandler,
+    dpi::PhysicalSize,
+    event::{DeviceEvent, KeyEvent, WindowEvent},
+    event_loop::{ActiveEventLoop, EventLoop},
+    keyboard::{Key, KeyCode, NamedKey, PhysicalKey},
+    platform::modifier_supplement::KeyEventExtModifierSupplement,
+    window::{self, Fullscreen, Window, WindowAttributes},
 };
 
 use crate::{
     game::{
-        block::{BlockMeta, BlockType, ResourceLocation}, chunk::Chunk, console_instr::match_command, player_state::PlayerState, register::RegisterTable, Game
+        block::{BlockMeta, BlockType, ResourceLocation},
+        chunk::Chunk,
+        console_instr::match_command,
+        player_state::PlayerState,
+        register::RegisterTable,
+        Game,
     },
     io::{atlas_helper::AtlasMeta, input_helper::InputState},
     render::{
         camera::{Camera, MatrixUniform},
         texture,
         vertex::Vertex,
-    }, BootArgs,
+    },
+    BootArgs,
 };
 
 use super::render_chunk::RenderChunk;
@@ -60,19 +72,18 @@ pub struct State<'a> {
 }
 
 impl<'a> State<'a> {
-    pub async fn new(event_loop: &EventLoop<()>, boot_args:&BootArgs) -> Result<State<'a>> {
+    pub async fn new(event_loop: &EventLoop<()>, boot_args: &BootArgs) -> Result<State<'a>> {
         // /-------------------../assets/atlas.png
         // Create the window
-        let mut window_attrs = Window::default_attributes()
-                .with_title("Blockworld Indev");
-        // set screen size based on boot_args 
-        if boot_args.full_screen{
+        let mut window_attrs = Window::default_attributes().with_title("Blockworld Indev");
+        // set screen size based on boot_args
+        if boot_args.full_screen {
             window_attrs = window_attrs.with_fullscreen(Some(Fullscreen::Borderless(None)));
-        }else{
-            window_attrs = window_attrs.with_inner_size(PhysicalSize::new(boot_args.width,boot_args.height))
+        } else {
+            window_attrs =
+                window_attrs.with_inner_size(PhysicalSize::new(boot_args.width, boot_args.height))
         }
-        let window = event_loop
-            .create_window(window_attrs)?;
+        let window = event_loop.create_window(window_attrs)?;
         window.set_cursor_grab(winit::window::CursorGrabMode::Confined);
         window.set_cursor_visible(false);
 
@@ -91,10 +102,7 @@ impl<'a> State<'a> {
 
         // /-------------------
         // Generate & Configure the surface
-        let surface = unsafe {
-            instance
-                .create_surface(&*(&window as *const Window))?
-        };
+        let surface = unsafe { instance.create_surface(&*(&window as *const Window))? };
 
         // Adapter is used to create device and queue.
         let adapter = instance
@@ -103,7 +111,8 @@ impl<'a> State<'a> {
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
-            .await.with_context(|| format!("adapter created error for problem with wgpu"))?;            
+            .await
+            .with_context(|| format!("adapter created error for problem with wgpu"))?;
 
         // Device is the abstraction of the GPU. Queue is the command queue to send to GPU.
         let (device, queue) = adapter
@@ -116,7 +125,6 @@ impl<'a> State<'a> {
                 None,
             )
             .await?;
-            
 
         let surface_caps = surface.get_capabilities(&adapter);
         let surface_format = surface_caps
@@ -187,7 +195,6 @@ impl<'a> State<'a> {
             include_bytes!("../assets/atlas.png"),
             "Block Texture",
         )?;
-        
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -288,9 +295,9 @@ impl<'a> State<'a> {
         // | Game Initialize |
         // -------------------
 
-        let (image_w, image_h) = image::io::Reader::open("../assets/atlas.png")?
-            .into_dimensions()?;
-            
+        let (image_w, image_h) =
+            image::io::Reader::open("../assets/atlas.png")?.into_dimensions()?;
+
         let atlas_meta = AtlasMeta {
             tile_w: 16,
             tile_h: 16,
@@ -428,7 +435,7 @@ impl<'a> State<'a> {
         std::result::Result::Ok(())
     }
 
-    pub fn try_exec_single_instr_from_console(&mut self) -> Result<()>{
+    pub fn try_exec_single_instr_from_console(&mut self) -> Result<()> {
         let stdin = std::io::stdin();
         let mut handle = stdin.lock();
         let mut console_string = String::new();

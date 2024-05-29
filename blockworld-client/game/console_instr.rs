@@ -9,18 +9,18 @@ pub struct ConsoleInstr {
     pub dialogue_id: Option<u64>,
 }
 
-impl ConsoleInstr{
+impl ConsoleInstr {
     // create console instr object from string
     pub fn new(console_string: String) -> Option<ConsoleInstr> {
         let input = console_string.trim().to_string();
-        let parts: Vec<String> = input.split(':').map(|s|s.to_string()).collect();
+        let parts: Vec<String> = input.split(':').map(|s| s.to_string()).collect();
         if parts.len() != 2 {
             return None;
         }
         let command = &parts[0];
-        if command.len() ==0{
+        if command.len() == 0 {
             println!("message has no command");
-            return None
+            return None;
         }
 
         let args_str = &parts[1];
@@ -28,15 +28,24 @@ impl ConsoleInstr{
             return None;
         }
         let args_clean = &args_str[1..args_str.len() - 1];
-        let args: Vec<String> = args_clean.split(',').map(|s|s.to_string()).collect();
+        let args: Vec<String> = args_clean.split(',').map(|s| s.to_string()).collect();
 
-        let dialogue_id:Option<u64>= if input.ends_with("]"){
+        let dialogue_id: Option<u64> = if input.ends_with("]") {
             let rev_chs = input.chars().rev();
             // 这是个左闭右开区间
-            let event_id_start_index = input.len()-1;
-            let event_id_end_index = rev_chs.enumerate().find(|(index,ch)| *ch=='[').unwrap().0 +1;
-            Some(input[event_id_start_index..event_id_end_index].parse::<u64>().unwrap())
-        }else{
+            let event_id_start_index = input.len() - 1;
+            let event_id_end_index = rev_chs
+                .enumerate()
+                .find(|(index, ch)| *ch == '[')
+                .unwrap()
+                .0
+                + 1;
+            Some(
+                input[event_id_start_index..event_id_end_index]
+                    .parse::<u64>()
+                    .unwrap(),
+            )
+        } else {
             None
         };
         Some(ConsoleInstr {
@@ -66,14 +75,18 @@ macro_rules! _match_command{
         }
     } ;
 }
-pub fn log(state:&mut State, s:&String){
-    println!("{}",s);
+pub fn log(state: &mut State, s: &String) {
+    println!("{}", s);
 }
-pub fn match_command(console_string:String, state:&mut State) -> Result<()>{
-    let console_instr = ConsoleInstr::new(console_string.clone())
-        .with_context(|| format!("can't recognize this string as console_string for format err:{}",console_string))?;
+pub fn match_command(console_string: String, state: &mut State) -> Result<()> {
+    let console_instr = ConsoleInstr::new(console_string.clone()).with_context(|| {
+        format!(
+            "can't recognize this string as console_string for format err:{}",
+            console_string
+        )
+    })?;
     _match_command!(
-        command log with_args (s:String) debug true 
+        command log with_args (s:String) debug true
         in console_instr
         with_context state
     );
