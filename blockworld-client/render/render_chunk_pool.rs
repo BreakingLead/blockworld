@@ -1,15 +1,13 @@
 use crate::game::chunk::Chunk;
 
-pub struct RenderChunkPool {
-    chunks: Vec<Chunk>,
-}
+pub struct RenderChunkPool {}
 
 impl RenderChunkPool {
     fn new() -> Self {
-        Self { chunks: vec![] }
+        todo!()
     }
 
     fn add(&mut self, chunk: Chunk) {
-        self.chunks.push(chunk);
+        todo!()
     }
 }

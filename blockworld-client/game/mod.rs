@@ -4,9 +4,10 @@ use self::player_state::PlayerState;
 
 pub mod block;
 pub mod chunk;
+pub mod console_instr;
 pub mod player_state;
 pub mod register;
-pub mod console_instr;
+pub mod save;
 
 #[derive(Default)]
 pub struct Game {
