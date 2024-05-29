@@ -27,6 +27,7 @@ use crate::{
 use super::render_chunk::RenderChunk;
 use crate::io::atlas_helper::AtlasCoordinate;
 
+/// state contains all things the game needs
 pub struct State<'a> {
     pub window: Window,
 
@@ -46,6 +47,8 @@ pub struct State<'a> {
 
     pub camera: Camera,
     pub matrix_uniform: MatrixUniform,
+
+    /// matrix_buffer represents a gpu buffer
     pub matrix_buffer: wgpu::Buffer,
     pub matrix_bind_group: wgpu::BindGroup,
 
@@ -55,6 +58,8 @@ pub struct State<'a> {
 
     pub register_table: RegisterTable,
 
+    /// Q: function as frame counter ? How about rename it to frame_counter ?  
+    /// Do this means that if I have high framerate I can move faster? Or briefly, do move speed(m/s) binds with framerate?
     pub timer: u64,
 }
 
