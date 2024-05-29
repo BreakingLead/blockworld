@@ -10,6 +10,21 @@ We won't give up this project but the maintainer is busy recently.
 TL;DR:
 Blockworld is a modern **minecraft(java ver) client&server implementation** which has better performance, and minecraft modders can easily port their mods into this minecraft implementation.
 
+## Todo List (2024-05-29):
+- Graphics
+  * [ ] Antialias
+  * [ ] Ambient Occlusion
+  * [ ] Mipmap
+  * [ ] Shader
+- Engine
+  * [ ] ECS Engine
+  * [ ] Command Parser
+  * [ ] Script Language
+  * [ ] Atlas Generator
+  * [ ] GUI System
+  * [ ] Save File (De)serialization
+  * [ ] Map Generation
+
 ## What does Blockworld do
 - Provide better minecraft experience for players.
 - Modular design, which means you can use Blockworld as a voxel game engine. Official updates will be provide like a mod (1.20 mod etc.)
