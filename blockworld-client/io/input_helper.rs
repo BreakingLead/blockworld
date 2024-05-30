@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use winit::{
     event::{ElementState, KeyEvent},
-    keyboard::Key,
+    keyboard::{Key, NamedKey},
 };
 
 /// Tracker for the pressing keys
@@ -16,7 +16,7 @@ impl InputState {
         self.pressing_keys.contains(&key)
     }
 
-    pub fn handle_event(&mut self, event: &KeyEvent) {
+    pub fn handle_event<'a>(&mut self, event: &'a KeyEvent) {
         let key = &event.logical_key;
         match event.state {
             ElementState::Pressed => {
