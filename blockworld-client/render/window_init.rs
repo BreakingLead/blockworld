@@ -36,6 +36,7 @@ impl<'a> ApplicationHandler for State<'a> {
             _ => (),
         }
     }
+    fn user_event(&mut self, event_loop: &ActiveEventLoop, event: ()) {}
 
     fn window_event(
         &mut self,

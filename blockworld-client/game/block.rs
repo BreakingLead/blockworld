@@ -1,7 +1,3 @@
-use std::{borrow::Cow, default};
-
-use glam::Vec3;
-
 use crate::io::atlas_helper::AtlasCoordinate;
 
 #[derive(Default, Clone, PartialEq, Eq, Hash)]

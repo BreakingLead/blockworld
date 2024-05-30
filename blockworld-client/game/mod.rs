@@ -8,6 +8,7 @@ pub mod console_instr;
 pub mod player_state;
 pub mod register;
 pub mod save;
+pub mod settings;
 
 #[derive(Default)]
 pub struct Game {

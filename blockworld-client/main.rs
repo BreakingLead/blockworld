@@ -1,5 +1,6 @@
 use clap::Parser;
 
+mod debug;
 mod game;
 mod io;
 mod render;

@@ -1,8 +1,8 @@
-use glam::{ivec2, ivec3, vec3, IVec2};
+use glam::*;
 
 use crate::render::render_block::*;
 
-use super::block::{Block, BlockType, ResourceLocation};
+use super::block::Block;
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_HEIGHT: usize = 256;
