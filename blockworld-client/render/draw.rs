@@ -18,7 +18,7 @@ use crate::{
     game::{
         block::{BlockMeta, BlockType, ResourceLocation},
         chunk::Chunk,
-        console_instr::match_command,
+        console_instr::exec_instr_from_string,
         player_state::PlayerState,
         register::RegisterTable,
         Game,
@@ -440,7 +440,7 @@ impl<'a> State<'a> {
         let mut handle = stdin.lock();
         let mut console_string = String::new();
         handle.read_line(&mut console_string);
-        match_command(console_string, self)?;
+        exec_instr_from_string(console_string, self)?;
         Ok(())
     }
 }

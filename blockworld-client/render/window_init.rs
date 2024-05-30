@@ -3,6 +3,7 @@ use crate::BootArgs;
 use anyhow::*;
 use clap::Parser;
 use log::{debug, info};
+use anyhow::*;
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, WindowEvent};
@@ -49,7 +50,11 @@ impl<'a> ApplicationHandler for State<'a> {
             WindowEvent::RedrawRequested => {
                 self.update();
                 self.render();
-                self.try_exec_single_instr_from_console();
+                // self.try_exec_single_instr_from_console().inspect_err(
+                //     |e| {
+                //         error!("err when try_exec_single_instr_from_console {e:?}")
+                //     }
+                // );
                 self.window.request_redraw();
             }
             WindowEvent::Resized(size) => {

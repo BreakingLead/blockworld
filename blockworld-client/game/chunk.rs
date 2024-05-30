@@ -6,6 +6,7 @@ use super::block::{Block, BlockType, ResourceLocation};
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_HEIGHT: usize = 256;
+pub const CHUNK_BLOCK_NUM: usize = CHUNK_SIZE*CHUNK_SIZE*CHUNK_HEIGHT;
 
 pub struct Chunk {
     pub blocks: Box<[Block; CHUNK_HEIGHT * CHUNK_SIZE * CHUNK_SIZE]>,
@@ -91,7 +92,7 @@ impl Default for Chunk {
     // JUST FOR TEST
     // REMEMBER TO DELETE THOSE CODE
     fn default() -> Self {
-        let mut blocks = Box::new([Block::default(); 65536]);
+        let mut blocks = Box::new([Block::default(); CHUNK_BLOCK_NUM]);
         for x in (0..CHUNK_SIZE as i32) {
             for y in (0..3) {
                 for z in (0..CHUNK_SIZE as i32) {
