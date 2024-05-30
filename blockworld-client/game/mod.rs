@@ -4,13 +4,14 @@ use self::player_state::PlayerState;
 
 pub mod block;
 pub mod chunk;
+pub mod chunk_array;
 pub mod console_instr;
 pub mod player_state;
 pub mod register;
 pub mod save;
 pub mod settings;
 
-#[derive(Default,Debug)]
+#[derive(Default, Debug)]
 pub struct Game {
     pub player_state: PlayerState,
 }
