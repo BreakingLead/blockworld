@@ -1,9 +1,9 @@
 use crate::render::draw::{self, State};
 use crate::BootArgs;
 use anyhow::*;
+use anyhow::*;
 use clap::Parser;
 use log::{debug, info};
-use anyhow::*;
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, WindowEvent};

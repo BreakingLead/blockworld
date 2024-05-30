@@ -11,15 +11,17 @@ pub struct ConsoleInstr {
 
 impl ConsoleInstr {
     /// create console instr object from string
-    /// such as 
-    /// log:(hello_world)  
+    /// such as
+    /// `log:(hello_world)`
     /// or with dialogue_id
-    /// log:(hello_world)[3241]
+    /// `log:(hello_world)[3241]`
     pub fn new(console_string: &String) -> Result<ConsoleInstr> {
         let input = console_string.trim().to_string();
         let parts: Vec<String> = input.split(':').map(|s| s.to_string()).collect();
         if parts.len() != 2 {
-            return Err(anyhow!("instr should contain 2 parts (instr_name & instr_args) split by \":\" "))
+            return Err(anyhow!(
+                "instr should contain 2 parts (instr_name & instr_args) split by \":\" "
+            ));
         }
         let command = &parts[0];
         if command.len() == 0 {
@@ -34,7 +36,7 @@ impl ConsoleInstr {
         let args: Vec<String> = args_clean.split(',').map(|s| s.to_string()).collect();
 
         /// dialogue_id is used to distinguish the corresponding relation of request & reponse
-        /// It can be None if you are sure that 
+        /// It can be None if you are sure that
         let dialogue_id: Option<u64> = if input.ends_with("]") {
             let rev_chs = input.chars().rev();
             // 这是个左闭右开区间
@@ -48,7 +50,7 @@ impl ConsoleInstr {
             Some(
                 input[event_id_start_index..event_id_end_index]
                     .parse::<u64>()
-                    .with_context(|| format!("failed to parse event_id"))?
+                    .with_context(|| format!("failed to parse event_id"))?,
             )
         } else {
             None
@@ -83,12 +85,16 @@ macro_rules! match_command{
 pub fn log(state: &mut State, s: &String) {
     println!("{}", s);
 }
-pub fn exec_instr_from_string(console_string:String, state:&mut State) -> Result<()>{
-    let console_instr = ConsoleInstr::new(&console_string)
-        .with_context(|| format!("can't recognize this string as console_string for format err:{}",console_string))?;
+pub fn exec_instr_from_string(console_string: String, state: &mut State) -> Result<()> {
+    let console_instr = ConsoleInstr::new(&console_string).with_context(|| {
+        format!(
+            "can't recognize this string as console_string for format err:{}",
+            console_string
+        )
+    })?;
 
     match_command!(
-        command log with_args (s:String) debug true 
+        command log with_args (s:String) debug true
         in console_instr
         with_context state
     );

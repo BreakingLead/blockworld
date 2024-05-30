@@ -6,7 +6,7 @@ use super::block::{Block, BlockType, ResourceLocation};
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_HEIGHT: usize = 256;
-pub const CHUNK_BLOCK_NUM: usize = CHUNK_SIZE*CHUNK_SIZE*CHUNK_HEIGHT;
+pub const CHUNK_BLOCK_NUM: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT;
 
 pub struct Chunk {
     pub blocks: Box<[Block; CHUNK_HEIGHT * CHUNK_SIZE * CHUNK_SIZE]>,
