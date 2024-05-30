@@ -7,7 +7,7 @@ use anyhow::*;
 use glam::*;
 use wgpu::{include_wgsl, util::DeviceExt};
 use wgpu_text::{
-    glyph_brush::{ab_glyph::FontRef, Layout, OwnedSection, Section, Text},
+    glyph_brush::{ab_glyph::FontRef, Layout, OwnedSection, OwnedText, Section, Text},
     TextBrush,
 };
 use winit::{
@@ -319,13 +319,20 @@ impl<'a> State<'a> {
 
         let brush = wgpu_text::BrushBuilder::using_font_bytes(settings.font)
             .unwrap()
+            .with_depth_stencil(Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: false,
+                depth_compare: wgpu::CompareFunction::LessEqual,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }))
             .build(&device, config.width, config.height, config.format);
 
         let fps_text_section = Section::default()
             .add_text(
-                Text::new("Some Text Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum")
-                    .with_scale(30.0)
-                    .with_color([1.0, 1.0, 1.0, 1.0]),
+                Text::new("Hello World Test AAAAAAAAAAAAA")
+                    .with_color([1.0, 1.0, 1.0, 1.0])
+                    .with_scale(25.0),
             )
             .with_layout(Layout::default().v_align(wgpu_text::glyph_brush::VerticalAlign::Center))
             .with_screen_position((50.0, config.height as f32 * 0.5))
@@ -396,14 +403,17 @@ impl<'a> State<'a> {
         self.game.update(&self.input_state);
 
         // FPS Text Update
-        // self.fps_text_section.text[0] = OwnedText::new(
-        //     format!(
-        //         "delta time: {}\nfps: {}",
-        //         delta_time.as_secs_f32(),
-        //         1.0 / delta_time.as_secs_f32()
-        //     )
-        //     .to_string(),
-        // );
+        self.fps_text_section.text[0] = OwnedText::new(
+            format!(
+                "delta time: {}\nfps: {}",
+                delta_time.as_secs_f32(),
+                1.0 / delta_time.as_secs_f32()
+            )
+            .to_string(),
+        )
+        .with_z(0.0)
+        .with_scale(25.0)
+        .with_color([0.0, 0.0, 0.0, 1.0]);
 
         self.window.set_title(
             format!(
@@ -437,9 +447,9 @@ impl<'a> State<'a> {
                 label: Some("Blockworld Render Encoder"),
             });
 
-        // self.brush
-        //     .queue(&self.device, &self.queue, vec![&self.fps_text_section])
-        //     .unwrap();
+        self.brush
+            .queue(&self.device, &self.queue, vec![&self.fps_text_section])
+            .unwrap();
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Blockworld Render Pass"),
