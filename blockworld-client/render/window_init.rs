@@ -4,9 +4,9 @@ use anyhow::*;
 use clap::Parser;
 use log::*;
 use winit::application::ApplicationHandler;
-use winit::event::{DeviceEvent, WindowEvent};
+use winit::event::{DeviceEvent, ElementState, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::KeyCode;
+use winit::keyboard::{Key, KeyCode, NamedKey};
 use winit::window::WindowId;
 
 impl<'a> ApplicationHandler for State<'a> {
@@ -49,6 +49,7 @@ impl<'a> ApplicationHandler for State<'a> {
             WindowEvent::RedrawRequested => {
                 self.update();
                 self.render().expect("Render Error!");
+                // use inspect_err to avoid panic so that we can input instruction to display state to debug
                 // self.try_exec_single_instr_from_console().inspect_err(
                 //     |e| {
                 //         error!("err when try_exec_single_instr_from_console {e:?}")
@@ -64,6 +65,13 @@ impl<'a> ApplicationHandler for State<'a> {
                     event_loop.exit();
                 }
                 self.input_state.handle_event(&event);
+                let key = event.logical_key;
+
+                // ! NOT IDEAL
+                // ! FIX LATER
+                if key == Key::Named(NamedKey::F1) && event.state == ElementState::Released {
+                    self.debug_mode = !self.debug_mode;
+                }
             }
             _ => (),
         }

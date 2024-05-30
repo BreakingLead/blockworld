@@ -70,7 +70,7 @@ macro_rules! match_command{
                 let mut count = 0;
                 match ($({count+=1;&args[count-1].parse::<$arg_n_type>()}),*){
                     $(std::result::Result::Ok($arg_n)),* =>{
-                        $command_name($ctx, $($arg_n),*);
+                        $command_name($ctx, $($arg_n),*).await?;
                         if $is_debug {
                             println!("successfullly run \x1B[32m {} \x1B[0m with args \x1B[32m{:?}\x1B[0m",command,args);
                         }
@@ -82,10 +82,15 @@ macro_rules! match_command{
         }
     } ;
 }
-pub fn log(state: &mut State, s: &String) {
+pub async fn log(state: &mut State<'_>, s: &String) -> Result<()>{
     println!("{}", s);
+    Ok(())
 }
-pub fn exec_instr_from_string(console_string: String, state: &mut State) -> Result<()> {
+pub async fn state_dbg(state: &mut State<'_>) -> Result<()>{
+    println!("state:{:?}",state);
+    Ok(())
+}
+pub async fn exec_instr_from_string(console_string: String, state: &mut State<'_>) -> Result<()> {
     let console_instr = ConsoleInstr::new(&console_string).with_context(|| {
         format!(
             "can't recognize this string as console_string for format err:{}",

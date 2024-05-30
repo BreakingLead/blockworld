@@ -1,6 +1,6 @@
 use crate::io::atlas_helper::AtlasCoordinate;
 
-#[derive(Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResourceLocation {
     namespace: String,
     value: String,
@@ -23,12 +23,13 @@ impl ResourceLocation {
 }
 
 pub type BlockID = u32;
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Block {
     pub id: BlockID,
 }
 
 /// Metadata for query from id
+#[derive(Debug)]
 pub struct BlockMeta {
     pub name: ResourceLocation,
     pub ty: BlockType,

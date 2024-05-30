@@ -4,7 +4,7 @@ use crate::io::input_helper::InputState;
 
 // Best not to pub here
 // I'd like to change it later
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct PlayerState {
     pub forward: bool,
     pub backward: bool,

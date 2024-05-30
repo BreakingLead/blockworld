@@ -10,7 +10,7 @@ pub mod register;
 pub mod save;
 pub mod settings;
 
-#[derive(Default)]
+#[derive(Default,Debug)]
 pub struct Game {
     pub player_state: PlayerState,
 }

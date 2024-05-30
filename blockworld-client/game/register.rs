@@ -6,6 +6,7 @@ use block::{BlockID, BlockMeta};
 
 use super::block;
 
+#[derive(Debug)]
 pub struct RegisterTable {
     table_block: HashMap<BlockID, BlockMeta>,
 }

@@ -1,4 +1,7 @@
+use std::thread::Thread;
 use std::{io::BufRead, time::Instant};
+use std::fmt::Debug;
+use tokio::runtime::Runtime;
 
 use anyhow::*;
 use glam::*;
@@ -32,7 +35,10 @@ use crate::{
     BootArgs,
 };
 
-use super::render_chunk::RenderChunk;
+use super::{
+    pipeline::{RegularPipeline, WireframePipeline},
+    render_chunk::RenderChunk,
+};
 
 /// state contains all things the game needs
 pub struct State<'a> {
@@ -43,7 +49,8 @@ pub struct State<'a> {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    pub render_pipeline: wgpu::RenderPipeline,
+    pub main_pipeline: RegularPipeline,
+    pub wireframe_pipeline: WireframePipeline,
 
     pub render_chunk: RenderChunk,
 
@@ -76,6 +83,9 @@ pub struct State<'a> {
     pub settings: Settings<'a>,
 
     pub register_table: RegisterTable,
+
+    // Debug
+    pub debug_mode: bool,
 }
 
 impl<'a> State<'a> {
@@ -126,7 +136,7 @@ impl<'a> State<'a> {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    required_features: wgpu::Features::empty(),
+                    required_features: wgpu::Features::POLYGON_MODE_LINE,
                     required_limits: wgpu::Limits::default(),
                 },
                 None,
@@ -190,7 +200,7 @@ impl<'a> State<'a> {
                 binding: 30,
                 resource: matrix_buffer.as_entire_binding(),
             }],
-            label: Some("camera_bind_group"),
+            label: Some("Blockworld Prespective Matrix Bind Group"),
         });
         // \-------------------
 
@@ -247,58 +257,23 @@ impl<'a> State<'a> {
         // \-------------------
 
         let shader = device.create_shader_module(include_wgsl!("shaders/default_shader.wgsl"));
+        let wireframe_shader =
+            device.create_shader_module(include_wgsl!("shaders/debug_shader.wgsl"));
 
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&texture_bind_group_layout, &matrix_bind_group_layout],
-                push_constant_ranges: &[],
-            });
+        let main_pipeline = RegularPipeline::new(
+            &device,
+            &[&texture_bind_group_layout, &matrix_bind_group_layout],
+            &shader,
+            &config,
+        );
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[Vertex::desc()],
-                compilation_options: Default::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: Default::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                unclipped_depth: false,
-                polygon_mode: wgpu::PolygonMode::Fill,
-                conservative: false,
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
-            }),
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-        });
+        let wireframe_pipeline = WireframePipeline::new(
+            &device,
+            &[&texture_bind_group_layout, &matrix_bind_group_layout],
+            &wireframe_shader,
+            &config,
+        );
 
-        dbg!("Help me!");
         // -------------------
         // | Game Initialize |
         // -------------------
@@ -356,7 +331,6 @@ impl<'a> State<'a> {
             .with_screen_position((50.0, config.height as f32 * 0.5))
             .to_owned();
 
-        dbg!("Help me!");
         Ok(Self {
             window,
 
@@ -365,7 +339,8 @@ impl<'a> State<'a> {
             queue,
             config,
             size,
-            render_pipeline,
+            main_pipeline,
+            wireframe_pipeline,
 
             texture,
             texture_bind_group,
@@ -391,6 +366,7 @@ impl<'a> State<'a> {
             game,
 
             register_table,
+            debug_mode: false,
         })
     }
 
@@ -439,6 +415,7 @@ impl<'a> State<'a> {
 
         // Camera Update
         self.camera.update(&self.game.player_state);
+
         self.matrix_uniform.update_matrix(&self.camera);
         self.queue.write_buffer(
             &self.matrix_buffer,
@@ -457,21 +434,15 @@ impl<'a> State<'a> {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
+                label: Some("Blockworld Render Encoder"),
             });
 
-        // match self
-        //     .brush
-        //     .queue(&self.device, &self.queue, vec![self.fps_text_section])
-        // {
-        //     Ok(_) => (),
-        //     Err(err) => {
-        //         panic!("{err}");
-        //     }
-        // };
+        // self.brush
+        //     .queue(&self.device, &self.queue, vec![&self.fps_text_section])
+        //     .unwrap();
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
+                label: Some("Blockworld Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
                     resolve_target: None,
@@ -496,14 +467,22 @@ impl<'a> State<'a> {
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
-            render_pass.set_pipeline(&self.render_pipeline);
+
+            // check debug mode
+            if self.debug_mode {
+                // render with wireframe
+                render_pass.set_pipeline(&self.wireframe_pipeline.pipeline);
+            } else {
+                // render with texture
+                render_pass.set_pipeline(&self.main_pipeline.pipeline);
+            }
 
             render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
             render_pass.set_bind_group(1, &self.matrix_bind_group, &[]);
 
             render_pass.set_vertex_buffer(0, self.render_chunk.vertex_buffer.slice(..));
-            self.brush.draw(&mut render_pass);
             render_pass.draw(0..self.render_chunk.vertex_count, 0..1);
+            self.brush.draw(&mut render_pass);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -512,12 +491,19 @@ impl<'a> State<'a> {
         std::result::Result::Ok(())
     }
 
-    pub fn try_exec_single_instr_from_console(&mut self) -> Result<()> {
+    /// read a line from cmd synchronously. It should't be run on main displaying thread 
+    pub async fn try_exec_single_instr_from_console(&mut self) -> Result<()> {
         let stdin = std::io::stdin();
         let mut handle = stdin.lock();
         let mut console_string = String::new();
         handle.read_line(&mut console_string)?;
-        exec_instr_from_string(console_string, self)?;
+        exec_instr_from_string(console_string, self).await?;
         Ok(())
+    }
+}
+
+impl<'a> Debug for State<'a>{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("State").field("window", &self.window).field("surface", &self.surface).field("device", &self.device).field("queue", &self.queue).field("config", &self.config).field("size", &self.size).field("render_pipeline", &self.render_pipeline).field("render_chunk", &self.render_chunk).field("texture", &self.texture).field("texture_bind_group", &self.texture_bind_group).field("depth_texture", &self.depth_texture).field("camera", &self.camera).field("matrix_uniform", &self.matrix_uniform).field("matrix_buffer", &self.matrix_buffer).field("matrix_bind_group", &self.matrix_bind_group).field("input_state", &self.input_state).field("game", &self.game).field("fps", &self.fps).field("dt_timer", &self.dt_timer).field("global_timer", &self.global_timer).field("fps_text_section", &self.fps_text_section).field("settings", &self.settings).field("register_table", &self.register_table).finish()
     }
 }
