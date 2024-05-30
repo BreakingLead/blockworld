@@ -1,3 +1,4 @@
+use anyhow::*;
 use clap::Parser;
 
 mod debug;
@@ -16,6 +17,7 @@ pub struct BootArgs {
     full_screen: bool,
 }
 
-fn main() {
-    pollster::block_on(render::window_init::run());
+fn main() -> Result<()> {
+    pollster::block_on(render::window_init::run())?;
+    Ok(())
 }

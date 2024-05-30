@@ -35,15 +35,15 @@ impl ConsoleInstr {
         let args_clean = &args_str[1..args_str.len() - 1];
         let args: Vec<String> = args_clean.split(',').map(|s| s.to_string()).collect();
 
-        /// dialogue_id is used to distinguish the corresponding relation of request & reponse
-        /// It can be None if you are sure that
+        // dialogue_id is used to distinguish the corresponding relation of request & reponse
+        // It can be None if you are sure that
         let dialogue_id: Option<u64> = if input.ends_with("]") {
             let rev_chs = input.chars().rev();
             // 这是个左闭右开区间
             let event_id_start_index = input.len() - 1;
             let event_id_end_index = rev_chs
                 .enumerate()
-                .find(|(index, ch)| *ch == '[')
+                .find(|(_, ch)| *ch == '[')
                 .with_context(|| format!("failed to parse event_id"))?
                 .0
                 + 1;
@@ -66,10 +66,10 @@ impl ConsoleInstr {
 macro_rules! match_command{
     ($(command $command_name:ident with_args ($($arg_n:ident:$arg_n_type:ident),*) debug $is_debug:ident)+  in $command_args:ident with_context $ctx:ident) => {
         match $command_args{
-            $(ConsoleInstr{command ,args ,dialogue_id} if &command == stringify!($command_name) =>{
+            $(ConsoleInstr{command ,args ,dialogue_id:_} if &command == stringify!($command_name) =>{
                 let mut count = 0;
                 match ($({count+=1;&args[count-1].parse::<$arg_n_type>()}),*){
-                    ($(std::result::Result::Ok($arg_n)),*) =>{
+                    $(std::result::Result::Ok($arg_n)),* =>{
                         $command_name($ctx, $($arg_n),*);
                         if $is_debug {
                             println!("successfullly run \x1B[32m {} \x1B[0m with args \x1B[32m{:?}\x1B[0m",command,args);

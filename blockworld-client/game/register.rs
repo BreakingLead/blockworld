@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use anyhow::Error;
-use glam::{IVec2, Vec2};
 
 use block::{BlockID, BlockMeta};
 

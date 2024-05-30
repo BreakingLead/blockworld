@@ -1,15 +1,13 @@
-use crate::render::draw::{self, State};
+use crate::render::draw::State;
 use crate::BootArgs;
 use anyhow::*;
-use anyhow::*;
 use clap::Parser;
-use log::{debug, info};
+use log::*;
 use winit::application::ApplicationHandler;
-use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::{KeyCode, PhysicalKey};
-use winit::window::{Window, WindowButtons, WindowId};
+use winit::keyboard::KeyCode;
+use winit::window::WindowId;
 
 impl<'a> ApplicationHandler for State<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
@@ -50,7 +48,7 @@ impl<'a> ApplicationHandler for State<'a> {
             }
             WindowEvent::RedrawRequested => {
                 self.update();
-                self.render();
+                self.render().expect("Render Error!");
                 // self.try_exec_single_instr_from_console().inspect_err(
                 //     |e| {
                 //         error!("err when try_exec_single_instr_from_console {e:?}")

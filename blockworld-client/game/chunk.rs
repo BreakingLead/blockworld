@@ -93,18 +93,18 @@ impl Default for Chunk {
     // REMEMBER TO DELETE THOSE CODE
     fn default() -> Self {
         let mut blocks = Box::new([Block::default(); CHUNK_BLOCK_NUM]);
-        for x in (0..CHUNK_SIZE as i32) {
-            for y in (0..3) {
-                for z in (0..CHUNK_SIZE as i32) {
+        for x in 0..CHUNK_SIZE as i32 {
+            for y in 0..3 {
+                for z in 0..CHUNK_SIZE as i32 {
                     blocks[Chunk::index(x, y, z)] = match y {
                         _ => Block { id: 1 },
                     }
                 }
             }
         }
-        for x in (0..CHUNK_SIZE as i32) {
-            for y in (5..40) {
-                for z in (0..CHUNK_SIZE as i32) {
+        for x in 0..CHUNK_SIZE as i32 {
+            for y in 5..40 {
+                for z in 0..CHUNK_SIZE as i32 {
                     if (vec3(x as f32, y as f32, z as f32) - vec3(7.0, 15.0, 7.0)).length() <= 7.0 {
                         blocks[Chunk::index(x, y, z)] = match y {
                             _ => Block { id: 2 },

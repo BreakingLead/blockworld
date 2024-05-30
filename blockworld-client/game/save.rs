@@ -1,13 +1,13 @@
 //! Save file(Map) manager
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use anyhow::*;
 use glam::{ivec2, IVec2, IVec3};
 
 use crate::game::chunk::CHUNK_SIZE;
 
-use super::{block::Block, chunk::Chunk};
+use super::chunk::Chunk;
 struct ChunkPool {
     chunks: HashMap<IVec2, Chunk>,
 }
@@ -20,9 +20,10 @@ impl ChunkPool {
     }
 
     pub fn load_chunk(x: i32, y: i32) -> Result<()> {
-        todo!()
+        let _ = x;
+        let _ = y;
+        todo!();
     }
-
     pub fn generate_chunk(&mut self, x: i32, z: i32) -> Result<()> {
         if self.chunks.contains_key(&ivec2(x, z)) {
             Err(anyhow::Error::msg("Chunk already generated"))

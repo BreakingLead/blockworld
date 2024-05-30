@@ -1,8 +1,6 @@
-use std::collections::HashSet;
+use winit::keyboard::{Key, NamedKey};
 
-use winit::keyboard::{Key, KeyCode, NamedKey};
-
-use crate::{io::input_helper::InputState, render::draw::State};
+use crate::io::input_helper::InputState;
 
 // Best not to pub here
 // I'd like to change it later
