@@ -9,7 +9,7 @@ pub const CHUNK_HEIGHT: usize = 256;
 pub const CHUNK_BLOCK_NUM: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT;
 
 /// from `net/minecraft/util/math/ChunkPos.java`
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct ChunkPos {
     pub x: i32,
     pub z: i32,
@@ -38,6 +38,30 @@ pub struct Chunk {
 }
 
 impl Chunk {
+    pub fn new(chunk_x: i32, chunk_z: i32) -> Self {
+        let mut blocks = Box::new([Block::default(); CHUNK_BLOCK_NUM]);
+        for x in 0..CHUNK_SIZE as i32 {
+            for y in 0..3 {
+                for z in 0..CHUNK_SIZE as i32 {
+                    blocks[Chunk::index(x, y, z)] = match y {
+                        _ => Block { id: 1 },
+                    }
+                }
+            }
+        }
+        for y in 5..(5 + chunk_x) {
+            blocks[Chunk::index(7, y, 7)] = Block { id: 2 };
+        }
+        for y in 5..(5 + chunk_z) {
+            blocks[Chunk::index(8, y * 2, 8)] = Block { id: 2 };
+            blocks[Chunk::index(8, y * 2 + 1, 8)] = Block { id: 2 };
+        }
+        Self {
+            blocks,
+            pos: ChunkPos::new(chunk_x, chunk_z),
+        }
+    }
+
     /// Reference: [https://minecraft.wiki/w/Chunk_format]
     ///
     /// Format: YZX
@@ -125,23 +149,9 @@ impl Default for Chunk {
                 }
             }
         }
-        for x in 0..CHUNK_SIZE as i32 {
-            for y in 5..40 {
-                for z in 0..CHUNK_SIZE as i32 {
-                    if (vec3(x as f32, y as f32, z as f32) - vec3(7.0, 15.0, 7.0)).length() <= 7.0 {
-                        blocks[Chunk::index(x, y, z)] = match y {
-                            _ => Block { id: 2 },
-                        }
-                    }
-                }
-            }
-        }
-
         Self {
             blocks,
             pos: ChunkPos::new(0, 0),
         }
     }
 }
-
-pub struct ChunkProvider;

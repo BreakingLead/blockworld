@@ -30,6 +30,7 @@ use crate::{
 };
 
 use super::camera::{Camera, MatrixData};
+use super::render_array::RenderArray;
 use super::texture::Texture;
 use super::uniform::*;
 use super::{
@@ -50,7 +51,7 @@ pub struct State<'a> {
     pub main_pipeline: RegularPipeline,
     pub wireframe_pipeline: WireframePipeline,
 
-    pub render_chunk: RenderChunk,
+    pub render_array: RenderArray,
 
     pub texture: Texture,
     pub texture_bind_group: wgpu::BindGroup,
@@ -84,7 +85,6 @@ pub struct State<'a> {
 
 impl<'a> State<'a> {
     pub async fn new(event_loop: &EventLoop<()>, boot_args: &BootArgs) -> Result<State<'a>> {
-        // /-------------------../assets/atlas.png
         // Create the window
         let mut window_attrs = Window::default_attributes().with_title("Blockworld Indev");
         // set screen size based on boot_args
@@ -101,9 +101,7 @@ impl<'a> State<'a> {
         let _player_state: PlayerState = Default::default();
 
         let size = window.inner_size();
-        // \-------------------
 
-        // /-------------------
         // Instance is the way to create surface and adapter.
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::PRIMARY,
@@ -276,10 +274,8 @@ impl<'a> State<'a> {
             },
         )?;
 
-        let chunk = Chunk::default();
-        let render_chunk = RenderChunk::new(&device, &chunk, &register_table);
-
-        let game = Game::default();
+        let mut game = Game::default();
+        let render_array = RenderArray::new(&mut game.chunk_provider, &device, &register_table);
         let input_state = InputState::default();
 
         let settings = Settings {
@@ -324,7 +320,7 @@ impl<'a> State<'a> {
 
             depth_texture,
 
-            render_chunk,
+            render_array,
 
             camera,
             matrix_uniform,
@@ -426,9 +422,9 @@ impl<'a> State<'a> {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
+                            r: 0.0,
+                            g: 1.0,
+                            b: 239.0 / 255.0,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,
@@ -458,8 +454,10 @@ impl<'a> State<'a> {
             render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
             render_pass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
-            render_pass.set_vertex_buffer(0, self.render_chunk.vertex_buffer.slice(..));
-            render_pass.draw(0..self.render_chunk.vertex_count, 0..1);
+            for (i, chunk) in self.render_array.chunks().iter().enumerate() {
+                render_pass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
+                render_pass.draw(0..chunk.vertex_count, 0..1);
+            }
             self.brush.draw(&mut render_pass);
         }
 
@@ -491,13 +489,11 @@ impl<'a> Debug for State<'a> {
             .field("size", &self.size)
             .field("main_pipeline", &self.main_pipeline)
             .field("wireframe_pipeline", &self.wireframe_pipeline)
-            .field("render_chunk", &self.render_chunk)
             .field("texture", &self.texture)
             .field("texture_bind_group", &self.texture_bind_group)
             .field("depth_texture", &self.depth_texture)
             .field("camera", &self.camera)
             .field("input_state", &self.input_state)
-            .field("game", &self.game)
             .field("fps", &self.fps)
             .field("dt_timer", &self.dt_timer)
             .field("global_timer", &self.global_timer)

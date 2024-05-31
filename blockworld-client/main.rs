@@ -1,3 +1,5 @@
+#![feature(int_roundings)]
+
 use anyhow::*;
 use clap::Parser;
 

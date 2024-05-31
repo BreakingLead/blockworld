@@ -1,5 +1,6 @@
 use super::render_block::*;
 use glam::*;
+use log::info;
 use wgpu::{util::DeviceExt, Device};
 
 use crate::game::{chunk::*, register::RegisterTable};
@@ -14,6 +15,7 @@ pub struct RenderChunk {
 
 impl RenderChunk {
     pub fn new(device: &Device, chunk: &Chunk, register_table: &RegisterTable) -> Self {
+        info!("New renderchunk in {:?}", chunk.pos);
         let mut vertices: Vec<Vertex> = Vec::new();
         for x in 0..CHUNK_SIZE as i32 {
             for y in 0..CHUNK_HEIGHT as i32 {
