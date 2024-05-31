@@ -8,10 +8,33 @@ pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_HEIGHT: usize = 256;
 pub const CHUNK_BLOCK_NUM: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT;
 
+/// from `net/minecraft/util/math/ChunkPos.java`
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+pub struct ChunkPos {
+    pub x: i32,
+    pub z: i32,
+}
+
+impl ChunkPos {
+    pub fn new(x: i32, z: i32) -> Self {
+        Self { x, z }
+    }
+
+    pub fn as_long(x: i32, z: i32) -> i64 {
+        //? From minecraft source code
+        return (x as i64 & 0xFFFFFFFFi64) | (z as i64 & 0xFFFFFFFFi64) << 32;
+    }
+
+    pub fn hash_code(&self) -> i32 {
+        let i: i32 = 1664525 * self.x + 1013904223;
+        let j: i32 = 1664525 * (self.z ^ -559038737) + 1013904223;
+        i ^ j
+    }
+}
+
 pub struct Chunk {
     pub blocks: Box<[Block; CHUNK_HEIGHT * CHUNK_SIZE * CHUNK_SIZE]>,
-    pub x_pos: i32,
-    pub z_pos: i32,
+    pub pos: ChunkPos,
 }
 
 impl Chunk {
@@ -116,8 +139,7 @@ impl Default for Chunk {
 
         Self {
             blocks,
-            x_pos: 0,
-            z_pos: 0,
+            pos: ChunkPos::new(0, 0),
         }
     }
 }

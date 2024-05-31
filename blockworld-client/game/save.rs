@@ -7,9 +7,9 @@ use glam::{ivec2, IVec2, IVec3};
 
 use crate::game::chunk::CHUNK_SIZE;
 
-use super::chunk::Chunk;
+use super::chunk::{Chunk, ChunkPos};
 struct ChunkPool {
-    chunks: HashMap<IVec2, Chunk>,
+    chunks: HashMap<ChunkPos, Chunk>,
 }
 
 impl ChunkPool {
@@ -19,19 +19,18 @@ impl ChunkPool {
         }
     }
 
-    pub fn load_chunk(x: i32, y: i32) -> Result<()> {
-        let _ = x;
-        let _ = y;
+    pub fn load_chunk(pos: ChunkPos) -> Result<()> {
+        let _ = pos;
         todo!();
     }
-    pub fn generate_chunk(&mut self, x: i32, z: i32) -> Result<()> {
-        if self.chunks.contains_key(&ivec2(x, z)) {
+
+    pub fn generate_chunk(&mut self, pos: ChunkPos) -> Result<()> {
+        if self.chunks.contains_key(&pos) {
             Err(anyhow::Error::msg("Chunk already generated"))
         } else {
             let mut chunk = Chunk::default();
-            chunk.x_pos = x;
-            chunk.z_pos = x;
-            self.chunks.insert(ivec2(x, z), chunk);
+            chunk.pos = pos;
+            self.chunks.insert(pos, chunk);
             Ok(())
         }
     }
