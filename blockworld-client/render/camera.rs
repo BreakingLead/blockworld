@@ -101,13 +101,13 @@ impl Camera {
 #[repr(C)]
 // This is so we can store this in a buffer
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct MatrixUniform {
+pub struct MatrixData {
     // We can't use cgmath with bytemuck directly, so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
     matrix: [[f32; 4]; 4],
 }
 
-impl MatrixUniform {
+impl MatrixData {
     pub fn new() -> Self {
         Self {
             matrix: Mat4::IDENTITY.to_cols_array_2d(),

@@ -111,9 +111,9 @@ impl Chunk {
 }
 
 impl Default for Chunk {
-    // THIS IS NOT IDEAL
-    // JUST FOR TEST
-    // REMEMBER TO DELETE THOSE CODE
+    // ! THIS IS NOT IDEAL
+    // ! JUST FOR TEST
+    // ! REMEMBER TO DELETE THOSE CODE
     fn default() -> Self {
         let mut blocks = Box::new([Block::default(); CHUNK_BLOCK_NUM]);
         for x in 0..CHUNK_SIZE as i32 {
@@ -143,3 +143,5 @@ impl Default for Chunk {
         }
     }
 }
+
+pub struct ChunkProvider;

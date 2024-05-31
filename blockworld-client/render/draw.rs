@@ -26,14 +26,12 @@ use crate::{
         Game,
     },
     io::{atlas_helper::AtlasMeta, input_helper::InputState},
-    render::{
-        camera::{Camera, MatrixUniform},
-        texture,
-        vertex::Vertex,
-    },
     BootArgs,
 };
 
+use super::camera::{Camera, MatrixData};
+use super::texture::Texture;
+use super::uniform::*;
 use super::{
     pipeline::{RegularPipeline, WireframePipeline},
     render_chunk::RenderChunk,
@@ -48,22 +46,19 @@ pub struct State<'a> {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
+
     pub main_pipeline: RegularPipeline,
     pub wireframe_pipeline: WireframePipeline,
 
     pub render_chunk: RenderChunk,
 
-    pub texture: texture::Texture,
+    pub texture: Texture,
     pub texture_bind_group: wgpu::BindGroup,
 
-    pub depth_texture: texture::Texture,
+    pub depth_texture: Texture,
 
     pub camera: Camera,
-    pub matrix_uniform: MatrixUniform,
-
-    /// matrix_buffer represents a gpu buffer
-    pub matrix_buffer: wgpu::Buffer,
-    pub matrix_bind_group: wgpu::BindGroup,
+    pub matrix_uniform: Uniform<MatrixData>,
 
     // IO
     pub input_state: InputState,
@@ -169,38 +164,14 @@ impl<'a> State<'a> {
         // Camera thingy
         let camera = Camera::new(size.width as f32 / size.height as f32);
 
-        let mut matrix_uniform = MatrixUniform::new();
-        matrix_uniform.update_matrix(&camera);
+        let mut matrix_uniform = Uniform::new(
+            &device,
+            Box::new(MatrixData::new()),
+            30,
+            Some("Matrix Uniform"),
+        );
+        matrix_uniform.uniform.as_mut().update_matrix(&camera);
 
-        let matrix_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Martix Buffer"),
-            contents: bytemuck::cast_slice(&[matrix_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        let matrix_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 30,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-                label: Some("camera_bind_group_layout"),
-            });
-
-        let matrix_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &matrix_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 30,
-                resource: matrix_buffer.as_entire_binding(),
-            }],
-            label: Some("Blockworld Prespective Matrix Bind Group"),
-        });
         // \-------------------
 
         // /-------------------
@@ -252,7 +223,7 @@ impl<'a> State<'a> {
             label: Some("diffuse_bind_group"),
         });
 
-        let depth_texture = texture::Texture::create_depth_texture(&device, &config);
+        let depth_texture = Texture::create_depth_texture(&device, &config);
         // \-------------------
 
         let shader = device.create_shader_module(include_wgsl!("shaders/default_shader.wgsl"));
@@ -261,14 +232,14 @@ impl<'a> State<'a> {
 
         let main_pipeline = RegularPipeline::new(
             &device,
-            &[&texture_bind_group_layout, &matrix_bind_group_layout],
+            &[&texture_bind_group_layout, &matrix_uniform.layout],
             &shader,
             &config,
         );
 
         let wireframe_pipeline = WireframePipeline::new(
             &device,
-            &[&texture_bind_group_layout, &matrix_bind_group_layout],
+            &[&texture_bind_group_layout, &matrix_uniform.layout],
             &wireframe_shader,
             &config,
         );
@@ -356,9 +327,7 @@ impl<'a> State<'a> {
             render_chunk,
 
             camera,
-            matrix_buffer,
             matrix_uniform,
-            matrix_bind_group,
 
             brush,
             settings,
@@ -388,7 +357,7 @@ impl<'a> State<'a> {
             self.config.height = new_size.height;
 
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config);
+            self.depth_texture = Texture::create_depth_texture(&self.device, &self.config);
         }
     }
 
@@ -425,11 +394,11 @@ impl<'a> State<'a> {
         // Camera Update
         self.camera.update(&self.game.player_state);
 
-        self.matrix_uniform.update_matrix(&self.camera);
+        self.matrix_uniform.uniform.update_matrix(&self.camera);
         self.queue.write_buffer(
-            &self.matrix_buffer,
+            &self.matrix_uniform.buffer,
             0,
-            bytemuck::cast_slice(&[self.matrix_uniform]),
+            bytemuck::cast_slice(&[*self.matrix_uniform.uniform]),
         );
     }
 
@@ -487,7 +456,7 @@ impl<'a> State<'a> {
             }
 
             render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.matrix_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
             render_pass.set_vertex_buffer(0, self.render_chunk.vertex_buffer.slice(..));
             render_pass.draw(0..self.render_chunk.vertex_count, 0..1);
@@ -527,9 +496,6 @@ impl<'a> Debug for State<'a> {
             .field("texture_bind_group", &self.texture_bind_group)
             .field("depth_texture", &self.depth_texture)
             .field("camera", &self.camera)
-            .field("matrix_uniform", &self.matrix_uniform)
-            .field("matrix_buffer", &self.matrix_buffer)
-            .field("matrix_bind_group", &self.matrix_bind_group)
             .field("input_state", &self.input_state)
             .field("game", &self.game)
             .field("fps", &self.fps)

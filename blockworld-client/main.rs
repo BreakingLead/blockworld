@@ -5,7 +5,6 @@ mod debug;
 mod game;
 mod io;
 mod render;
-mod util;
 
 #[derive(Parser, Clone, Default)]
 #[command(author, version, about)]
