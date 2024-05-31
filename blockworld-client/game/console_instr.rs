@@ -1,7 +1,5 @@
 use anyhow::*;
 
-use crate::render::draw::State;
-
 #[derive(Debug)]
 pub struct ConsoleInstr {
     pub command: String,
@@ -63,6 +61,7 @@ impl ConsoleInstr {
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! match_command{
     ($(command $command_name:ident with_args ($($arg_n:ident:$arg_n_type:ident),*) debug $is_debug:ident)+  in $command_args:ident with_context $ctx:ident) => {
         match $command_args{
@@ -82,26 +81,19 @@ macro_rules! match_command{
         }
     } ;
 }
-pub async fn log(state: &mut State<'_>, s: &String) -> Result<()>{
-    println!("{}", s);
-    Ok(())
-}
-pub async fn state_dbg(state: &mut State<'_>) -> Result<()>{
-    println!("state:{:?}",state);
-    Ok(())
-}
-pub async fn exec_instr_from_string(console_string: String, state: &mut State<'_>) -> Result<()> {
-    let console_instr = ConsoleInstr::new(&console_string).with_context(|| {
-        format!(
-            "can't recognize this string as console_string for format err:{}",
-            console_string
-        )
-    })?;
 
-    match_command!(
-        command log with_args (s:String) debug true
-        in console_instr
-        with_context state
-    );
-    Ok(())
-}
+// pub async fn exec_instr_from_string(console_string: String, state: &mut State<'_>) -> Result<()> {
+//     let console_instr = ConsoleInstr::new(&console_string).with_context(|| {
+//         format!(
+//             "can't recognize this string as console_string for format err:{}",
+//             console_string
+//         )
+//     })?;
+
+//     match_command!(
+//         command log with_args (s:String) debug true
+//         in console_instr
+//         with_context state
+//     );
+//     Ok(())
+// }

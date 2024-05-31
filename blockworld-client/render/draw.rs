@@ -1,44 +1,39 @@
 use std::fmt::Debug;
-use std::thread::Thread;
 use std::{io::BufRead, time::Instant};
 
 use anyhow::*;
 use glam::*;
-use wgpu::{include_wgsl, util::DeviceExt};
+use input_helper::InputState;
+use wgpu::include_wgsl;
 use wgpu_text::{
     glyph_brush::{ab_glyph::FontRef, Layout, OwnedSection, OwnedText, Section, Text},
     TextBrush,
 };
+
 use winit::{
     dpi::PhysicalSize,
     event_loop::EventLoop,
     window::{Fullscreen, Window},
 };
 
+use crate::io::atlas_helper::Atlas;
+use crate::io::input_helper;
 use crate::{
     game::{
         block::{BlockMeta, BlockType, ResourceLocation},
-        chunk::Chunk,
-        console_instr::exec_instr_from_string,
         player_state::PlayerState,
         register::RegisterTable,
         settings::Settings,
         Game,
     },
-    io::{atlas_helper::AtlasMeta, input_helper::InputState},
-    render::{
-        camera::{Camera, MatrixUniform},
-        texture,
-        vertex::Vertex,
-    },
     BootArgs,
 };
 
-use super::{
-    pipeline::{RegularPipeline, WireframePipeline},
-    render_chunk::RenderChunk,
-};
-
+use super::camera::{Camera, MatrixData};
+use super::pipeline::{RegularPipeline, WireframePipeline};
+use super::render_array::RenderArray;
+use super::texture::Texture;
+use super::uniform::*;
 /// state contains all things the game needs
 pub struct State<'a> {
     pub window: Window,
@@ -48,22 +43,19 @@ pub struct State<'a> {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
+
     pub main_pipeline: RegularPipeline,
     pub wireframe_pipeline: WireframePipeline,
 
-    pub render_chunk: RenderChunk,
+    pub render_array: RenderArray,
 
-    pub texture: texture::Texture,
+    pub texture: Texture,
     pub texture_bind_group: wgpu::BindGroup,
 
-    pub depth_texture: texture::Texture,
+    pub depth_texture: Texture,
 
     pub camera: Camera,
-    pub matrix_uniform: MatrixUniform,
-
-    /// matrix_buffer represents a gpu buffer
-    pub matrix_buffer: wgpu::Buffer,
-    pub matrix_bind_group: wgpu::BindGroup,
+    pub matrix_uniform: Uniform<MatrixData>,
 
     // IO
     pub input_state: InputState,
@@ -89,7 +81,6 @@ pub struct State<'a> {
 
 impl<'a> State<'a> {
     pub async fn new(event_loop: &EventLoop<()>, boot_args: &BootArgs) -> Result<State<'a>> {
-        // /-------------------../assets/atlas.png
         // Create the window
         let mut window_attrs = Window::default_attributes().with_title("Blockworld Indev");
         // set screen size based on boot_args
@@ -99,6 +90,7 @@ impl<'a> State<'a> {
             window_attrs =
                 window_attrs.with_inner_size(PhysicalSize::new(boot_args.width, boot_args.height))
         }
+        #[allow(deprecated)]
         let window = event_loop.create_window(window_attrs)?;
         window.set_cursor_grab(winit::window::CursorGrabMode::Confined)?;
         window.set_cursor_visible(false);
@@ -106,9 +98,7 @@ impl<'a> State<'a> {
         let _player_state: PlayerState = Default::default();
 
         let size = window.inner_size();
-        // \-------------------
 
-        // /-------------------
         // Instance is the way to create surface and adapter.
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::PRIMARY,
@@ -163,54 +153,24 @@ impl<'a> State<'a> {
         };
 
         surface.configure(&device, &config);
-        // \-------------------
 
-        // /-------------------
         // Camera thingy
         let camera = Camera::new(size.width as f32 / size.height as f32);
 
-        let mut matrix_uniform = MatrixUniform::new();
-        matrix_uniform.update_matrix(&camera);
-
-        let matrix_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Martix Buffer"),
-            contents: bytemuck::cast_slice(&[matrix_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        let matrix_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 30,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-                label: Some("camera_bind_group_layout"),
-            });
-
-        let matrix_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &matrix_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 30,
-                resource: matrix_buffer.as_entire_binding(),
-            }],
-            label: Some("Blockworld Prespective Matrix Bind Group"),
-        });
-        // \-------------------
-
-        // /-------------------
+        let mut matrix_uniform = Uniform::new(
+            &device,
+            Box::new(MatrixData::new()),
+            30,
+            Some("Matrix Uniform"),
+        );
+        matrix_uniform.uniform.as_mut().update_matrix(&camera);
         // Texture & its bind group
         let texture = crate::render::texture::Texture::from_bytes(
             &device,
             &queue,
             include_bytes!("../assets/atlas.png"),
             "Block Texture",
-        )?;
+        );
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -252,7 +212,7 @@ impl<'a> State<'a> {
             label: Some("diffuse_bind_group"),
         });
 
-        let depth_texture = texture::Texture::create_depth_texture(&device, &config);
+        let depth_texture = Texture::create_depth_texture(&device, &config);
         // \-------------------
 
         let shader = device.create_shader_module(include_wgsl!("shaders/default_shader.wgsl"));
@@ -261,14 +221,14 @@ impl<'a> State<'a> {
 
         let main_pipeline = RegularPipeline::new(
             &device,
-            &[&texture_bind_group_layout, &matrix_bind_group_layout],
+            &[&texture_bind_group_layout, &matrix_uniform.layout],
             &shader,
             &config,
         );
 
         let wireframe_pipeline = WireframePipeline::new(
             &device,
-            &[&texture_bind_group_layout, &matrix_bind_group_layout],
+            &[&texture_bind_group_layout, &matrix_uniform.layout],
             &wireframe_shader,
             &config,
         );
@@ -277,23 +237,14 @@ impl<'a> State<'a> {
         // | Game Initialize |
         // -------------------
 
-        let (image_w, image_h) = image::io::Reader::open("../assets/atlas.png")
-            .unwrap()
-            .into_dimensions()?;
-
-        let atlas_meta = AtlasMeta {
-            tile_w: 16,
-            tile_h: 16,
-            image_w,
-            image_h,
-        };
         let mut register_table = RegisterTable::new();
+        let atlas = Atlas::new("assets/atlas.png", 16);
         register_table.register_block(
             1,
             BlockMeta {
                 name: ResourceLocation::new("test_a"),
                 ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(6, 19)?; 6],
+                atlas_coord: [atlas.get_uv_from_xy(6, 19)?; 6],
             },
         )?;
         register_table.register_block(
@@ -301,14 +252,12 @@ impl<'a> State<'a> {
             BlockMeta {
                 name: ResourceLocation::new("test_b"),
                 ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(16, 6)?; 6],
+                atlas_coord: [atlas.get_uv_from_xy(16, 6)?; 6],
             },
         )?;
 
-        let chunk = Chunk::default();
-        let render_chunk = RenderChunk::new(&device, &chunk, &register_table);
-
-        let game = Game::default();
+        let mut game = Game::default();
+        let render_array = RenderArray::new(&mut game.chunk_provider, &device, &register_table);
         let input_state = InputState::default();
 
         let settings = Settings {
@@ -353,12 +302,10 @@ impl<'a> State<'a> {
 
             depth_texture,
 
-            render_chunk,
+            render_array,
 
             camera,
-            matrix_buffer,
             matrix_uniform,
-            matrix_bind_group,
 
             brush,
             settings,
@@ -388,7 +335,7 @@ impl<'a> State<'a> {
             self.config.height = new_size.height;
 
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config);
+            self.depth_texture = Texture::create_depth_texture(&self.device, &self.config);
         }
     }
 
@@ -425,11 +372,11 @@ impl<'a> State<'a> {
         // Camera Update
         self.camera.update(&self.game.player_state);
 
-        self.matrix_uniform.update_matrix(&self.camera);
+        self.matrix_uniform.uniform.update_matrix(&self.camera);
         self.queue.write_buffer(
-            &self.matrix_buffer,
+            &self.matrix_uniform.buffer,
             0,
-            bytemuck::cast_slice(&[self.matrix_uniform]),
+            bytemuck::cast_slice(&[*self.matrix_uniform.uniform]),
         );
     }
 
@@ -457,9 +404,9 @@ impl<'a> State<'a> {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
+                            r: 0.0,
+                            g: 1.0,
+                            b: 239.0 / 255.0,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,
@@ -487,10 +434,12 @@ impl<'a> State<'a> {
             }
 
             render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.matrix_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
-            render_pass.set_vertex_buffer(0, self.render_chunk.vertex_buffer.slice(..));
-            render_pass.draw(0..self.render_chunk.vertex_count, 0..1);
+            for chunk in self.render_array.chunks().iter() {
+                render_pass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
+                render_pass.draw(0..chunk.vertex_count, 0..1);
+            }
             self.brush.draw(&mut render_pass);
         }
 
@@ -506,7 +455,7 @@ impl<'a> State<'a> {
         let mut handle = stdin.lock();
         let mut console_string = String::new();
         handle.read_line(&mut console_string)?;
-        exec_instr_from_string(console_string, self).await?;
+        // exec_instr_from_string(console_string, self).await?;
         Ok(())
     }
 }
@@ -522,16 +471,11 @@ impl<'a> Debug for State<'a> {
             .field("size", &self.size)
             .field("main_pipeline", &self.main_pipeline)
             .field("wireframe_pipeline", &self.wireframe_pipeline)
-            .field("render_chunk", &self.render_chunk)
             .field("texture", &self.texture)
             .field("texture_bind_group", &self.texture_bind_group)
             .field("depth_texture", &self.depth_texture)
             .field("camera", &self.camera)
-            .field("matrix_uniform", &self.matrix_uniform)
-            .field("matrix_buffer", &self.matrix_buffer)
-            .field("matrix_bind_group", &self.matrix_bind_group)
             .field("input_state", &self.input_state)
-            .field("game", &self.game)
             .field("fps", &self.fps)
             .field("dt_timer", &self.dt_timer)
             .field("global_timer", &self.global_timer)

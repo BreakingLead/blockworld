@@ -19,7 +19,7 @@ impl RegisterTable {
     }
 
     pub fn register_block(&mut self, id: BlockID, meta: BlockMeta) -> Result<(), Error> {
-        if let Some(v) = self.table_block.insert(id, meta) {
+        if let Some(_meta) = self.table_block.insert(id, meta) {
             Err(Error::msg("ID Exists"))
         } else {
             Ok(())
