@@ -1,4 +1,7 @@
+use std::thread::Thread;
 use std::{io::BufRead, time::Instant};
+use std::fmt::Debug;
+use tokio::runtime::Runtime;
 
 use anyhow::*;
 use glam::*;
@@ -512,12 +515,19 @@ impl<'a> State<'a> {
         std::result::Result::Ok(())
     }
 
-    pub fn try_exec_single_instr_from_console(&mut self) -> Result<()> {
+    /// read a line from cmd synchronously. It should't be run on main displaying thread 
+    pub async fn try_exec_single_instr_from_console(&mut self) -> Result<()> {
         let stdin = std::io::stdin();
         let mut handle = stdin.lock();
         let mut console_string = String::new();
         handle.read_line(&mut console_string)?;
-        exec_instr_from_string(console_string, self)?;
+        exec_instr_from_string(console_string, self).await?;
         Ok(())
+    }
+}
+
+impl<'a> Debug for State<'a>{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("State").field("window", &self.window).field("surface", &self.surface).field("device", &self.device).field("queue", &self.queue).field("config", &self.config).field("size", &self.size).field("render_pipeline", &self.render_pipeline).field("render_chunk", &self.render_chunk).field("texture", &self.texture).field("texture_bind_group", &self.texture_bind_group).field("depth_texture", &self.depth_texture).field("camera", &self.camera).field("matrix_uniform", &self.matrix_uniform).field("matrix_buffer", &self.matrix_buffer).field("matrix_bind_group", &self.matrix_bind_group).field("input_state", &self.input_state).field("game", &self.game).field("fps", &self.fps).field("dt_timer", &self.dt_timer).field("global_timer", &self.global_timer).field("fps_text_section", &self.fps_text_section).field("settings", &self.settings).field("register_table", &self.register_table).finish()
     }
 }

@@ -4,6 +4,7 @@ use glam::*;
 use log::{debug, info};
 
 use crate::game::player_state::PlayerState;
+#[derive(Debug)]
 pub struct Camera {
     pub position: Vec3,
     up: Vec3,

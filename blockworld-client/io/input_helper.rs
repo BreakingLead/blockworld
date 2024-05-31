@@ -6,7 +6,7 @@ use winit::{
 };
 
 /// Tracker for the pressing keys
-#[derive(Default)]
+#[derive(Default,Debug)]
 pub struct InputState {
     pressing_keys: HashSet<Key>,
 }

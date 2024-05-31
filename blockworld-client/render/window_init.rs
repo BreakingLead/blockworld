@@ -49,6 +49,7 @@ impl<'a> ApplicationHandler for State<'a> {
             WindowEvent::RedrawRequested => {
                 self.update();
                 self.render().expect("Render Error!");
+                // use inspect_err to avoid panic so that we can input instruction to display state to debug
                 // self.try_exec_single_instr_from_console().inspect_err(
                 //     |e| {
                 //         error!("err when try_exec_single_instr_from_console {e:?}")
