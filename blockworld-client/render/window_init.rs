@@ -10,14 +10,14 @@ use winit::keyboard::{Key, KeyCode, NamedKey};
 use winit::window::WindowId;
 
 impl<'a> ApplicationHandler for State<'a> {
-    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+    fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
         info!("Resumed!");
     }
 
     fn device_event(
         &mut self,
-        event_loop: &ActiveEventLoop,
-        device_id: winit::event::DeviceId,
+        _event_loop: &ActiveEventLoop,
+        _device_id: winit::event::DeviceId,
         event: winit::event::DeviceEvent,
     ) {
         match event {
@@ -34,12 +34,11 @@ impl<'a> ApplicationHandler for State<'a> {
             _ => (),
         }
     }
-    fn user_event(&mut self, event_loop: &ActiveEventLoop, event: ()) {}
 
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
-        window_id: WindowId,
+        _window_id: WindowId,
         event: WindowEvent,
     ) {
         match event {

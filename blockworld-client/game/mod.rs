@@ -13,7 +13,6 @@ pub mod chunk_provider;
 pub mod console_instr;
 pub mod player_state;
 pub mod register;
-pub mod save;
 pub mod settings;
 pub mod world;
 

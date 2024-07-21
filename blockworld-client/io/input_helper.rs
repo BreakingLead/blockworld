@@ -2,11 +2,11 @@ use std::collections::HashSet;
 
 use winit::{
     event::{ElementState, KeyEvent},
-    keyboard::{Key, NamedKey},
+    keyboard::Key,
 };
 
 /// Tracker for the pressing keys
-#[derive(Default,Debug)]
+#[derive(Default, Debug)]
 pub struct InputState {
     pressing_keys: HashSet<Key>,
 }

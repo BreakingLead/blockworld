@@ -1,43 +1,39 @@
 use std::fmt::Debug;
-use std::thread::Thread;
 use std::{io::BufRead, time::Instant};
 
 use anyhow::*;
 use glam::*;
-use wgpu::{include_wgsl, util::DeviceExt};
+use input_helper::InputState;
+use wgpu::include_wgsl;
 use wgpu_text::{
     glyph_brush::{ab_glyph::FontRef, Layout, OwnedSection, OwnedText, Section, Text},
     TextBrush,
 };
+
 use winit::{
     dpi::PhysicalSize,
     event_loop::EventLoop,
     window::{Fullscreen, Window},
 };
 
+use crate::io::atlas_helper::Atlas;
+use crate::io::input_helper;
 use crate::{
     game::{
         block::{BlockMeta, BlockType, ResourceLocation},
-        chunk::Chunk,
-        console_instr::exec_instr_from_string,
         player_state::PlayerState,
         register::RegisterTable,
         settings::Settings,
         Game,
     },
-    io::{atlas_helper::AtlasMeta, input_helper::InputState},
     BootArgs,
 };
 
 use super::camera::{Camera, MatrixData};
+use super::pipeline::{RegularPipeline, WireframePipeline};
 use super::render_array::RenderArray;
 use super::texture::Texture;
 use super::uniform::*;
-use super::{
-    pipeline::{RegularPipeline, WireframePipeline},
-    render_chunk::RenderChunk,
-};
-
 /// state contains all things the game needs
 pub struct State<'a> {
     pub window: Window,
@@ -94,6 +90,7 @@ impl<'a> State<'a> {
             window_attrs =
                 window_attrs.with_inner_size(PhysicalSize::new(boot_args.width, boot_args.height))
         }
+        #[allow(deprecated)]
         let window = event_loop.create_window(window_attrs)?;
         window.set_cursor_grab(winit::window::CursorGrabMode::Confined)?;
         window.set_cursor_visible(false);
@@ -156,9 +153,7 @@ impl<'a> State<'a> {
         };
 
         surface.configure(&device, &config);
-        // \-------------------
 
-        // /-------------------
         // Camera thingy
         let camera = Camera::new(size.width as f32 / size.height as f32);
 
@@ -169,17 +164,13 @@ impl<'a> State<'a> {
             Some("Matrix Uniform"),
         );
         matrix_uniform.uniform.as_mut().update_matrix(&camera);
-
-        // \-------------------
-
-        // /-------------------
         // Texture & its bind group
         let texture = crate::render::texture::Texture::from_bytes(
             &device,
             &queue,
             include_bytes!("../assets/atlas.png"),
             "Block Texture",
-        )?;
+        );
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -246,23 +237,14 @@ impl<'a> State<'a> {
         // | Game Initialize |
         // -------------------
 
-        let (image_w, image_h) = image::io::Reader::open("../assets/atlas.png")
-            .unwrap()
-            .into_dimensions()?;
-
-        let atlas_meta = AtlasMeta {
-            tile_w: 16,
-            tile_h: 16,
-            image_w,
-            image_h,
-        };
         let mut register_table = RegisterTable::new();
+        let atlas = Atlas::new("assets/atlas.png", 16);
         register_table.register_block(
             1,
             BlockMeta {
                 name: ResourceLocation::new("test_a"),
                 ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(6, 19)?; 6],
+                atlas_coord: [atlas.get_uv_from_xy(6, 19)?; 6],
             },
         )?;
         register_table.register_block(
@@ -270,7 +252,7 @@ impl<'a> State<'a> {
             BlockMeta {
                 name: ResourceLocation::new("test_b"),
                 ty: BlockType::Solid,
-                atlas_coord: [atlas_meta.get(16, 6)?; 6],
+                atlas_coord: [atlas.get_uv_from_xy(16, 6)?; 6],
             },
         )?;
 
@@ -454,7 +436,7 @@ impl<'a> State<'a> {
             render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
             render_pass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
-            for (i, chunk) in self.render_array.chunks().iter().enumerate() {
+            for chunk in self.render_array.chunks().iter() {
                 render_pass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
                 render_pass.draw(0..chunk.vertex_count, 0..1);
             }
@@ -473,7 +455,7 @@ impl<'a> State<'a> {
         let mut handle = stdin.lock();
         let mut console_string = String::new();
         handle.read_line(&mut console_string)?;
-        exec_instr_from_string(console_string, self).await?;
+        // exec_instr_from_string(console_string, self).await?;
         Ok(())
     }
 }

@@ -1,7 +1,6 @@
 use std::f32::consts::PI;
 
 use glam::*;
-use log::{debug, info};
 
 use crate::game::player_state::PlayerState;
 #[derive(Debug)]

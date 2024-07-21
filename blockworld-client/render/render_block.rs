@@ -62,7 +62,7 @@ pub const ZN_B: u32 = 0b100000;
 
 impl AxisDirection {
     /// Generate direction vector.
-    fn direction_vec(&self) -> Vec3 {
+    fn _direction_vector(&self) -> Vec3 {
         let v = match self.axis {
             Axis::X => Vec3::X,
             Axis::Y => Vec3::Y,

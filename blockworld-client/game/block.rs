@@ -1,4 +1,4 @@
-use crate::io::atlas_helper::AtlasCoordinate;
+use crate::io::atlas_helper::UV;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResourceLocation {
@@ -40,7 +40,7 @@ pub struct BlockMeta {
     /// - 3: Right
     /// - 4: Front
     /// - 5: Back
-    pub atlas_coord: [AtlasCoordinate; 6],
+    pub atlas_coord: [UV; 6],
 }
 
 #[derive(Debug, Default, Clone, Copy)]

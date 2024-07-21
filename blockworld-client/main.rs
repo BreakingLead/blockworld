@@ -1,12 +1,12 @@
 #![feature(int_roundings)]
 
+pub mod debug;
+pub mod game;
+pub mod io;
+pub mod render;
+
 use anyhow::*;
 use clap::Parser;
-
-mod debug;
-mod game;
-mod io;
-mod render;
 
 #[derive(Parser, Clone, Default)]
 #[command(author, version, about)]

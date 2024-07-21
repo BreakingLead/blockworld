@@ -29,5 +29,5 @@ impl RenderArray {
         &self.chunks
     }
 
-    pub fn update(&mut self, chunk_provider: &mut ClientChunkProvider) {}
+    pub fn update(&mut self, _chunk_provider: &mut ClientChunkProvider) {}
 }

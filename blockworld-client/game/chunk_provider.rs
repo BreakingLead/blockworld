@@ -2,7 +2,6 @@
 use std::rc::Rc;
 
 use anyhow::{anyhow, Result};
-use log::warn;
 
 use super::{chunk::Chunk, world::ClientWorld};
 pub struct ClientChunkProvider {
@@ -52,7 +51,7 @@ impl ClientChunkProvider {
 
     // ! NOT COMPLETE
     pub fn load_chunk(&mut self, chunk_x: i32, chunk_z: i32) -> Option<Rc<Chunk>> {
-        if (!self.array.in_view(chunk_x, chunk_z)) {
+        if !self.array.in_view(chunk_x, chunk_z) {
             log::error!(
                 "Ignoring chunk since we don't have complete data: {}, {}",
                 chunk_x,
