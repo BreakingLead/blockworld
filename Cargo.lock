@@ -329,6 +329,7 @@ name = "blockworld-client"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "blockworld-utils",
  "bytemuck",
  "clap",
  "env_logger",

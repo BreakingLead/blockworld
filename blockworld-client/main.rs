@@ -1,25 +1,41 @@
-#![feature(int_roundings)]
+use std::sync::OnceLock;
 
-pub mod debug;
-pub mod game;
-pub mod io;
-pub mod render;
-
-use anyhow::*;
 use clap::Parser;
+use renderer::window_init::run;
 
-#[derive(Parser, Clone, Default)]
-#[command(author, version, about)]
-pub struct BootArgs {
-    #[arg(long, default_value = "600")]
-    height: u32,
-    #[arg(long, default_value = "800")]
-    width: u32,
-    #[arg(long, default_value = "false")]
-    full_screen: bool,
+mod block;
+mod debug;
+mod game;
+mod io;
+mod network;
+mod renderer;
+mod resources;
+mod tileentity;
+mod world;
+
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value_t = 1280)]
+    pub width: u32,
+
+    #[arg(short, long, default_value_t = 720)]
+    pub height: u32,
+
+    #[arg(short, long)]
+    pub full_screen: bool,
 }
 
-fn main() -> Result<()> {
-    pollster::block_on(render::window_init::run())?;
-    Ok(())
+static cli_args: OnceLock<Args> = OnceLock::new();
+
+pub fn get_cli_args() -> &'static Args {
+    cli_args.get_or_init(|| {
+        let args = Args::parse();
+        args
+    })
+}
+
+fn main() {
+    pollster::block_on(run());
 }

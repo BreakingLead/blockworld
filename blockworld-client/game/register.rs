@@ -1,13 +1,10 @@
+use crate::block::*;
+use anyhow::Error;
+use block::{BlockID, BlockMeta};
 use std::collections::HashMap;
 
-use anyhow::Error;
-
-use block::{BlockID, BlockMeta};
-
-use super::block;
-
 #[derive(Debug)]
-pub struct RegisterTable {
+pub struct BlockRegisterTable {
     table_block: HashMap<BlockID, BlockMeta>,
 }
 
