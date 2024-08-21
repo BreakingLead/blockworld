@@ -7,16 +7,6 @@ pub struct RegularPipeline {
 }
 
 impl RegularPipeline {
-    pub fn depth_stencil_state() -> wgpu::DepthStencilState {
-        wgpu::DepthStencilState {
-            format: wgpu::TextureFormat::Depth32Float,
-            depth_write_enabled: true,
-            depth_compare: wgpu::CompareFunction::Less,
-            stencil: wgpu::StencilState::default(),
-            bias: wgpu::DepthBiasState::default(),
-        }
-    }
-
     pub fn new(
         device: &wgpu::Device,
         bind_group_layouts: &[&wgpu::BindGroupLayout],
@@ -57,7 +47,13 @@ impl RegularPipeline {
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
-            depth_stencil: Some(Self::depth_stencil_state()),
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,

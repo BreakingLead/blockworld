@@ -62,18 +62,16 @@ trait ResourcePack {
     fn get_read_stream(&self) -> ReadBuf;
 }
 
-struct DefaultResourcePack {
+struct VanillaResourcePack {
     name: String,
 }
 
-impl ResourcePack for DefaultResourcePack {
+impl ResourcePack for VanillaResourcePack {
     fn get_name(&self) -> String {
         self.name.clone()
     }
 
-    fn get_metadata(&self) -> Result<PackMetadataSection, std::io::Error> {
-        todo!()
-    }
+    fn get_metadata(&self) -> Result<PackMetadataSection, std::io::Error> {}
 
     fn resource_exists(&self, location: &Path) -> bool {
         Path::exists(location)

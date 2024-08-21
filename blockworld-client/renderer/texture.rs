@@ -89,6 +89,7 @@ impl Texture {
             height: config.height,
             depth_or_array_layers: 1,
         };
+
         let desc = wgpu::TextureDescriptor {
             label: Some("Blockworld Depth Texture"),
             size,
@@ -100,6 +101,7 @@ impl Texture {
                 | wgpu::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         };
+
         let texture = device.create_texture(&desc);
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());

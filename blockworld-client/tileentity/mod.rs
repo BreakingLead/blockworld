@@ -1,1 +1,1 @@
-struct TileEntity;
+pub struct TileEntity;

@@ -1,3 +1,4 @@
+use glam::Vec2;
 use winit::keyboard::{Key, NamedKey};
 
 use crate::io::input_helper::InputState;

@@ -3,17 +3,19 @@ use std::f32::consts::PI;
 use glam::*;
 
 use crate::game::player_state::PlayerState;
+
+use super::uniform::RawMat4;
 #[derive(Debug)]
 pub struct Camera {
     pub position: Vec3,
-    up: Vec3,
+    pub up: Vec3,
     pub yaw: f32,
     pub pitch: f32,
-    aspect_ratio: f32,
-    fovy: f32,
-    znear: f32,
-    zfar: f32,
-    speed: f32,
+    pub aspect_ratio: f32,
+    pub fovy: f32,
+    pub znear: f32,
+    pub zfar: f32,
+    pub speed: f32,
 }
 
 impl Camera {
@@ -43,12 +45,23 @@ impl Camera {
         .normalize()
     }
 
-    pub fn build_mvp(&self) -> Mat4 {
+    pub fn build_mvp(&self) -> RawMat4 {
         let gaze = self.get_gaze();
         let view = Mat4::look_to_rh(self.position, gaze, self.up);
         let projection = Mat4::perspective_rh(self.fovy, self.aspect_ratio, self.znear, self.zfar);
 
-        projection * view
+        RawMat4((projection * view).to_cols_array_2d())
+    }
+
+    pub fn update_rotation(&mut self, delta: Vec2) {
+        let sensitivity = 0.002;
+        self.yaw += delta.x * sensitivity;
+        self.pitch += delta.y * sensitivity;
+        if self.pitch >= f32::to_radians(89.9) {
+            self.pitch = f32::to_radians(89.9);
+        } else if self.pitch <= f32::to_radians(-89.9) {
+            self.pitch = f32::to_radians(-89.9);
+        }
     }
 
     /// update camera state by 1 unit according to player_state

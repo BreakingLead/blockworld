@@ -8,9 +8,10 @@ We won't give up this project but the maintainer is busy recently.
 ![](./logo.svg)
 
 TL;DR:
-Blockworld is a modern **minecraft(java ver) client&server implementation** which has better performance, and minecraft modders can easily port their mods into this minecraft implementation.
+Blockworld is a modern **Minecraft (Java Version) implementation** which has better performance,
+and minecraft modders can easily port their mods into this minecraft implementation.
 
-## Todo List (2024-05-29):
+## Todo List (2024-08-21):
 - Graphics
   * [ ] Antialias
   * [ ] Ambient Occlusion
@@ -24,6 +25,15 @@ Blockworld is a modern **minecraft(java ver) client&server implementation** whic
   * [ ] GUI System
   * [ ] Save File (De)serialization
   * [ ] Map Generation
+
+## Contributing
+
+We basically organize the code based on the same structure as minecraft. And keep the code extremely clean and readable.
+
+Every big module will contain a `README.md` file to explain the purpose of the module.
+
+It's different from rust's module documentation, which the readme is more like a brief introduction to the motivation of the module, in order to attract more contributors.
+
 
 ## What does Blockworld do
 - Provide better minecraft experience for players.

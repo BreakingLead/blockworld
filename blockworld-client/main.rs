@@ -1,3 +1,4 @@
+#![deny(unused_must_use)]
 use std::sync::OnceLock;
 
 use clap::Parser;

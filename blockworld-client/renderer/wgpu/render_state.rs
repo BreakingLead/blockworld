@@ -1,6 +1,7 @@
+use crate::renderer::wgpu::init_helpers::*;
 use crate::{
-    game::{settings::Settings, Game},
-    get_cli_args,
+    game::{settings::Settings, Blockworld},
+    io::input_helper::InputState,
     renderer::{
         camera::{Camera, MatrixData},
         pipeline::{RegularPipeline, WireframePipeline},
@@ -8,17 +9,19 @@ use crate::{
     },
 };
 use glam::Mat4;
+use pollster::FutureExt;
 use std::{sync::Arc, time::Instant};
-use wgpu::*;
+use wgpu::{include_wgsl, Device, Queue, Surface, SurfaceConfiguration};
 use winit::{
     dpi::PhysicalSize,
     event_loop::EventLoop,
     window::{Fullscreen, Window},
 };
-/// state contains all things the game needs
+
+/// The RenderState struct holds all the state needed to render the game's user interface and game world.
 pub struct RenderState {
     pub window: Arc<Window>,
-    pub surface: wgpu::Surface<'static>,
+    pub surface: Surface<'static>,
 
     pub device: Device,
     pub queue: Queue,
@@ -40,8 +43,7 @@ pub struct RenderState {
     pub input_state: InputState,
 
     // The Game
-    pub game: Game,
-    pub fps: f32,
+    pub game: Blockworld,
     pub dt_timer: Instant,
     pub global_timer: Instant,
 
@@ -58,95 +60,14 @@ pub struct RenderState {
     pub debug_mode: bool,
 }
 
-fn create_window(event_loop: &EventLoop<()>) -> Window {
-    let mut window_attrs = Window::default_attributes().with_title("Blockworld Indev");
-    let args = get_cli_args();
-    // set screen size based on boot_args
-    if args.full_screen {
-        window_attrs = window_attrs.with_fullscreen(Some(Fullscreen::Borderless(None)));
-    } else {
-        window_attrs = window_attrs.with_inner_size(PhysicalSize::new(args.width, args.height))
-    }
-    let window = event_loop.create_window(window_attrs).unwrap();
-    window.set_cursor_grab(winit::window::CursorGrabMode::Confined)?;
-    window.set_cursor_visible(false);
-
-    window
-}
-
-fn create_instance() -> Instance {
-    Instance::new(wgpu::InstanceDescriptor {
-        backends: wgpu::Backends::PRIMARY,
-        ..Default::default()
-    })
-}
-
-fn create_surface<'window>(
-    instance: &Instance,
-    window: &'window Window,
-) -> Result<Surface<'window>, wgpu::CreateSurfaceError> {
-    instance.create_surface(window)
-}
-
-async fn create_adapter(instance: &Instance, surface: &Surface<'_>) -> wgpu::Adapter {
-    instance
-        .request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::default(),
-            compatible_surface: Some(surface),
-            force_fallback_adapter: false,
-        })
-        .await
-        .unwrap()
-}
-
-async fn create_device_and_queue(adapter: &wgpu::Adapter) -> (wgpu::Device, wgpu::Queue) {
-    let (device, queue) = adapter
-        .request_device(
-            &wgpu::DeviceDescriptor {
-                label: None,
-                required_features: wgpu::Features::POLYGON_MODE_LINE,
-                required_limits: wgpu::Limits::default(),
-            },
-            None,
-        )
-        .await
-        .unwrap();
-    (device, queue)
-}
-
-fn create_surface_config(
-    size: PhysicalSize<u32>,
-    surface: &Surface,
-    adapter: &Adapter,
-) -> wgpu::SurfaceConfiguration {
-    let surface_caps = surface.get_capabilities(&adapter);
-    let surface_format = surface_caps
-        .formats
-        .iter()
-        .find(|f| f.is_srgb())
-        .copied()
-        .unwrap_or(surface_caps.formats[0]);
-
-    wgpu::SurfaceConfiguration {
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-        format: surface_format,
-        width: size.width,
-        height: size.height,
-        present_mode: PresentMode::AutoNoVsync,
-        alpha_mode: surface_caps.alpha_modes[0],
-        view_formats: vec![],
-        desired_maximum_frame_latency: 2,
-    }
-}
-
 impl RenderState {
-    pub async fn new(window: Window) -> RenderState {
-        let window_arc = Arc::new(window);
+    pub fn new(window: Window) -> RenderState {
+        let window = Arc::new(window);
         let size = window.inner_size();
         let instance = create_instance();
         let surface = create_surface(&instance, &window).unwrap();
-        let adapter = create_adapter(&instance, &surface).await;
-        let (device, queue) = create_device_and_queue(&adapter).await;
+        let adapter = create_adapter(&instance, &surface);
+        let (device, queue) = create_device_and_queue(&adapter);
         let config = create_surface_config(size, &surface, &adapter);
         surface.configure(&device, &config);
 
@@ -159,7 +80,7 @@ impl RenderState {
             30,
             Some("Matrix Uniform"),
         );
-        matrix_uniform.uniform.as_mut() = camera.build_mvp();
+        matrix_uniform.uniform = Box::new(camera.build_mvp());
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -201,8 +122,7 @@ impl RenderState {
             label: Some("diffuse_bind_group"),
         });
 
-        let depth_texture = Texture::create_depth_texture(&device, &config);
-        // \-------------------
+        let depth_texture = crate::renderer::Texture::create_depth_texture(&device, &config);
 
         let shader = device.create_shader_module(include_wgsl!("../shaders/default_shader.wgsl"));
         let wireframe_shader =
@@ -229,22 +149,11 @@ impl RenderState {
         let mut register_table = RegisterTable::new();
         let atlas = Atlas::new("assets/atlas.png", 16);
 
-        let mut game = Game::default();
+        let mut game = Blockworld::default();
         let render_array = RenderArray::new(&mut game.chunk_provider, &device, &register_table);
         let input_state = InputState::default();
 
-        let brush = wgpu_text::BrushBuilder::using_font_bytes(settings.font)
-            .unwrap()
-            .with_depth_stencil(Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
-                depth_write_enabled: false,
-                depth_compare: wgpu::CompareFunction::LessEqual,
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
-            }))
-            .build(&device, config.width, config.height, config.format);
-
-        Ok(Self {
+        Self {
             window,
 
             surface,
@@ -263,8 +172,6 @@ impl RenderState {
             camera,
             matrix_uniform,
 
-            settings,
-            fps: 0.0,
             dt_timer: Instant::now(),
             global_timer: Instant::now(),
 
@@ -273,7 +180,8 @@ impl RenderState {
 
             register_table,
             debug_mode: false,
-        })
+            settings: todo!(),
+        }
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -281,14 +189,13 @@ impl RenderState {
             self.camera
                 .update_aspect_ratio(new_size.width as f32 / new_size.height as f32);
 
-            self.brush
-                .resize_view(new_size.width as f32, new_size.height as f32, &self.queue);
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
 
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture = Texture::create_depth_texture(&self.device, &self.config);
+            self.depth_texture =
+                crate::renderer::texture::Texture::create_depth_texture(&self.device, &self.config);
         }
     }
 
@@ -311,6 +218,7 @@ impl RenderState {
 
         // Camera Update
         self.camera.update(&self.game.player_state);
+        self.camera.update_rotation(self.input_state.mouse_delta);
 
         self.matrix_uniform.uniform.update_matrix(&self.camera);
         self.queue.write_buffer(
@@ -386,7 +294,7 @@ impl RenderState {
     }
 
     /// read a line from cmd synchronously. It should't be run on main displaying thread
-    pub async fn try_exec_single_instr_from_console(&mut self) -> Result<()> {
+    pub async fn try_exec_single_instr_from_console(&mut self) -> anyhow::Result<()> {
         let stdin = std::io::stdin();
         let mut handle = stdin.lock();
         let mut console_string = String::new();

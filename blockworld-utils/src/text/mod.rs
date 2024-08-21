@@ -1,3 +1,6 @@
+//! DO NOT CARE ABOUT THIS FILE.
+//! THIS IS TOTALLY UNUSED CODE.
+//! I DONT KNOW WHY I PUT IT HERE.
 use crate::resource_location::ResourceLocation;
 
 struct ClickEvent;
@@ -28,6 +31,7 @@ impl Default for Style {
             click_event: None,
             hover_event: None,
         }
+    }
 }
 
 trait AbstractTextComponent {
