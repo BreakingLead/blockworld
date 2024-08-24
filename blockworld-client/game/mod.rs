@@ -1,7 +1,6 @@
 use self::player_state::PlayerState;
 use crate::{io::input_helper::InputState, world::chunk_provider::ClientChunkProvider};
 use blockworld_utils::AM;
-use std::rc::Rc;
 use world::ClientWorld;
 
 pub mod console_instr;

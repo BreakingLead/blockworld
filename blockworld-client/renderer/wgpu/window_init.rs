@@ -1,10 +1,8 @@
 use std::process::exit;
 
-use crate::{game::Blockworld, get_cli_args};
 use anyhow::Context;
 use application::ApplicationHandler;
-use clap::Parser;
-use event::{DeviceEvent, WindowEvent};
+use event::WindowEvent;
 use event_loop::{ActiveEventLoop, EventLoop};
 use keyboard::KeyCode;
 use log::*;

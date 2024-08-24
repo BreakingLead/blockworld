@@ -1,10 +1,5 @@
 use serde_json::Value;
-use std::{
-    collections::{HashMap, HashSet},
-    fs::File,
-    io::BufReader,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::Path};
 use tokio::io::ReadBuf;
 struct PackMetadataSection {
     /// Version of the pack format

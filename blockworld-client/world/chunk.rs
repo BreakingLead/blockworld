@@ -1,10 +1,8 @@
-use std::{ops::Div, rc::Rc};
+use std::ops::Div;
 
 use glam::*;
 
 use crate::block::*;
-
-use super::{chunk_provider::ClientChunkProvider, world::World};
 
 pub const SUBCHUNK_SIZE: usize = 16;
 pub const SUBCHUNK_BLOCK_NUM: usize = SUBCHUNK_SIZE * SUBCHUNK_SIZE * SUBCHUNK_SIZE;
