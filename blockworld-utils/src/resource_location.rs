@@ -1,33 +1,36 @@
-#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+use std::path::PathBuf;
+
+/// Same as Minecraft's `ResourceLocation`
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct ResourceLocation {
-    domain: String,
-    path: String,
+    namespace: String,
+    path: PathBuf,
 }
 
 impl ResourceLocation {
     pub fn new(id: &str) -> Self {
         if let Some((a, b)) = id.split_once(':') {
             Self {
-                domain: a.to_string(),
-                path: b.to_string(),
+                namespace: a.to_string(),
+                path: b.into(),
             }
         } else {
             Self {
-                domain: "blockworld".to_string(),
-                path: id.to_string(),
+                namespace: "blockworld".to_string(),
+                path: id.into(),
             }
         }
     }
 
-    pub fn get_domain(&self) -> String {
-        self.domain.clone()
+    pub fn get_namespace(&self) -> String {
+        self.namespace.clone()
     }
 
     pub fn get_path(&self) -> String {
-        self.domain.clone()
+        self.namespace.clone()
     }
 
     pub fn to_string(&self) -> String {
-        format!("{}:{}", self.domain, self.path)
+        format!("{}:{:?}", self.namespace, self.path)
     }
 }

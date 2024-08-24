@@ -27,7 +27,7 @@ impl Default for Style {
             underlined: false,
             strikethrough: false,
             obfuscated: false,
-            font_id: ResourceLocation::default(),
+            font_id: todo!(),
             click_event: None,
             hover_event: None,
         }

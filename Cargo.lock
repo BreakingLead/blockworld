@@ -336,6 +336,7 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
+ "slab",
  "thiserror",
  "tokio",
  "wgpu 0.20.1",
