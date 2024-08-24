@@ -4,6 +4,8 @@
 //! version 1.21
 //! ```
 
+use std::fmt::Display;
+
 use blockworld_utils::ResourceLocation;
 
 /// This is a wrapper around an image::RgbaImage that contains the contents of a sprite. It also will handle its mipmaps.
@@ -34,5 +36,16 @@ impl SpriteContents {
 
     pub fn height(&self) -> u32 {
         self.original_image.height()
+    }
+}
+
+impl Display for SpriteContents {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "SpriteContents({}, {:?})",
+            self.name,
+            self.original_image.dimensions()
+        )
     }
 }

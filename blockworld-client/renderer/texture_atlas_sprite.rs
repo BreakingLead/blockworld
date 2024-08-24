@@ -24,14 +24,13 @@ pub struct TextureAtlasSprite {
 }
 
 impl TextureAtlasSprite {
+    /// `atlas_width` is `pOriginX` in the Java code
     pub fn new(
         atlas_location: ResourceLocation,
         contents: &Rc<SpriteContents>,
         x: u32,
         y: u32,
-        /// `pOriginX`
         atlas_width: u32,
-        /// `pOriginY`
         atlas_height: u32,
     ) -> Self {
         let u0 = x as f32 / atlas_width as f32;

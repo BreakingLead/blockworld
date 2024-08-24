@@ -1,4 +1,5 @@
 #![deny(unused_must_use)]
+#![feature(int_roundings)]
 use std::sync::OnceLock;
 
 use clap::Parser;

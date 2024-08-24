@@ -6,10 +6,7 @@ pub struct Registry<V> {
     data: HashMap<ResourceLocation, V>,
 }
 
-impl<V> Registry<V>
-where
-    V: Eq,
-{
+impl<V> Registry<V> {
     pub fn new() -> Self {
         Self {
             data: HashMap::new(),

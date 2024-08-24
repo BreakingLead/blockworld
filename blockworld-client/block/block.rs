@@ -8,6 +8,7 @@ pub trait Block {
     fn material(&self) -> Material;
 }
 
+#[derive(Eq, PartialEq)]
 pub struct AirBlock;
 impl Block for AirBlock {
     fn texture_name(&self) -> String {
@@ -21,6 +22,7 @@ impl Block for AirBlock {
     }
 }
 
+#[derive(Eq, PartialEq)]
 pub struct StoneBlock;
 impl Block for StoneBlock {
     fn texture_name(&self) -> String {
@@ -34,6 +36,7 @@ impl Block for StoneBlock {
     }
 }
 
+#[derive(Eq, PartialEq)]
 pub struct GrassBlock;
 impl Block for GrassBlock {
     fn texture_name(&self) -> String {
@@ -47,6 +50,7 @@ impl Block for GrassBlock {
     }
 }
 
+#[derive(Eq, PartialEq)]
 pub struct DirtBlock;
 impl Block for DirtBlock {
     fn texture_name(&self) -> String {

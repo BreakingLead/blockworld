@@ -1,5 +1,3 @@
-use anyhow::*;
-use blockworld_utils::resource_location::str;
 use serde_json::Value;
 use std::{
     collections::{HashMap, HashSet},
@@ -26,7 +24,7 @@ struct PackMetadataSection {
     pub description: String,
 }
 
-const RESOURCE_ROOT: &Path = Path::new("./assets/assets/");
+static RESOURCE_ROOT: &str = "/assets/assets/";
 
 pub enum ResourceType {
     ClientResources,
@@ -43,7 +41,7 @@ impl ResourceType {
 }
 
 struct Resource {
-    location: str,
+    location: String,
     map_metadata: HashMap<String, Value>,
 }
 
@@ -54,8 +52,8 @@ impl Resource {
 }
 
 trait ResourcePack {
-    fn get_metadata(&self) -> Result<PackMetadataSection>;
-    fn resource_exists(&self, resource_path: &str) -> bool;
+    fn get_metadata(&self) -> anyhow::Result<PackMetadataSection>;
+    fn resource_exists(&self, resource_path: &Path) -> bool;
     fn get_name(&self) -> String;
     /// `getInputStream` in Minecraft
     fn get_read_stream(&self) -> ReadBuf;
@@ -70,7 +68,9 @@ impl ResourcePack for VanillaResourcePack {
         self.name.clone()
     }
 
-    fn get_metadata(&self) -> Result<PackMetadataSection, std::io::Error> {}
+    fn get_metadata(&self) -> anyhow::Result<PackMetadataSection> {
+        todo!()
+    }
 
     fn resource_exists(&self, location: &Path) -> bool {
         Path::exists(location)

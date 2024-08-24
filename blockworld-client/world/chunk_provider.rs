@@ -1,5 +1,4 @@
 //! net/minecraft/client/multiplayer/ClientChunkProvider.java
-#[feature(int_roundings)]
 use std::{
     cell::RefCell,
     rc::Rc,
@@ -10,6 +9,8 @@ use anyhow::{anyhow, Result};
 use blockworld_utils::*;
 
 use crate::game::world::ClientWorld;
+
+use super::chunk::Chunk;
 
 pub struct ClientChunkProvider {
     array: ChunkArray,
@@ -27,7 +28,7 @@ impl ClientChunkProvider {
             let index = self.array.get_index(chunk_x, chunk_z);
             let chunk = self.array.get(index);
             // ! fix this unwrap, validate chunk before unload
-            self.array.unload(index, chunk.unwrap())?;
+            self.array.unload(index, chunk.unwrap());
         }
         Ok(())
     }
@@ -62,7 +63,7 @@ impl ClientChunkProvider {
                 return None;
             }
             let chunk = &mut self.array.chunks[index];
-            *chunk = Some(Arc::new(Mutex::new((Chunk::new(chunk_x, chunk_z)))));
+            *chunk = Some(Arc::new(Mutex::new(Chunk::new(chunk_x, chunk_z))));
 
             return Some(chunk.as_ref().unwrap().clone());
         }

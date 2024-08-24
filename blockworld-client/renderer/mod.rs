@@ -4,7 +4,6 @@ pub mod entity;
 pub mod gui;
 pub mod pipeline;
 pub mod sprite_contents;
-pub mod texture;
 pub mod texture_atlas_sprite;
 pub mod utils;
 pub mod vertex;

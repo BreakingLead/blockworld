@@ -38,8 +38,6 @@ impl SubChunk {
 }
 
 pub struct Chunk {
-    pub world: Rc<World>,
-
     /// Blocks
     pub storage_array: [Box<SubChunk>; 16],
 
@@ -52,9 +50,8 @@ pub struct Chunk {
 }
 
 impl Chunk {
-    pub fn new(world: &Rc<World>, pos_x: i32, pos_z: i32) -> Self {
+    pub fn new(pos_x: i32, pos_z: i32) -> Self {
         Self {
-            world: Rc::clone(world),
             storage_array: todo!(),
             pos_x,
             pos_z,
@@ -85,5 +82,7 @@ impl Chunk {
 
     /// Detect neighbors for face cull.
     /// The coordinate is chunk-relative.
-    pub fn detect_block_neighbors(&self, x: i32, y: i32, z: i32) -> u32 {}
+    pub fn detect_block_neighbors(&self, x: i32, y: i32, z: i32) -> u32 {
+        todo!()
+    }
 }

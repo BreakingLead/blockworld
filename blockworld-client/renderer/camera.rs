@@ -4,7 +4,8 @@ use glam::*;
 
 use crate::game::player_state::PlayerState;
 
-use super::uniform::RawMat4;
+use super::wgpu::uniform::RawMat4;
+
 #[derive(Debug)]
 pub struct Camera {
     pub position: Vec3,

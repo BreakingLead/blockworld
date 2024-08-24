@@ -18,7 +18,9 @@ pub fn create_window(event_loop: &EventLoop<()>) -> Window {
         window_attrs = window_attrs.with_inner_size(PhysicalSize::new(args.width, args.height))
     }
     let window = event_loop.create_window(window_attrs).unwrap();
-    window.set_cursor_grab(winit::window::CursorGrabMode::Confined)?;
+    window
+        .set_cursor_grab(winit::window::CursorGrabMode::Confined)
+        .unwrap();
     window.set_cursor_visible(false);
 
     window

@@ -26,6 +26,10 @@ impl From<Mat4> for RawMat4 {
 }
 
 impl<T: bytemuck::Pod> Uniform<T> {
+    pub fn update(&mut self, new_value: T) {
+        self.uniform = Box::new(new_value);
+    }
+
     /// Create a new uniform with the given device, uniform value, binding number and label
     pub fn new(device: &wgpu::Device, uniform: T, binding: u32, label: Option<&str>) -> Self {
         let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

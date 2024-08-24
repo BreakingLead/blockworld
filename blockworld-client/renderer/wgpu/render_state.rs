@@ -1,4 +1,4 @@
-use crate::renderer::texture::Texture;
+use crate::block::Block;
 use crate::renderer::wgpu::init_helpers::*;
 use crate::{
     game::{settings::Settings, Blockworld},
@@ -8,6 +8,7 @@ use crate::{
         pipeline::{RegularPipeline, WireframePipeline},
     },
 };
+use blockworld_utils::registry::Registry;
 use glam::Mat4;
 use pollster::FutureExt;
 use std::{sync::Arc, time::Instant};
@@ -17,6 +18,9 @@ use winit::{
     event_loop::EventLoop,
     window::{Fullscreen, Window},
 };
+
+use super::texture::Texture;
+use super::uniform::{RawMat4, Uniform};
 
 /// The RenderState struct holds all the state needed to render the game's user interface and game world.
 pub struct RenderState {
@@ -37,7 +41,7 @@ pub struct RenderState {
     pub depth_texture: Texture,
 
     pub camera: Camera,
-    pub matrix_uniform: Uniform<MatrixData>,
+    pub matrix_uniform: Uniform<RawMat4>,
 
     // IO
     pub input_state: InputState,
@@ -54,7 +58,7 @@ pub struct RenderState {
     // Settings
     pub settings: Settings<'static>,
 
-    pub register_table: RegisterTable,
+    pub register_table: Registry<&'static dyn Block>,
 
     // Debug
     pub debug_mode: bool,
@@ -124,7 +128,7 @@ impl RenderState {
             label: Some("diffuse_bind_group"),
         });
 
-        let depth_texture = crate::renderer::Texture::create_depth_texture(&device, &config);
+        let depth_texture = Texture::create_depth_texture(&device, &config);
 
         let shader = device.create_shader_module(include_wgsl!("../shaders/default_shader.wgsl"));
         let wireframe_shader =
@@ -148,8 +152,7 @@ impl RenderState {
         // | Game Initialize |
         // -------------------
 
-        let mut register_table = RegisterTable::new();
-        let atlas = Atlas::new("assets/atlas.png", 16);
+        let mut register_table = Registry::new();
 
         let mut game = Blockworld::default();
         let input_state = InputState::default();
@@ -195,8 +198,7 @@ impl RenderState {
             self.config.height = new_size.height;
 
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture =
-                crate::renderer::texture::Texture::create_depth_texture(&self.device, &self.config);
+            self.depth_texture = Texture::create_depth_texture(&self.device, &self.config);
         }
     }
 
@@ -221,7 +223,7 @@ impl RenderState {
         self.camera.update(&self.game.player_state);
         self.camera.update_rotation(self.input_state.mouse_delta);
 
-        self.matrix_uniform.uniform.update_matrix(&self.camera);
+        self.matrix_uniform.update(self.camera.build_mvp());
         self.queue.write_buffer(
             &self.matrix_uniform.buffer,
             0,
@@ -294,7 +296,7 @@ impl RenderState {
         std::result::Result::Ok(())
     }
 
-    /// read a line from cmd synchronously. It should't be run on main displaying thread
+    // read a line from cmd synchronously. It should't be run on main displaying thread
     // pub async fn try_exec_single_instr_from_console(&mut self) -> anyhow::Result<()> {
     //     let stdin = std::io::stdin();
     //     let mut handle = stdin.lock();
