@@ -1,65 +1,42 @@
 //! net/minecraft/client/multiplayer/ClientChunkProvider.java
-use std::{cell::RefCell, rc::Rc};
+#[feature(int_roundings)]
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use anyhow::{anyhow, Result};
+use blockworld_utils::*;
 
-trait ChunkProvider {
-    /**
-     * Checks to see if a chunk exists at x, y
-     */
-    fn chunk_exists(&self, chunk_x: i32, chunk_z: i32) -> bool;
+use crate::game::world::ClientWorld;
 
-    /**
-     * Will return back a chunk, if it doesn't exist and its not a MP client it will generates all the blocks for the
-     * specified chunk from the map seed and chunk seed
-     */
-    fn provide_chunk(&self, chunk_x: i32, chunk_z: i32) -> Rc<RefCell<Chunk>>;
-
-    /**
-     * loads or generates the chunk at the chunk location specified
-     */
-    fn load_chunk(&self, chunk_x: i32, chunk_z: i32) -> Rc<RefCell<Chunk>> {
-        self.provide_chunk(chunk_x, chunk_z)
-    }
-}
-
-use super::{chunk::Chunk, world::ClientWorld};
 pub struct ClientChunkProvider {
     array: ChunkArray,
-    world: Rc<ClientWorld>,
+    world: AM<ClientWorld>,
 }
 
 impl ClientChunkProvider {
-    pub fn new(world: Rc<ClientWorld>, view_distance: i32) -> Self {
+    pub fn new(world: AM<ClientWorld>, view_distance: i32) -> Self {
         let array = ChunkArray::new(view_distance);
         Self { array, world }
-    }
-
-    fn is_valid(chunk_in: &Option<Rc<Chunk>>, x: i32, z: i32) -> bool {
-        if let Some(chunk) = chunk_in {
-            let pos = chunk.pos;
-            pos.x == x && pos.z == z
-        } else {
-            false
-        }
     }
 
     fn unload_chunk(&mut self, chunk_x: i32, chunk_z: i32) -> Result<()> {
         if self.array.in_view(chunk_x, chunk_z) {
             let index = self.array.get_index(chunk_x, chunk_z);
             let chunk = self.array.get(index);
-            if Self::is_valid(&chunk, chunk_x, chunk_z) {
-                // this unwrap is safe because it's checked to be vaild
-                self.array.unload(index, chunk.unwrap())?;
-            }
+            // ! fix this unwrap, validate chunk before unload
+            self.array.unload(index, chunk.unwrap())?;
         }
         Ok(())
     }
 
-    pub fn get_chunk(&self, chunk_x: i32, chunk_z: i32) -> Option<Rc<Chunk>> {
+    pub fn get_chunk(&self, chunk_x: i32, chunk_z: i32) -> Option<AM<Chunk>> {
         if self.array.in_view(chunk_x, chunk_z) {
             let chunk = self.array.get(self.array.get_index(chunk_x, chunk_z));
-            if Self::is_valid(&chunk, chunk_x, chunk_z) {
+            // if Self::is_valid(&chunk, chunk_x, chunk_z) {
+            if true {
                 chunk
             } else {
                 None
@@ -70,7 +47,7 @@ impl ClientChunkProvider {
     }
 
     // ! NOT COMPLETE
-    pub fn load_chunk(&mut self, chunk_x: i32, chunk_z: i32) -> Option<Rc<Chunk>> {
+    pub fn load_chunk(&mut self, chunk_x: i32, chunk_z: i32) -> Option<AM<Chunk>> {
         if !self.array.in_view(chunk_x, chunk_z) {
             log::error!(
                 "Ignoring chunk since we don't have complete data: {}, {}",
@@ -85,7 +62,7 @@ impl ClientChunkProvider {
                 return None;
             }
             let chunk = &mut self.array.chunks[index];
-            *chunk = Some(Rc::new(Chunk::new(chunk_x, chunk_z)));
+            *chunk = Some(Arc::new(Mutex::new((Chunk::new(chunk_x, chunk_z)))));
 
             return Some(chunk.as_ref().unwrap().clone());
         }
@@ -95,7 +72,7 @@ impl ClientChunkProvider {
 /// The place which holds references of all loaded chunks
 struct ChunkArray {
     /// Stored references
-    chunks: Vec<Option<Rc<Chunk>>>,
+    chunks: Vec<Option<AM<Chunk>>>,
     /// Set this with the view distance
     view_distance: i32,
     side_length: i32,
@@ -130,7 +107,7 @@ impl ChunkArray {
             + floor_mod(chunk_x, self.side_length)) as usize
     }
 
-    pub fn get(&self, chunk_index: usize) -> Option<Rc<Chunk>> {
+    pub fn get(&self, chunk_index: usize) -> Option<AM<Chunk>> {
         if chunk_index >= self.chunks.len() {
             None
         } else {
@@ -145,16 +122,17 @@ impl ChunkArray {
     }
 
     // ! Unfinished
-    /// chunk's index must match itself
-    pub fn unload(&mut self, chunk_index: usize, chunk_in: Rc<Chunk>) -> Result<()> {
+    /// # Panics
+    /// If the chunk is not in the view distance or the index is out of bound.
+    ///
+    pub fn unload(&mut self, chunk_index: usize, chunk_in: AM<Chunk>) {
         if self.get(chunk_index).is_none() {
-            Err(anyhow!("target chunk does not exist"))
-        } else if !Rc::ptr_eq(&self.get(chunk_index).unwrap(), &chunk_in) {
-            Err(anyhow!("target chunk does not match the index"))
+            panic!("target chunk does not exist");
+        } else if !Arc::ptr_eq(&self.get(chunk_index).unwrap(), &chunk_in) {
+            panic!("target chunk does not match the index")
         } else {
             self.chunks[chunk_index] = None;
             self.loaded -= 1;
-            Ok(())
         }
     }
 }

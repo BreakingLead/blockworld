@@ -1,11 +1,11 @@
+use crate::renderer::texture::Texture;
 use crate::renderer::wgpu::init_helpers::*;
 use crate::{
     game::{settings::Settings, Blockworld},
     io::input_helper::InputState,
     renderer::{
-        camera::{Camera, MatrixData},
+        camera::*,
         pipeline::{RegularPipeline, WireframePipeline},
-        uniform::{RawMat4, Uniform},
     },
 };
 use glam::Mat4;
@@ -82,6 +82,8 @@ impl RenderState {
         );
         matrix_uniform.uniform = Box::new(camera.build_mvp());
 
+        let texture: Texture = todo!();
+
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
@@ -150,7 +152,6 @@ impl RenderState {
         let atlas = Atlas::new("assets/atlas.png", 16);
 
         let mut game = Blockworld::default();
-        let render_array = RenderArray::new(&mut game.chunk_provider, &device, &register_table);
         let input_state = InputState::default();
 
         Self {
@@ -164,7 +165,7 @@ impl RenderState {
             main_pipeline,
             wireframe_pipeline,
 
-            texture,
+            texture: todo!(),
             texture_bind_group,
 
             depth_texture,
@@ -281,10 +282,10 @@ impl RenderState {
             render_pass.set_bind_group(0, &self.texture_bind_group, &[]);
             render_pass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
-            for chunk in self.render_array.chunks().iter() {
-                render_pass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
-                render_pass.draw(0..chunk.vertex_count, 0..1);
-            }
+            // for chunk in self.render_array.chunks().iter() {
+            //     render_pass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
+            //     render_pass.draw(0..chunk.vertex_count, 0..1);
+            // }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -294,12 +295,12 @@ impl RenderState {
     }
 
     /// read a line from cmd synchronously. It should't be run on main displaying thread
-    pub async fn try_exec_single_instr_from_console(&mut self) -> anyhow::Result<()> {
-        let stdin = std::io::stdin();
-        let mut handle = stdin.lock();
-        let mut console_string = String::new();
-        handle.read_line(&mut console_string)?;
-        // exec_instr_from_string(console_string, self).await?;
-        Ok(())
-    }
+    // pub async fn try_exec_single_instr_from_console(&mut self) -> anyhow::Result<()> {
+    //     let stdin = std::io::stdin();
+    //     let mut handle = stdin.lock();
+    //     let mut console_string = String::new();
+    //     handle.read_line(&mut console_string)?;
+    //     // exec_instr_from_string(console_string, self).await?;
+    //     Ok(())
+    // }
 }

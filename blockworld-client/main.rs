@@ -2,7 +2,7 @@
 use std::sync::OnceLock;
 
 use clap::Parser;
-use renderer::window_init::run;
+use renderer::run;
 
 mod block;
 mod debug;

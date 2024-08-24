@@ -1,6 +1,5 @@
 use anyhow::*;
 use blockworld_utils::resource_location::str;
-use image::RgbaImage;
 use serde_json::Value;
 use std::{
     collections::{HashMap, HashSet},

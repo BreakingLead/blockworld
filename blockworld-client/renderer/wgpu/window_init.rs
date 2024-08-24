@@ -92,7 +92,9 @@ impl ApplicationHandler for WindowApplication {
 
                 // ! NOT IDEAL
                 // ! FIX LATER
-                if key == Key::Named(NamedKey::F1) && event.state == ElementState::Released {
+                if key == keyboard::Key::Named(keyboard::NamedKey::F1)
+                    && event.state == event::ElementState::Released
+                {
                     self.render_state_mut().debug_mode = !self.render_state().debug_mode;
                 }
             }

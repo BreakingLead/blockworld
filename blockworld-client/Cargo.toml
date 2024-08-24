@@ -28,6 +28,7 @@ thiserror = "1.0.61"
 tokio = "1.37.0"
 wgpu = "0.20.0"
 winit = "0.30.0"
+slab = "0.4.9"
 
 [[bin]]
 name = "blockworld-client"
