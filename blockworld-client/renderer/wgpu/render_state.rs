@@ -10,14 +10,9 @@ use crate::{
 };
 use blockworld_utils::registry::Registry;
 use glam::Mat4;
-use pollster::FutureExt;
 use std::{sync::Arc, time::Instant};
 use wgpu::{include_wgsl, Device, Queue, Surface, SurfaceConfiguration};
-use winit::{
-    dpi::PhysicalSize,
-    event_loop::EventLoop,
-    window::{Fullscreen, Window},
-};
+use winit::{dpi::PhysicalSize, window::Window};
 
 use super::texture::Texture;
 use super::uniform::{RawMat4, Uniform};

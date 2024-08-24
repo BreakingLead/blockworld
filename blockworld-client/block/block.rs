@@ -1,5 +1,3 @@
-use crate::io::atlas_helper::UV;
-
 pub type BlockID = u32;
 
 pub trait Block {

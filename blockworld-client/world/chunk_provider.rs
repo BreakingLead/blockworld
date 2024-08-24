@@ -1,11 +1,7 @@
 //! net/minecraft/client/multiplayer/ClientChunkProvider.java
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use blockworld_utils::*;
 
 use crate::game::world::ClientWorld;
