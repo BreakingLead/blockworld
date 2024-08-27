@@ -1,4 +1,4 @@
-use super::vertex::Vertex;
+use crate::renderer::{shaders::ToWgpuShader, vertex::TexturedVertex};
 
 #[derive(Debug)]
 pub struct RegularPipeline {
@@ -10,7 +10,7 @@ impl RegularPipeline {
     pub fn new(
         device: &wgpu::Device,
         bind_group_layouts: &[&wgpu::BindGroupLayout],
-        shader: &wgpu::ShaderModule,
+        shader: &dyn ToWgpuShader,
         config: &wgpu::SurfaceConfiguration,
     ) -> Self {
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -23,17 +23,17 @@ impl RegularPipeline {
             label: Some("Render Pipeline"),
             layout: Some(&layout),
             vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[Vertex::desc()],
+                module: shader.get_vert().0,
+                entry_point: shader.get_vert().1,
+                buffers: &[TexturedVertex::desc()],
                 compilation_options: Default::default(),
             },
             fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
+                module: shader.get_frag().0,
+                entry_point: shader.get_frag().1,
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
                 compilation_options: Default::default(),
@@ -75,7 +75,7 @@ impl WireframePipeline {
     pub fn new(
         device: &wgpu::Device,
         bind_group_layouts: &[&wgpu::BindGroupLayout],
-        shader: &wgpu::ShaderModule,
+        shader: &dyn ToWgpuShader,
         config: &wgpu::SurfaceConfiguration,
     ) -> Self {
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -88,14 +88,14 @@ impl WireframePipeline {
             label: Some("Wireframe Pipeline"),
             layout: Some(&layout),
             vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[Vertex::desc()],
+                module: shader.get_vert().0,
+                entry_point: shader.get_vert().1,
+                buffers: &[TexturedVertex::desc()],
                 compilation_options: Default::default(),
             },
             fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
+                module: shader.get_vert().0,
+                entry_point: shader.get_vert().1,
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),

@@ -9,7 +9,6 @@ use std::fmt::Display;
 use blockworld_utils::ResourceLocation;
 
 /// This is a wrapper around an image::RgbaImage that contains the contents of a sprite. It also will handle its mipmaps.
-///
 pub struct SpriteContents {
     name: ResourceLocation,
     original_image: image::RgbaImage,

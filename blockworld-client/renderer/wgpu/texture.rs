@@ -1,24 +1,22 @@
 use image::GenericImageView;
 
 #[derive(Debug)]
-pub struct Texture {
+pub struct TextureWithView {
     pub texture: wgpu::Texture,
     pub view: wgpu::TextureView,
-    pub sampler: wgpu::Sampler,
+    pub sampler: Option<wgpu::Sampler>,
 }
 
-impl Texture {
-    pub fn from_bytes(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        bytes: &[u8],
-        label: &str,
-    ) -> Self {
-        let img = image::load_from_memory(bytes).unwrap();
-        Self::from_image(device, queue, &img, Some(label))
-    }
+/// WARNING: This is a temporary solution until we have a better way to handle bind groups and layouts
+/// So do not check this code if you don't know what you are doing
+pub struct BindableTexture {
+    pub texture: TextureWithView,
+    pub bind_group: wgpu::BindGroup,
+    pub bind_group_layout: wgpu::BindGroupLayout,
+}
 
-    pub fn from_image(
+impl TextureWithView {
+    pub fn new(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         img: &image::DynamicImage,
@@ -73,18 +71,12 @@ impl Texture {
         Self {
             texture,
             view,
-            sampler,
+            sampler: Some(sampler),
         }
     }
 
-    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float; // 1.
-
-    pub fn create_depth_texture(
-        device: &wgpu::Device,
-        config: &wgpu::SurfaceConfiguration,
-    ) -> Self {
+    pub fn new_depth(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> Self {
         let size = wgpu::Extent3d {
-            // 2.
             width: config.width,
             height: config.height,
             depth_or_array_layers: 1,
@@ -96,9 +88,8 @@ impl Texture {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: Self::DEPTH_FORMAT,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT // 3.
-                | wgpu::TextureUsages::TEXTURE_BINDING,
+            format: wgpu::TextureFormat::Depth32Float,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         };
 
@@ -106,24 +97,70 @@ impl Texture {
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        // Sampler is unnecessary as long as depth texture won't be sampled but we will make our struct happy
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Linear,
-            compare: Some(wgpu::CompareFunction::LessEqual),
-            lod_min_clamp: 0.0,
-            lod_max_clamp: 100.0,
-            ..Default::default()
+        Self {
+            texture,
+            view,
+            sampler: None,
+        }
+    }
+}
+
+impl BindableTexture {
+    pub fn new(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        img: &image::DynamicImage,
+        label: Option<&str>,
+    ) -> Self {
+        let texture = TextureWithView::new(device, queue, img, label);
+
+        let mut group_layout_entries = vec![wgpu::BindGroupLayoutEntry {
+            binding: 0,
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            ty: wgpu::BindingType::Texture {
+                sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                view_dimension: wgpu::TextureViewDimension::D2,
+                multisampled: false,
+            },
+            count: None,
+        }];
+
+        let mut group_entries = vec![wgpu::BindGroupEntry {
+            binding: 0,
+            resource: wgpu::BindingResource::TextureView(&texture.view),
+        }];
+
+        if texture.sampler.is_some() {
+            group_layout_entries.push(wgpu::BindGroupLayoutEntry {
+                binding: 1,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
+                count: None,
+            });
+
+            group_entries.push(wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Sampler(&texture.sampler.as_ref().unwrap()), // unwrap is safe because we checked
+            })
+        }
+
+        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: label
+                .map(|s| s.to_owned() + " Bind Group Layout")
+                .as_deref(),
+            entries: &group_layout_entries,
+        });
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label,
+            layout: &bind_group_layout,
+            entries: &group_entries,
         });
 
         Self {
             texture,
-            view,
-            sampler,
+            bind_group,
+            bind_group_layout,
         }
     }
 }

@@ -1,14 +1,22 @@
 //! Utils for creating bind group, bind group layout and the uniform
 
+use std::{cell::Cell, ops::Deref};
+
 use glam::Mat4;
 use wgpu::util::DeviceExt;
+
+pub trait ToBytes: Copy + Clone + bytemuck::Pod {
+    fn to_bytes(&self) -> &[u8] {
+        bytemuck::bytes_of(self)
+    }
+}
 
 /// T refers to the uniform type
 pub struct Uniform<T>
 where
-    T: Copy + Clone + bytemuck::Pod + bytemuck::Zeroable + bytemuck::NoUninit,
+    T: ToBytes,
 {
-    pub uniform: Box<T>,
+    uniform: T,
     pub buffer: wgpu::Buffer,
     pub layout: wgpu::BindGroupLayout,
     pub bind_group: wgpu::BindGroup,
@@ -18,6 +26,7 @@ where
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct RawMat4(pub [[f32; 4]; 4]);
+impl ToBytes for RawMat4 {}
 
 impl From<Mat4> for RawMat4 {
     fn from(mat: Mat4) -> Self {
@@ -25,12 +34,14 @@ impl From<Mat4> for RawMat4 {
     }
 }
 
-impl<T: bytemuck::Pod> Uniform<T> {
+impl<T: ToBytes> Uniform<T> {
     pub fn update(&mut self, new_value: T) {
-        self.uniform = Box::new(new_value);
+        self.uniform = new_value;
     }
 
     /// Create a new uniform with the given device, uniform value, binding number and label
+    ///
+    /// binding number corresponds to the shader's @binding(x)
     pub fn new(device: &wgpu::Device, uniform: T, binding: u32, label: Option<&str>) -> Self {
         let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label,
@@ -41,7 +52,7 @@ impl<T: bytemuck::Pod> Uniform<T> {
         let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding,
-                visibility: wgpu::ShaderStages::VERTEX,
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
@@ -49,21 +60,18 @@ impl<T: bytemuck::Pod> Uniform<T> {
                 },
                 count: None,
             }],
-            // ? Should add a " layout" after label
             label,
         });
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &layout,
             entries: &[wgpu::BindGroupEntry {
-                // same as above binding number
+                // @binding(x)
                 binding,
                 resource: buffer.as_entire_binding(),
             }],
             label,
         });
-
-        let uniform = Box::new(uniform);
 
         Self {
             uniform,
@@ -72,5 +80,16 @@ impl<T: bytemuck::Pod> Uniform<T> {
             bind_group,
             binding,
         }
+    }
+}
+
+impl<T> Deref for Uniform<T>
+where
+    T: ToBytes,
+{
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.uniform.to_bytes()
     }
 }

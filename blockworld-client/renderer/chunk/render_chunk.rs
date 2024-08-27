@@ -3,7 +3,10 @@ use glam::*;
 use log::info;
 use wgpu::{util::DeviceExt, Device};
 
-use crate::game::{chunk::*, register::RegisterTable};
+use crate::{
+    game::{chunk::*, register::RegisterTable},
+    world::chunk::Chunk,
+};
 
 use super::vertex::Vertex;
 

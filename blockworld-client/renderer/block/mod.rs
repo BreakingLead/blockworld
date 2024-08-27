@@ -1,6 +1,6 @@
 //! Helper methods and structures for working with cubes.
-use super::vertex::Vertex;
-use crate::io::atlas_helper::UV;
+
+use super::vertex::TexturedVertex;
 use glam::*;
 
 #[repr(u8)]
@@ -91,17 +91,17 @@ impl BlockFaceDirection {
             .map(|v| bias + v)
     }
 
-    pub fn to_face_mesh(self, coord: Vec3, uv: UV) -> [Vertex; 6] {
-        let aa = uv.aa();
-        let bb = uv.bb();
-        let vecs = self.to_vertices(coord);
+    pub fn to_quad_mesh(self, quad_center: Vec3, uv_aa: Vec2, uv_bb: Vec2) -> [TexturedVertex; 6] {
+        let aa = uv_aa;
+        let bb = uv_bb;
+        let vecs = self.to_vertices(quad_center);
         [
-            Vertex::new(vecs[0], vec2(bb.x, aa.y)),
-            Vertex::new(vecs[1], vec2(aa.x, aa.y)),
-            Vertex::new(vecs[2], vec2(aa.x, bb.y)),
-            Vertex::new(vecs[0], vec2(bb.x, aa.y)),
-            Vertex::new(vecs[2], vec2(aa.x, bb.y)),
-            Vertex::new(vecs[3], vec2(bb.x, bb.y)),
+            TexturedVertex::new(vecs[0], vec2(bb.x, aa.y)),
+            TexturedVertex::new(vecs[1], vec2(aa.x, aa.y)),
+            TexturedVertex::new(vecs[2], vec2(aa.x, bb.y)),
+            TexturedVertex::new(vecs[0], vec2(bb.x, aa.y)),
+            TexturedVertex::new(vecs[2], vec2(aa.x, bb.y)),
+            TexturedVertex::new(vecs[3], vec2(bb.x, bb.y)),
         ]
     }
 }

@@ -14,9 +14,12 @@ pub struct TextureAtlasSprite {
     atlas_location: ResourceLocation,
     /// a reference to the big texture atlas
     contents: Rc<SpriteContents>,
-    /// `final`
+
+    // Column y and row x of the sprite in the big texture atlas
     x: u32,
     y: u32,
+
+    // Calculated values
     u0: f32,
     v0: f32,
     u1: f32,
