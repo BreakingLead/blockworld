@@ -32,7 +32,9 @@ impl ApplicationHandler for WindowApplication {
     /// Initialize the application.
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = event_loop.create_window(
-            Window::default_attributes().with_title(blockworld_utils::constants::GAME_NAME),
+            Window::default_attributes()
+                .with_title(blockworld_utils::GAME_NAME)
+                .with_resizable(false),
         );
         match window {
             Ok(window) => {
@@ -54,7 +56,7 @@ impl ApplicationHandler for WindowApplication {
         event: winit::event::DeviceEvent,
     ) {
         self.render_state_mut()
-            .input_state
+            .input_manager
             .handle_device_event(&event);
     }
 
@@ -71,13 +73,13 @@ impl ApplicationHandler for WindowApplication {
             }
             WindowEvent::RedrawRequested => {
                 self.render_state_mut().update();
-                self.render_state_mut().render().expect("Render Error!");
                 // use inspect_err to avoid panic so that we can input instruction to display state to debug
                 // self.try_exec_single_instr_from_console().inspect_err(
                 //     |e| {
                 //         error!("err when try_exec_single_instr_from_console {e:?}")
                 //     }
                 // );
+                self.render_state().render();
                 self.render_state().window.request_redraw();
             }
             WindowEvent::Resized(size) => {
@@ -87,7 +89,9 @@ impl ApplicationHandler for WindowApplication {
                 if event.physical_key == KeyCode::Escape {
                     event_loop.exit();
                 }
-                self.render_state_mut().input_state.handle_key_event(&event);
+                self.render_state_mut()
+                    .input_manager
+                    .handle_key_event(&event);
 
                 let key = event.logical_key;
 
@@ -96,7 +100,8 @@ impl ApplicationHandler for WindowApplication {
                 if key == keyboard::Key::Named(keyboard::NamedKey::F1)
                     && event.state == event::ElementState::Released
                 {
-                    self.render_state_mut().debug_mode = !self.render_state().debug_mode;
+                    self.render_state_mut().world_renderer.debug_mode =
+                        !self.render_state().world_renderer.debug_mode;
                 }
             }
             _ => (),
@@ -114,6 +119,6 @@ pub async fn run() {
 
     event_loop
         .run_app(&mut state)
-        .with_context(|| format!("Failed to run app"))
+        .with_context(|| "Failed to run app".to_string())
         .unwrap();
 }

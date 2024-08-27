@@ -22,7 +22,7 @@ impl ConsoleInstr {
             ));
         }
         let command = &parts[0];
-        if command.len() == 0 {
+        if command.is_empty() {
             return Err(anyhow!("instr_name should not be null"));
         }
 
@@ -42,13 +42,13 @@ impl ConsoleInstr {
             let event_id_end_index = rev_chs
                 .enumerate()
                 .find(|(_, ch)| *ch == '[')
-                .with_context(|| format!("failed to parse event_id"))?
+                .with_context(|| "failed to parse event_id".to_string())?
                 .0
                 + 1;
             Some(
                 input[event_id_start_index..event_id_end_index]
                     .parse::<u64>()
-                    .with_context(|| format!("failed to parse event_id"))?,
+                    .with_context(|| "failed to parse event_id".to_string())?,
             )
         } else {
             None

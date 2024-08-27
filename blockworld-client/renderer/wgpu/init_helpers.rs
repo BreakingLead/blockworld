@@ -3,7 +3,7 @@ use pollster::FutureExt;
 use wgpu::*;
 use winit::{
     dpi::PhysicalSize,
-    event_loop::EventLoop,
+    event_loop::{ActiveEventLoop, EventLoop},
     window::{Fullscreen, Window},
 };
 
@@ -32,14 +32,6 @@ pub fn create_instance() -> Instance {
         backends: wgpu::Backends::PRIMARY,
         ..Default::default()
     })
-}
-
-/// Create the `wgpu` surface from the window.
-pub fn create_surface<'window>(
-    instance: &Instance,
-    window: &'window Window,
-) -> Result<Surface<'window>, wgpu::CreateSurfaceError> {
-    instance.create_surface(window)
 }
 
 /// Create the `wgpu` adapter from the instance and surface.
@@ -76,7 +68,7 @@ pub fn create_surface_config(
     surface: &Surface,
     adapter: &Adapter,
 ) -> wgpu::SurfaceConfiguration {
-    let surface_caps = surface.get_capabilities(&adapter);
+    let surface_caps = surface.get_capabilities(adapter);
     let surface_format = surface_caps
         .formats
         .iter()

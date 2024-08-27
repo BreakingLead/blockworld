@@ -1,5 +1,4 @@
-#[derive(Debug)]
-pub struct Settings<'a> {
-    pub font: &'a [u8],
-    pub font_size: f32,
-}
+// pub struct Settings<'a> {
+//     pub font: &'a [u8],
+//     pub font_size: f32,
+// }

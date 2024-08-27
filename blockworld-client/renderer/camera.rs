@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use glam::*;
 
-use crate::game::player_state::PlayerState;
+use crate::game::key_record::MovementRecord;
 
 use super::wgpu::uniform::RawMat4;
 
@@ -22,15 +22,15 @@ pub struct Camera {
 impl Camera {
     pub fn new(aspect_ratio: f32) -> Self {
         Self {
-            position: vec3(0.0, 0.0, 5.0),
+            position: vec3(0.0, 10.0, 5.0),
             up: vec3(0.0, 1.0, 0.0),
-            yaw: PI,
+            yaw: 0.0,
             pitch: 0.0,
             aspect_ratio,
             fovy: PI / 2.0,
             znear: 0.1,
             zfar: 100.0,
-            speed: 0.15,
+            speed: 0.05,
         }
     }
 
@@ -66,23 +66,23 @@ impl Camera {
     }
 
     /// update camera state by 1 unit according to player_state
-    pub fn update(&mut self, player_state: &PlayerState) {
-        if player_state.forward {
+    pub fn update(&mut self, player_state: MovementRecord) {
+        if player_state.forward() {
             self.go_forward(1.0);
         }
-        if player_state.backward {
+        if player_state.backward() {
             self.go_forward(-1.0);
         }
-        if player_state.left {
+        if player_state.left() {
             self.go_right(-1.0);
         }
-        if player_state.right {
+        if player_state.right() {
             self.go_right(1.0);
         }
-        if player_state.ascend {
+        if player_state.ascend() {
             self.go_up(1.0);
         }
-        if player_state.descend {
+        if player_state.descend() {
             self.go_up(-1.0);
         }
     }

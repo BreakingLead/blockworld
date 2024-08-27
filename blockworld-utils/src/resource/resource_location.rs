@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-/// Same as Minecraft's `ResourceLocation`
-#[derive(Debug, PartialEq, Eq, Hash)]
+/// Same as Minecraft's `ResourceLocation` or `Identifier` in yarn mappings.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ResourceLocation {
     namespace: String,
     path: PathBuf,
@@ -26,12 +26,32 @@ impl ResourceLocation {
         self.namespace.clone()
     }
 
-    pub fn get_path(&self) -> String {
-        self.namespace.clone()
+    pub fn get_path(&self) -> PathBuf {
+        self.path.clone()
+    }
+
+    pub fn with_namespace(self, namespace: String) -> Self {
+        Self {
+            namespace,
+            path: self.path,
+        }
+    }
+
+    pub fn with_path(self, path: PathBuf) -> Self {
+        Self {
+            namespace: self.namespace,
+            path,
+        }
     }
 
     pub fn to_string(&self) -> String {
         format!("{}:{:?}", self.namespace, self.path)
+    }
+}
+
+impl From<&str> for ResourceLocation {
+    fn from(s: &str) -> Self {
+        Self::new(s)
     }
 }
 

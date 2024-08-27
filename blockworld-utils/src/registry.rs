@@ -1,9 +1,15 @@
 use std::collections::HashMap;
 
-use crate::resource_location::ResourceLocation;
+use crate::ResourceLocation;
 
 pub struct Registry<V> {
     data: HashMap<ResourceLocation, V>,
+}
+
+impl<V> Default for Registry<V> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<V> Registry<V> {
@@ -13,15 +19,15 @@ impl<V> Registry<V> {
         }
     }
 
-    fn register(&mut self, name: ResourceLocation, value: V) {
+    pub fn register(&mut self, name: ResourceLocation, value: V) {
         self.data.insert(name, value);
     }
 
-    fn get(&self, name: &ResourceLocation) -> Option<&V> {
+    pub fn get(&self, name: &ResourceLocation) -> Option<&V> {
         self.data.get(name)
     }
     /// From value to key.
-    fn get_key(&self, value: &V) -> Option<ResourceLocation> {
+    pub fn get_key(&self, value: &V) -> Option<ResourceLocation> {
         todo!()
     }
 }
