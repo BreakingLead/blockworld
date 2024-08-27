@@ -1,9 +1,15 @@
 use std::collections::HashMap;
 
-use crate::resource_location::ResourceLocation;
+use crate::ResourceLocation;
 
 pub struct Registry<V> {
     data: HashMap<ResourceLocation, V>,
+}
+
+impl<V> Default for Registry<V> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<V> Registry<V> {

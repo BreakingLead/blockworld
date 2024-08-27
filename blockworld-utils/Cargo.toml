@@ -4,3 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+maplit = "1.0.2"
+serde = "1.0.209"
+serde_json = "1.0.127"
+thiserror = "1.0.63"

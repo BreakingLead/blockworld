@@ -1,6 +1,4 @@
-//! What's a resource key?
-
-use crate::resource_location::ResourceLocation;
+use crate::ResourceLocation;
 
 /// ResourceKeys combine a registry id with a registry name.
 /// An example would be a registry key with the registry id `minecraft:item` and the registry name `minecraft:diamond_sword.`

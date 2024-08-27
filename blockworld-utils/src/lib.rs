@@ -4,13 +4,11 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-pub mod constants;
-pub mod registry;
-pub mod resource_key;
-pub mod resource_location;
-pub mod text;
+mod constants;
+mod registry;
+mod resource;
 
-pub use resource_location::ResourceLocation;
+pub use resource::resource_location::ResourceLocation;
 
 pub type AM<T> = Arc<Mutex<T>>;
 pub type RR<T> = Rc<RefCell<T>>;
