@@ -31,8 +31,11 @@ impl WindowApplication {
 impl ApplicationHandler for WindowApplication {
     /// Initialize the application.
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let window = event_loop
-            .create_window(Window::default_attributes().with_title(blockworld_utils::GAME_NAME));
+        let window = event_loop.create_window(
+            Window::default_attributes()
+                .with_title(blockworld_utils::GAME_NAME)
+                .with_resizable(false),
+        );
         match window {
             Ok(window) => {
                 self.render_state = Some(RenderState::new(window));
@@ -70,13 +73,13 @@ impl ApplicationHandler for WindowApplication {
             }
             WindowEvent::RedrawRequested => {
                 self.render_state_mut().update();
-                self.render_state_mut().render();
                 // use inspect_err to avoid panic so that we can input instruction to display state to debug
                 // self.try_exec_single_instr_from_console().inspect_err(
                 //     |e| {
                 //         error!("err when try_exec_single_instr_from_console {e:?}")
                 //     }
                 // );
+                self.render_state().render();
                 self.render_state().window.request_redraw();
             }
             WindowEvent::Resized(size) => {

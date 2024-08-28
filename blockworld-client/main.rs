@@ -1,5 +1,5 @@
 #![deny(unused_must_use)]
-#![feature(int_roundings)]
+#![feature(int_roundings, lazy_cell)]
 use std::sync::OnceLock;
 
 use clap::Parser;
@@ -29,13 +29,10 @@ struct Args {
     pub full_screen: bool,
 }
 
-static cli_args: OnceLock<Args> = OnceLock::new();
+static CLIARGS: OnceLock<Args> = OnceLock::new();
 
 pub fn get_cli_args() -> &'static Args {
-    cli_args.get_or_init(|| {
-        let args = Args::parse();
-        args
-    })
+    CLIARGS.get_or_init(|| Args::parse())
 }
 
 fn main() {

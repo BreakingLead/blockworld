@@ -94,8 +94,8 @@ impl WireframePipeline {
                 compilation_options: Default::default(),
             },
             fragment: Some(wgpu::FragmentState {
-                module: shader.get_vert().0,
-                entry_point: shader.get_vert().1,
+                module: shader.get_frag().0,
+                entry_point: shader.get_frag().1,
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),

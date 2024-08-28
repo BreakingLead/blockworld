@@ -7,14 +7,14 @@ use thiserror::Error;
 /// This trait is implemented by different resource providers,
 /// such as a filesystem provider,
 /// a web request provider or a resource pack provider.
-pub trait ResourceProvider: Send + Sync {
+pub trait BytesProvider: Send + Sync {
     fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>, ResourceError>;
 }
 
 /// A resource provider that provides resources from a static value (embedded in the binary).
-pub struct StaticResourceProvider;
+pub struct StaticBytesProvider;
 
-impl ResourceProvider for StaticResourceProvider {
+impl BytesProvider for StaticBytesProvider {
     fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>, ResourceError> {
         if id == &"blockworld:assets/shaders/wireframe_shader.wgsl".into() {
             let r = include_bytes!("../assets/shaders/wireframe_shader.wgsl").to_vec();
@@ -31,9 +31,9 @@ impl ResourceProvider for StaticResourceProvider {
 /// Only used for debugging purposes
 /// When 1.0 is released, this should be replaced with a more robust solution
 pub const TEMP_ASSETS_ROOT: &str = "assets/";
-pub struct FilesystemResourceProvider;
+pub struct FilesystemBytesProvider;
 
-impl ResourceProvider for FilesystemResourceProvider {
+impl BytesProvider for FilesystemBytesProvider {
     fn get_bytes(&self, identifier: &ResourceLocation) -> Result<Vec<u8>, ResourceError> {
         let path = TEMP_ASSETS_ROOT.to_string() + identifier.get_path().to_str().unwrap();
         let path = Path::new(&path);
@@ -60,7 +60,7 @@ pub enum ResourceError {
 fn filesystem_resource_provider_test() {
     std::fs::write("assets/test.txt", "hello").unwrap();
 
-    let p = FilesystemResourceProvider;
+    let p = FilesystemBytesProvider;
     let bytes = p.get_bytes(&ResourceLocation::new("test.txt")).unwrap();
     let s = String::from_utf8(bytes).unwrap();
     assert_eq!(s, "hello");

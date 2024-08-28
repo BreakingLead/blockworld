@@ -1,11 +1,13 @@
 //! Helper methods and structures for working with cubes.
 
 use super::vertex::TexturedVertex;
+use enumflags2::bitflags;
 use glam::*;
 
+#[bitflags]
 #[repr(u8)]
 #[derive(Clone, Copy)]
-enum BlockFaceDirection {
+pub enum BlockFaceDirection {
     /// X+ (east)
     XP = 0b000001,
     /// Y+ (up)

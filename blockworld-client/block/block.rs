@@ -1,66 +1,35 @@
-pub type BlockID = u32;
+use blockworld_utils::ResourceLocation;
 
-pub trait Block {
-    fn texture_name(&self) -> String;
+pub type NumberID = u32;
+
+pub trait Block: Send + Sync + 'static {
+    fn texture_location(&self) -> ResourceLocation;
     fn hardness(&self) -> f32;
     fn material(&self) -> Material;
 }
 
-#[derive(Eq, PartialEq)]
-pub struct AirBlock;
-impl Block for AirBlock {
-    fn texture_name(&self) -> String {
-        "block/air".to_string()
-    }
-    fn hardness(&self) -> f32 {
-        0.0
-    }
-    fn material(&self) -> Material {
-        Material::Air
-    }
+macro_rules! def_basic_block {
+    ($name:ident, $texture:literal, $hardness:literal, $material:expr) => {
+        #[derive(Eq, PartialEq, Clone, Copy)]
+        pub struct $name;
+        impl Block for $name {
+            fn texture_location(&self) -> ResourceLocation {
+                $texture.into()
+            }
+            fn hardness(&self) -> f32 {
+                $hardness
+            }
+            fn material(&self) -> Material {
+                $material
+            }
+        }
+    };
 }
 
-#[derive(Eq, PartialEq)]
-pub struct StoneBlock;
-impl Block for StoneBlock {
-    fn texture_name(&self) -> String {
-        "block/stone".to_string()
-    }
-    fn hardness(&self) -> f32 {
-        1.5
-    }
-    fn material(&self) -> Material {
-        Material::Solid
-    }
-}
-
-#[derive(Eq, PartialEq)]
-pub struct GrassBlock;
-impl Block for GrassBlock {
-    fn texture_name(&self) -> String {
-        "block/grass".to_string()
-    }
-    fn hardness(&self) -> f32 {
-        0.6
-    }
-    fn material(&self) -> Material {
-        Material::Solid
-    }
-}
-
-#[derive(Eq, PartialEq)]
-pub struct DirtBlock;
-impl Block for DirtBlock {
-    fn texture_name(&self) -> String {
-        "block/dirt".to_string()
-    }
-    fn hardness(&self) -> f32 {
-        0.5
-    }
-    fn material(&self) -> Material {
-        Material::Solid
-    }
-}
+def_basic_block!(Air, "null", 1.5, Material::Air);
+def_basic_block!(Stone, "stone", 1.5, Material::Solid);
+def_basic_block!(Grass, "grass", 0.6, Material::Solid);
+def_basic_block!(Dirt, "dirt", 0.5, Material::Solid);
 
 #[derive(Debug, Default, Clone, Copy)]
 pub enum Material {

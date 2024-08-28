@@ -1,11 +1,16 @@
 use glam::Mat4;
 use wgpu::*;
 
-use crate::game::{input_manager::InputManager, key_record::MovementRecord};
+use crate::{
+    game::{input_manager::InputManager, key_record::MovementRecord},
+    world::chunk_provider::ChunkArray,
+};
 
 use super::{
     camera::Camera,
-    resource_provider::StaticResourceProvider,
+    chunk::render_chunk::RenderChunk,
+    resource_manager::BLOCK_ATLAS,
+    resource_provider::StaticBytesProvider,
     shaders::WgslShader,
     wgpu::{
         pipeline::{RegularPipeline, WireframePipeline},
@@ -25,6 +30,9 @@ pub struct WorldRenderer {
 
     camera: Camera,
     matrix_uniform: Uniform<RawMat4>,
+
+    chunks: Box<ChunkArray>,
+    render_array: Vec<RenderChunk>,
 }
 
 impl WorldRenderer {
@@ -45,14 +53,18 @@ impl WorldRenderer {
         );
         matrix_uniform.update(camera.build_mvp());
 
-        let diffuse_texture =
-            BindableTexture::new(&device, &queue, todo!(), Some("Diffuse Texture"));
+        let diffuse_texture = BindableTexture::new(
+            &device,
+            &queue,
+            &image::DynamicImage::ImageRgba8(BLOCK_ATLAS.get_image().clone()),
+            Some("Diffuse Texture"),
+        );
 
         let depth_texture = TextureWithView::new_depth(&device, &config);
 
         let shader = WgslShader::new(
             &"blockworld:assets/shaders/default_shader.wgsl".into(),
-            &StaticResourceProvider,
+            &StaticBytesProvider,
             device,
             "fs",
             "vs",
@@ -61,7 +73,7 @@ impl WorldRenderer {
 
         let wireframe_shader = WgslShader::new(
             &"blockworld:assets/shaders/wireframe_shader.wgsl".into(),
-            &StaticResourceProvider,
+            &StaticBytesProvider,
             device,
             "fs",
             "vs",
@@ -81,6 +93,24 @@ impl WorldRenderer {
             &wireframe_shader,
             &config,
         );
+
+        let chunks = Box::new(ChunkArray::new(8));
+        let mut render_array = vec![];
+        for (loc, chunk) in chunks.chunks.iter() {
+            render_array.push(RenderChunk::new(device, chunk));
+        }
+
+        Self {
+            debug_mode: false,
+            main_pipeline,
+            wireframe_pipeline,
+            diffuse_texture,
+            depth_texture,
+            camera,
+            matrix_uniform,
+            render_array,
+            chunks,
+        }
     }
 
     pub fn update(&mut self, queue: &Queue, input: &InputManager) {
@@ -108,20 +138,21 @@ impl WorldRenderer {
 
     pub fn render<'rpass>(&'rpass self, rpass: &mut RenderPass<'rpass>) {
         // check debug mode
-        if self.debug_mode {
-            // render with wireframe
-            rpass.set_pipeline(&self.wireframe_pipeline.pipeline);
-        } else {
-            // render with texture
-            rpass.set_pipeline(&self.main_pipeline.pipeline);
-        }
+        // if self.debug_mode {
+        //     // render with wireframe
+        //     rpass.set_pipeline(&self.wireframe_pipeline.pipeline);
+        // } else {
+        //     // render with texture
+        //     rpass.set_pipeline(&self.main_pipeline.pipeline);
+        // }
 
+        rpass.set_pipeline(&self.main_pipeline.pipeline);
         rpass.set_bind_group(0, &self.diffuse_texture.bind_group, &[]);
         rpass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
-        // for chunk in self.render_array.chunks().iter() {
-        //     render_pass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
-        //     render_pass.draw(0..chunk.vertex_count, 0..1);
-        // }
+        for chunk in self.render_array.iter() {
+            rpass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
+            rpass.draw(0..chunk.vertex_count, 0..1);
+        }
     }
 }

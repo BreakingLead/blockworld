@@ -19,15 +19,15 @@ impl<V> Registry<V> {
         }
     }
 
-    fn register(&mut self, name: ResourceLocation, value: V) {
+    pub fn register(&mut self, name: ResourceLocation, value: V) {
         self.data.insert(name, value);
     }
 
-    fn get(&self, name: &ResourceLocation) -> Option<&V> {
+    pub fn get(&self, name: &ResourceLocation) -> Option<&V> {
         self.data.get(name)
     }
     /// From value to key.
-    fn get_key(&self, value: &V) -> Option<ResourceLocation> {
+    pub fn get_key(&self, value: &V) -> Option<ResourceLocation> {
         todo!()
     }
 }

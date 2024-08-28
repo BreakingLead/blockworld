@@ -8,22 +8,19 @@ use winit::{
 
 /// Tracker for the pressing keys
 #[derive(Default, Debug)]
-pub struct InputState {
+pub struct InputManager {
     pub mouse_delta: Vec2,
     pub pressing_keys: HashSet<Key>,
 }
 
-impl InputState {
+impl InputManager {
     pub fn is_key_pressing(&self, key: Key) -> bool {
         self.pressing_keys.contains(&key)
     }
 
     pub fn handle_device_event(&mut self, event: &winit::event::DeviceEvent) {
-        match event {
-            winit::event::DeviceEvent::MouseMotion { delta } => {
-                self.mouse_delta = vec2(delta.0 as f32, delta.1 as f32);
-            }
-            _ => (),
+        if let winit::event::DeviceEvent::MouseMotion { delta } = event {
+            self.mouse_delta = vec2(delta.0 as f32, delta.1 as f32);
         }
     }
 
@@ -34,8 +31,12 @@ impl InputState {
                 self.pressing_keys.insert(key.clone());
             }
             ElementState::Released => {
-                self.pressing_keys.remove(&key);
+                self.pressing_keys.remove(key);
             }
         }
+    }
+
+    pub fn get_mouse_delta(&self) -> Vec2 {
+        self.mouse_delta
     }
 }

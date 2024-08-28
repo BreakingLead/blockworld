@@ -63,6 +63,12 @@ impl RenderState {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
 
+            self.world_renderer.resize(
+                &self.queue,
+                &self.device,
+                &self.config,
+                new_size.width as f32 / new_size.height as f32,
+            );
             self.surface.configure(&self.device, &self.config);
             self.size = new_size;
         }
@@ -81,9 +87,11 @@ impl RenderState {
             )
             .as_str(),
         );
+
+        self.world_renderer.update(&self.queue, &self.input_manager);
     }
 
-    pub fn render(&mut self) {
+    pub fn render(&self) {
         let output_texture = self
             .surface
             .get_current_texture()
@@ -126,6 +134,7 @@ impl RenderState {
                 }),
                 ..Default::default()
             });
+            self.world_renderer.render(&mut render_pass)
         }
 
         let command_buffer = encoder.finish();
