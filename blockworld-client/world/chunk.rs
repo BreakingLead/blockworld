@@ -122,22 +122,22 @@ impl Chunk {
         {
             BlockFaceDirection::empty()
         } else {
-            if self.is_air(x - 1, y, z) {
+            if !self.is_air(x - 1, y, z) {
                 m |= BlockFaceDirection::XN;
             }
-            if self.is_air(x + 1, y, z) {
+            if !self.is_air(x + 1, y, z) {
                 m |= BlockFaceDirection::XP;
             }
-            if self.is_air(x, y - 1, z) {
+            if !self.is_air(x, y - 1, z) {
                 m |= BlockFaceDirection::YN;
             }
-            if self.is_air(x, y + 1, z) {
+            if !self.is_air(x, y + 1, z) {
                 m |= BlockFaceDirection::YP;
             }
-            if self.is_air(x, y, z - 1) {
+            if !self.is_air(x, y, z - 1) {
                 m |= BlockFaceDirection::ZN;
             }
-            if self.is_air(x, y, z + 1) {
+            if !self.is_air(x, y, z + 1) {
                 m |= BlockFaceDirection::ZP;
             }
             m

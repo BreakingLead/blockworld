@@ -56,8 +56,8 @@ impl Camera {
 
     pub fn update_rotation(&mut self, delta: Vec2) {
         let sensitivity = 0.002;
-        self.yaw += delta.x * sensitivity;
-        self.pitch += delta.y * sensitivity;
+        self.yaw -= delta.x * sensitivity;
+        self.pitch -= delta.y * sensitivity;
         if self.pitch >= f32::to_radians(89.9) {
             self.pitch = f32::to_radians(89.9);
         } else if self.pitch <= f32::to_radians(-89.9) {

@@ -4,7 +4,8 @@ use anyhow::Context;
 use application::ApplicationHandler;
 use event::WindowEvent;
 use event_loop::{ActiveEventLoop, EventLoop};
-use keyboard::KeyCode;
+use glam::vec2;
+use keyboard::{KeyCode, PhysicalKey};
 use log::*;
 use window::{Window, WindowId};
 use winit::*;
@@ -55,9 +56,14 @@ impl ApplicationHandler for WindowApplication {
         _device_id: winit::event::DeviceId,
         event: winit::event::DeviceEvent,
     ) {
-        self.render_state_mut()
-            .input_manager
-            .handle_device_event(&event);
+        match event {
+            winit::event::DeviceEvent::MouseMotion { delta } => self
+                .render_state_mut()
+                .world_renderer
+                .camera
+                .update_rotation(vec2(delta.0 as f32, delta.1 as f32)),
+            _ => (),
+        }
     }
 
     /// Process a window event.
@@ -93,15 +99,36 @@ impl ApplicationHandler for WindowApplication {
                     .input_manager
                     .handle_key_event(&event);
 
-                let key = event.logical_key;
+                let key = event.physical_key;
 
                 // ! NOT IDEAL
                 // ! FIX LATER
-                if key == keyboard::Key::Named(keyboard::NamedKey::F1)
+                if key == PhysicalKey::Code(KeyCode::F1)
                     && event.state == event::ElementState::Released
                 {
                     self.render_state_mut().world_renderer.debug_mode =
                         !self.render_state().world_renderer.debug_mode;
+                }
+
+                if key == PhysicalKey::Code(KeyCode::F2)
+                    && event.state == event::ElementState::Released
+                {
+                    // only for test, remove later
+                    static mut GRAB_MODE: bool = true;
+                    if unsafe { GRAB_MODE } {
+                        self.render_state_mut()
+                            .window
+                            .set_cursor_grab(window::CursorGrabMode::Confined)
+                            .unwrap();
+                    } else {
+                        self.render_state_mut()
+                            .window
+                            .set_cursor_grab(window::CursorGrabMode::None)
+                            .unwrap();
+                    }
+                    self.render_state_mut()
+                        .window
+                        .set_cursor_visible(!unsafe { GRAB_MODE });
                 }
             }
             _ => (),

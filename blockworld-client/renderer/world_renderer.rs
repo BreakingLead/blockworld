@@ -28,7 +28,7 @@ pub struct WorldRenderer {
     diffuse_texture: BindableTexture,
     pub depth_texture: TextureWithView,
 
-    camera: Camera,
+    pub camera: Camera,
     matrix_uniform: Uniform<RawMat4>,
 
     chunks: Box<ChunkArray>,
@@ -116,7 +116,6 @@ impl WorldRenderer {
     pub fn update(&mut self, queue: &Queue, input: &InputManager) {
         // Move the camera based on user input
         self.camera.update(MovementRecord::mk(input));
-        self.camera.update_rotation(input.get_mouse_delta());
 
         // Update the uniform buffer with the new camera matrix
         self.matrix_uniform.update(self.camera.build_mvp());
@@ -137,16 +136,14 @@ impl WorldRenderer {
     }
 
     pub fn render<'rpass>(&'rpass self, rpass: &mut RenderPass<'rpass>) {
-        // check debug mode
-        // if self.debug_mode {
-        //     // render with wireframe
-        //     rpass.set_pipeline(&self.wireframe_pipeline.pipeline);
-        // } else {
-        //     // render with texture
-        //     rpass.set_pipeline(&self.main_pipeline.pipeline);
-        // }
+        if self.debug_mode {
+            // render with wireframe
+            rpass.set_pipeline(&self.wireframe_pipeline.pipeline);
+        } else {
+            // render with texture
+            rpass.set_pipeline(&self.main_pipeline.pipeline);
+        }
 
-        rpass.set_pipeline(&self.main_pipeline.pipeline);
         rpass.set_bind_group(0, &self.diffuse_texture.bind_group, &[]);
         rpass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
