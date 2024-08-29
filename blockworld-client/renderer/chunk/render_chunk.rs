@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use glam::*;
 use log::info;
 use wgpu::{util::DeviceExt, Device};
@@ -34,11 +36,9 @@ impl RenderChunk {
                     if block_id != "blockworld:air" {
                         let block = BLOCK_REGISTRY.get(&block_id.as_str().into());
                         if let Some(block) = block {
-                            let texture_location = block.texture_location();
-
                             let cull_mask = chunk.exist_neighbor(x, y, z);
                             let (a, b) = BLOCK_ATLAS
-                                .query_uv(&texture_location)
+                                .query_uv(&block_id.deref().into())
                                 .unwrap_or((vec2(0.0, 0.0), vec2(1.0, 1.0)));
 
                             let mut add = |d: BlockFaceDirection| {

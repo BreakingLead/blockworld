@@ -3,14 +3,14 @@ use wgpu::*;
 
 use crate::{
     game::{input_manager::InputManager, key_record::MovementRecord},
-    world::chunk_provider::ChunkArray,
+    world::chunk_array::ChunkArray,
 };
 
 use super::{
+    bytes_provider::StaticBytesProvider,
     camera::Camera,
     chunk::render_chunk::RenderChunk,
     resource_manager::BLOCK_ATLAS,
-    resource_provider::StaticBytesProvider,
     shaders::WgslShader,
     wgpu::{
         pipeline::{RegularPipeline, WireframePipeline},
@@ -28,7 +28,7 @@ pub struct WorldRenderer {
     diffuse_texture: BindableTexture,
     pub depth_texture: TextureWithView,
 
-    camera: Camera,
+    pub camera: Camera,
     matrix_uniform: Uniform<RawMat4>,
 
     chunks: Box<ChunkArray>,
@@ -51,7 +51,7 @@ impl WorldRenderer {
             30,
             Some("Matrix Uniform"),
         );
-        matrix_uniform.update(camera.build_mvp());
+        matrix_uniform.update(queue, camera.build_mvp());
 
         let diffuse_texture = BindableTexture::new(
             &device,
@@ -113,16 +113,12 @@ impl WorldRenderer {
         }
     }
 
-    pub fn update(&mut self, queue: &Queue, input: &InputManager) {
+    pub fn update(&mut self, queue: &Queue) {
         // Move the camera based on user input
-        self.camera.update(MovementRecord::mk(input));
-        self.camera.update_rotation(input.get_mouse_delta());
+        self.camera.update(todo!());
 
         // Update the uniform buffer with the new camera matrix
-        self.matrix_uniform.update(self.camera.build_mvp());
-
-        // Upload the new uniform buffer to the GPU
-        queue.write_buffer(&self.matrix_uniform.buffer, 0, &self.matrix_uniform);
+        self.matrix_uniform.update(queue, self.camera.build_mvp());
     }
 
     pub fn resize(
@@ -137,16 +133,14 @@ impl WorldRenderer {
     }
 
     pub fn render<'rpass>(&'rpass self, rpass: &mut RenderPass<'rpass>) {
-        // check debug mode
-        // if self.debug_mode {
-        //     // render with wireframe
-        //     rpass.set_pipeline(&self.wireframe_pipeline.pipeline);
-        // } else {
-        //     // render with texture
-        //     rpass.set_pipeline(&self.main_pipeline.pipeline);
-        // }
+        if self.debug_mode {
+            // render with wireframe
+            rpass.set_pipeline(&self.wireframe_pipeline.pipeline);
+        } else {
+            // render with texture
+            rpass.set_pipeline(&self.main_pipeline.pipeline);
+        }
 
-        rpass.set_pipeline(&self.main_pipeline.pipeline);
         rpass.set_bind_group(0, &self.diffuse_texture.bind_group, &[]);
         rpass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 

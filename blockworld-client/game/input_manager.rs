@@ -1,27 +1,48 @@
 use std::collections::HashSet;
 
 use glam::{vec2, Vec2};
+use once_cell::sync::Lazy;
 use winit::{
-    event::{ElementState, KeyEvent},
-    keyboard::Key,
+    event::{DeviceEvent, ElementState, KeyEvent},
+    keyboard::{Key, NamedKey},
 };
+
+use super::key_record::MovementRecord;
+
+pub static mut GLOBAL_INPUT_MANAGER: Lazy<InputManager> = Lazy::new(|| InputManager::default());
 
 /// Tracker for the pressing keys
 #[derive(Default, Debug)]
 pub struct InputManager {
-    pub mouse_delta: Vec2,
-    pub pressing_keys: HashSet<Key>,
+    pressing_keys: HashSet<Key>,
 }
 
 impl InputManager {
-    pub fn is_key_pressing(&self, key: Key) -> bool {
-        self.pressing_keys.contains(&key)
+    pub fn to_key_record(&self) -> MovementRecord {
+        let mut s = MovementRecord::default();
+        if self.is_key_pressing(Key::Character("w".into())) {
+            s.forward = true;
+        }
+        if self.is_key_pressing(Key::Character("a".into())) {
+            s.left = true;
+        }
+        if self.is_key_pressing(Key::Character("s".into())) {
+            s.backward = true;
+        }
+        if self.is_key_pressing(Key::Character("d".into())) {
+            s.right = true;
+        }
+        if self.is_key_pressing(Key::Named(NamedKey::Space)) {
+            s.ascend = true;
+        }
+        if self.is_key_pressing(Key::Named(NamedKey::Shift)) {
+            s.descend = true;
+        }
+        s
     }
 
-    pub fn handle_device_event(&mut self, event: &winit::event::DeviceEvent) {
-        if let winit::event::DeviceEvent::MouseMotion { delta } = event {
-            self.mouse_delta = vec2(delta.0 as f32, delta.1 as f32);
-        }
+    pub fn is_key_pressing(&self, key: Key) -> bool {
+        self.pressing_keys.contains(&key)
     }
 
     pub fn handle_key_event(&mut self, event: &KeyEvent) {
@@ -36,7 +57,5 @@ impl InputManager {
         }
     }
 
-    pub fn get_mouse_delta(&self) -> Vec2 {
-        self.mouse_delta
-    }
+    pub fn handle_mouse_event(&mut self, event: &DeviceEvent) {}
 }
