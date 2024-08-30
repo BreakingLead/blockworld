@@ -492,6 +492,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "blockworld-renderer"
+version = "0.1.0"
+
+[[package]]
 name = "blockworld-server"
 version = "0.1.0"
 dependencies = [
