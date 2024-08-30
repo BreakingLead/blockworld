@@ -17,7 +17,7 @@ pub struct Atlas {
     /// - "blockworld:atlas/item"
     /// - "ic2:atlas/item"
     /// - etc.
-    self_name: ResourceLocation,
+    // self_name: ResourceLocation,
     atlas: image::RgbaImage,
     /// Mipmaps of the image, if they were generated.
     by_mip_level: Option<Vec<image::RgbaImage>>,
@@ -27,7 +27,7 @@ pub struct Atlas {
 }
 
 impl Atlas {
-    pub fn new<Q: AsRef<Path>>(self_name: &ResourceLocation, input_dir: Q) -> Self {
+    pub fn new<Q: AsRef<Path>>(assets_path: Q) -> Self {
         let width_pixels = 512;
         let height_pixels = 512;
         let tile_size = 16;
@@ -43,13 +43,13 @@ impl Atlas {
         // and it's not ideal since we haven't implemented reading resource packs.
 
         log::warn!(
-            "Creating new texture atlas {self_name}, reading from {:?}",
-            input_dir.as_ref()
+            "Creating new texture atlas, reading from {:?}",
+            assets_path.as_ref()
         );
 
         let mut name_to_xy_map = HashMap::new();
         let mut counter = 0;
-        for entry in input_dir.as_ref().read_dir().unwrap() {
+        for entry in assets_path.as_ref().read_dir().unwrap() {
             let entry = entry.unwrap();
             let path = entry.path();
             if path.is_file()
@@ -81,7 +81,6 @@ impl Atlas {
         }
 
         Self {
-            self_name: self_name.clone(),
             atlas,
             by_mip_level: None,
             tile_size,
@@ -97,15 +96,7 @@ impl Atlas {
     where
         Q: AsRef<Path>,
     {
-        let path = root
-            .as_ref()
-            .join(self.self_name.get_path().with_extension("png"));
-        dbg!(&path);
-        self.atlas.save(path).unwrap();
-    }
-
-    pub fn name(&self) -> &ResourceLocation {
-        &self.self_name
+        self.atlas.save(root).unwrap();
     }
 
     fn width(&self) -> u32 {
@@ -147,21 +138,13 @@ impl Atlas {
 
 impl Display for Atlas {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "SpriteContents({}, {:?})",
-            self.self_name,
-            self.atlas.dimensions()
-        )
+        write!(f, "Atlas({:?})", self.atlas.dimensions())
     }
 }
 
 #[test]
 fn atlas_generation() {
-    let atlas = Atlas::new(
-        &ResourceLocation::new("blockworld:atlas/block"),
-        Path::new("assets/assets/minecraft/textures/block/"),
-    );
+    let atlas = Atlas::new(Path::new("assets/minecraft/textures/block"));
     dbg!(&atlas.name_to_xy_map);
     atlas.save("run/");
 }

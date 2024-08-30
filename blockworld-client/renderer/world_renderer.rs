@@ -3,14 +3,14 @@ use wgpu::*;
 
 use crate::{
     game::{input_manager::InputManager, key_record::MovementRecord},
-    world::chunk_provider::ChunkArray,
+    world::chunk_array::ChunkArray,
 };
 
 use super::{
+    bytes_provider::StaticBytesProvider,
     camera::Camera,
     chunk::render_chunk::RenderChunk,
     resource_manager::BLOCK_ATLAS,
-    resource_provider::StaticBytesProvider,
     shaders::WgslShader,
     wgpu::{
         pipeline::{RegularPipeline, WireframePipeline},
@@ -51,7 +51,7 @@ impl WorldRenderer {
             30,
             Some("Matrix Uniform"),
         );
-        matrix_uniform.update(camera.build_mvp());
+        matrix_uniform.update(queue, camera.build_mvp());
 
         let diffuse_texture = BindableTexture::new(
             &device,
@@ -113,15 +113,12 @@ impl WorldRenderer {
         }
     }
 
-    pub fn update(&mut self, queue: &Queue, input: &InputManager) {
+    pub fn update(&mut self, queue: &Queue) {
         // Move the camera based on user input
-        self.camera.update(MovementRecord::mk(input));
+        self.camera.update(todo!());
 
         // Update the uniform buffer with the new camera matrix
-        self.matrix_uniform.update(self.camera.build_mvp());
-
-        // Upload the new uniform buffer to the GPU
-        queue.write_buffer(&self.matrix_uniform.buffer, 0, &self.matrix_uniform);
+        self.matrix_uniform.update(queue, self.camera.build_mvp());
     }
 
     pub fn resize(

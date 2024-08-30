@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use glam::*;
 
-use crate::game::key_record::MovementRecord;
+use crate::game::{input_manager::InputManager, key_record::MovementRecord};
 
 use super::wgpu::uniform::RawMat4;
 
@@ -28,8 +28,8 @@ impl Camera {
             pitch: 0.0,
             aspect_ratio,
             fovy: PI / 2.0,
-            znear: 0.1,
-            zfar: 100.0,
+            znear: 0.01,
+            zfar: 300.0,
             speed: 0.05,
         }
     }
@@ -65,24 +65,26 @@ impl Camera {
         }
     }
 
-    /// update camera state by 1 unit according to player_state
-    pub fn update(&mut self, player_state: MovementRecord) {
-        if player_state.forward() {
+    /// Now we use data directly from the input manager to update the camera position
+    /// This is temporary until we define the player's state.
+    pub fn update(&mut self, player_state: &InputManager) {
+        let player_state = player_state.to_key_record();
+        if player_state.forward {
             self.go_forward(1.0);
         }
-        if player_state.backward() {
+        if player_state.backward {
             self.go_forward(-1.0);
         }
-        if player_state.left() {
+        if player_state.left {
             self.go_right(-1.0);
         }
-        if player_state.right() {
+        if player_state.right {
             self.go_right(1.0);
         }
-        if player_state.ascend() {
+        if player_state.ascend {
             self.go_up(1.0);
         }
-        if player_state.descend() {
+        if player_state.descend {
             self.go_up(-1.0);
         }
     }

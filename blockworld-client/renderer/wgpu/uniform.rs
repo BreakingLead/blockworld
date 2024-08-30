@@ -1,9 +1,7 @@
 //! Utils for creating bind group, bind group layout and the uniform
 
-use std::{cell::Cell, ops::Deref};
-
 use glam::Mat4;
-use wgpu::util::DeviceExt;
+use wgpu::{util::DeviceExt, Queue};
 
 pub trait ToBytes: Copy + Clone + bytemuck::Pod {
     fn to_bytes(&self) -> &[u8] {
@@ -16,11 +14,11 @@ pub struct Uniform<T>
 where
     T: ToBytes,
 {
-    uniform: T,
     pub buffer: wgpu::Buffer,
     pub layout: wgpu::BindGroupLayout,
     pub bind_group: wgpu::BindGroup,
     pub binding: u32,
+    _phantom: std::marker::PhantomData<T>,
 }
 
 #[repr(C)]
@@ -35,8 +33,9 @@ impl From<Mat4> for RawMat4 {
 }
 
 impl<T: ToBytes> Uniform<T> {
-    pub fn update(&mut self, new_value: T) {
-        self.uniform = new_value;
+    pub fn update(&mut self, queue: &Queue, new_value: T) {
+        // Upload the new uniform buffer to the GPU
+        queue.write_buffer(&self.buffer, 0, new_value.to_bytes());
     }
 
     /// Create a new uniform with the given device, uniform value, binding number and label
@@ -74,22 +73,22 @@ impl<T: ToBytes> Uniform<T> {
         });
 
         Self {
-            uniform,
             buffer,
             layout,
             bind_group,
             binding,
+            _phantom: std::marker::PhantomData,
         }
     }
 }
 
-impl<T> Deref for Uniform<T>
-where
-    T: ToBytes,
-{
-    type Target = [u8];
+// impl<T> Deref for Uniform<T>
+// where
+//     T: ToBytes,
+// {
+//     type Target = [u8];
 
-    fn deref(&self) -> &Self::Target {
-        self.uniform.to_bytes()
-    }
-}
+//     fn deref(&self) -> &Self::Target {
+//         self.uniform.to_bytes()
+//     }
+// }

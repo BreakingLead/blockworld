@@ -4,7 +4,7 @@ use anyhow::*;
 use blockworld_utils::ResourceLocation;
 use wgpu::*;
 
-use super::resource_provider::BytesProvider;
+use super::bytes_provider::BytesProvider;
 
 pub trait ToWgpuShader: Send + Sync {
     fn get_frag(&self) -> (&ShaderModule, &str);
