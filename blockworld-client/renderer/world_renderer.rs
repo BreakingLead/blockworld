@@ -63,7 +63,7 @@ impl WorldRenderer {
         let depth_texture = TextureWithView::new_depth(&device, &config);
 
         let shader = WgslShader::new(
-            &"blockworld:assets/shaders/default_shader.wgsl".into(),
+            &"minecraft:assets/shaders/default_shader.wgsl".into(),
             &StaticBytesProvider,
             device,
             "fs",
@@ -72,7 +72,7 @@ impl WorldRenderer {
         .expect("Failed to load shader");
 
         let wireframe_shader = WgslShader::new(
-            &"blockworld:assets/shaders/wireframe_shader.wgsl".into(),
+            &"minecraft:assets/shaders/wireframe_shader.wgsl".into(),
             &StaticBytesProvider,
             device,
             "fs",

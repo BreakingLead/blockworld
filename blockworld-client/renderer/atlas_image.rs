@@ -13,8 +13,8 @@ use wgpu::hal::auxil::db;
 
 /// This is a wrapper around an image::RgbaImage that contains the contents of a sprite. It also will handle its mipmaps.
 pub struct Atlas {
-    /// - "blockworld:atlas/block"
-    /// - "blockworld:atlas/item"
+    /// - "minecraft:atlas/block"
+    /// - "minecraft:atlas/item"
     /// - "ic2:atlas/item"
     /// - etc.
     // self_name: ResourceLocation,
