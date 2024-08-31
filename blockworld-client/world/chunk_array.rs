@@ -34,7 +34,7 @@ impl ChunkArray {
                 let mut c = Chunk::new(x, z);
                 for x_c in 0..16 {
                     for z_c in 0..16 {
-                        c.set_block_id(x_c, 1, z_c, "blockworld:stone".into());
+                        c.set_block_id(x_c, 1, z_c, "minecraft:stone".into());
                     }
                 }
                 c.is_chunk_loaded = true;

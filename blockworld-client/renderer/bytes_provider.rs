@@ -22,11 +22,11 @@ pub struct StaticBytesProvider;
 
 impl BytesProvider for StaticBytesProvider {
     fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>, ResourceError> {
-        if id == &"blockworld:assets/shaders/wireframe_shader.wgsl".into() {
+        if id == &"minecraft:assets/shaders/wireframe_shader.wgsl".into() {
             let r = include_bytes!("shaders/wireframe_shader.wgsl").to_vec();
             return Ok(r);
         }
-        if id == &"blockworld:assets/shaders/default_shader.wgsl".into() {
+        if id == &"minecraft:assets/shaders/default_shader.wgsl".into() {
             let r = include_bytes!("shaders/default_shader.wgsl").to_vec();
             return Ok(r);
         }

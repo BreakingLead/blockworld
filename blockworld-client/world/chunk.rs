@@ -27,7 +27,7 @@ impl SubChunk {
     pub fn new() -> Self {
         Self {
             block_ref_count: 0,
-            block_array: core::array::from_fn(|_| "blockworld:air".to_string()),
+            block_array: core::array::from_fn(|_| "minecraft:air".to_string()),
         }
     }
 
@@ -44,14 +44,14 @@ impl SubChunk {
 
     pub fn set_blockid(&mut self, x: i32, y: i32, z: i32, block_id: &str) {
         self.block_array[Self::index(x, y, z)] = block_id.to_string();
-        if block_id != "blockworld:air" {
+        if block_id != "minecraft:air" {
             self.block_ref_count += 1;
         }
     }
 
     pub fn remove_block(&mut self, x: i32, y: i32, z: i32) {
-        if self.block_array[Self::index(x, y, z)] != "blockworld:air" {
-            self.block_array[Self::index(x, y, z)] = "blockworld:air".to_string();
+        if self.block_array[Self::index(x, y, z)] != "minecraft:air" {
+            self.block_array[Self::index(x, y, z)] = "minecraft:air".to_string();
             self.block_ref_count -= 1;
         }
     }
@@ -86,7 +86,7 @@ impl Chunk {
     }
 
     pub fn is_air(&self, x: i32, y: i32, z: i32) -> bool {
-        self.get_block_id(x, y, z) == "blockworld:air"
+        self.get_block_id(x, y, z) == "minecraft:air"
     }
 
     /// Get the block at (x,y,z) with respect to the chunk-relative coord.

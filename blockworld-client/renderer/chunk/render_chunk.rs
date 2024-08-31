@@ -33,7 +33,7 @@ impl RenderChunk {
                     );
                     let block_id = chunk.get_block_id(x, y, z);
 
-                    if block_id != "blockworld:air" {
+                    if block_id != "minecraft:air" {
                         let block = BLOCK_REGISTRY.get(&block_id.as_str().into());
                         if let Some(block) = block {
                             let cull_mask = chunk.exist_neighbor(x, y, z);
