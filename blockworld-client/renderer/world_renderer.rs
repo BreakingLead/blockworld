@@ -1,10 +1,7 @@
 use glam::Mat4;
 use wgpu::*;
 
-use crate::{
-    game::{input_manager::InputManager, key_record::MovementRecord},
-    world::chunk_array::ChunkArray,
-};
+use crate::{game::input_manager::InputManager, world::chunk_array::ChunkArray};
 
 use super::{
     bytes_provider::StaticBytesProvider,
@@ -31,6 +28,8 @@ pub struct WorldRenderer {
     pub camera: Camera,
     matrix_uniform: Uniform<RawMat4>,
 
+    /// temporary storage for the chunks
+    /// move later
     chunks: Box<ChunkArray>,
     render_array: Vec<RenderChunk>,
 }
@@ -113,9 +112,9 @@ impl WorldRenderer {
         }
     }
 
-    pub fn update(&mut self, queue: &Queue) {
+    pub fn update(&mut self, queue: &Queue, input: &InputManager) {
         // Move the camera based on user input
-        self.camera.update(todo!());
+        self.camera.update(input);
 
         // Update the uniform buffer with the new camera matrix
         self.matrix_uniform.update(queue, self.camera.build_mvp());

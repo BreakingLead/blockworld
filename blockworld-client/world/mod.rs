@@ -1,4 +1,6 @@
+use bevy_ecs::world::World;
 use chunk_array::ChunkArray;
+use once_cell::sync::Lazy;
 
 use crate::renderer::entity::Player;
 
@@ -6,7 +8,18 @@ pub mod block_access;
 pub mod chunk;
 pub mod chunk_array;
 
-pub struct World {
+pub struct Blockworld {
     chunks: ChunkArray,
-    player: Player,
+    ecs: World,
 }
+
+impl Blockworld {
+    pub fn new() -> Self {
+        Self {
+            chunks: ChunkArray::new(8),
+            ecs: World::default(),
+        }
+    }
+}
+
+static mut BLOCKWORLD: Lazy<Blockworld> = Lazy::new(|| Blockworld::new());
