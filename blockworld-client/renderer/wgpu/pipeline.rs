@@ -11,7 +11,7 @@ impl RegularPipeline {
         device: &wgpu::Device,
         bind_group_layouts: &[&wgpu::BindGroupLayout],
         shader: &dyn ToWgpuShader,
-        config: &wgpu::SurfaceConfiguration,
+        surface_config: &wgpu::SurfaceConfiguration,
     ) -> Self {
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Blockworld Render Pipeline Layout"),
@@ -32,7 +32,7 @@ impl RegularPipeline {
                 module: shader.get_frag().0,
                 entry_point: shader.get_frag().1,
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
+                    format: surface_config.format,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],

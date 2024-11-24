@@ -34,11 +34,11 @@ impl RenderChunk {
                     let block_id = chunk.get_block_id(x, y, z);
 
                     if block_id != "minecraft:air" {
-                        let block = BLOCK_REGISTRY.get(&block_id.as_str().into());
+                        let block = BLOCK_REGISTRY.get(&block_id.into());
                         if let Some(block) = block {
                             let cull_mask = chunk.exist_neighbor(x, y, z);
                             let (a, b) = BLOCK_ATLAS
-                                .query_uv(&block_id.deref().into())
+                                .query_uv(&block_id.into())
                                 .unwrap_or((vec2(0.0, 0.0), vec2(1.0, 1.0)));
 
                             let mut add = |d: BlockFaceDirection| {

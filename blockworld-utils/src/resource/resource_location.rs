@@ -16,7 +16,7 @@ impl ResourceLocation {
             }
         } else {
             Self {
-                namespace: "blockworld".to_string(),
+                namespace: "minecraft".to_string(),
                 path: id.into(),
             }
         }

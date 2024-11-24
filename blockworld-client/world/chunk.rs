@@ -1,5 +1,9 @@
-use std::{borrow::Cow, ops::Div};
+use std::{
+    borrow::{Borrow, Cow},
+    ops::Div,
+};
 
+use bevy_ecs::system::Res;
 use blockworld_utils::ResourceLocation;
 use enumflags2::{BitFlag, BitFlags};
 use glam::*;
@@ -16,18 +20,21 @@ pub const CHUNK_BLOCK_NUM: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT;
 // ! Should be optimized later by using 4 bit instead of u8
 type LightLevel = u8;
 
-// ExtendedBlockStorage.java
 pub struct SubChunk {
-    /// A total count of the number of non-air blocks in this block storage's Chunk.
-    block_ref_count: u32,
-    block_array: [String; SUBCHUNK_SIZE * SUBCHUNK_SIZE * SUBCHUNK_SIZE],
+    // block_palette: Vec<NumberID>,
+    // in yzx order
+    // can be empty
+    // blocks: Option<Vec<u16>>,
+
+    // temp, low performance
+    blocks: Box<[u32; 4096]>,
 }
 
 impl SubChunk {
     pub fn new() -> Self {
         Self {
-            block_ref_count: 0,
-            block_array: core::array::from_fn(|_| "minecraft:air".to_string()),
+            // block_palette: Vec::new(),
+            blocks: Box::new([0; 4096]),
         }
     }
 
@@ -37,27 +44,35 @@ impl SubChunk {
     ///
     /// From xyz to Index of the block array.
     ///
-    /// Don't pass negative numbers into this function!
     fn index(x: i32, y: i32, z: i32) -> usize {
+        // Make sure the index is in the range of 0..15
+        assert!(
+            x >= 0
+                && y >= 0
+                && z >= 0
+                && x <= SUBCHUNK_SIZE as i32
+                && y <= SUBCHUNK_SIZE as i32
+                && z <= SUBCHUNK_SIZE as i32
+        );
+
         (y * CHUNK_SIZE as i32 * CHUNK_SIZE as i32 + z * CHUNK_SIZE as i32 + x) as usize
     }
 
     pub fn set_blockid(&mut self, x: i32, y: i32, z: i32, block_id: &str) {
-        self.block_array[Self::index(x, y, z)] = block_id.to_string();
-        if block_id != "minecraft:air" {
-            self.block_ref_count += 1;
-        }
+        let number_id = BLOCK_REGISTRY.name_to_number_id(&block_id.into());
+        self.blocks[Self::index(x, y, z)] = number_id;
     }
 
     pub fn remove_block(&mut self, x: i32, y: i32, z: i32) {
-        if self.block_array[Self::index(x, y, z)] != "minecraft:air" {
-            self.block_array[Self::index(x, y, z)] = "minecraft:air".to_string();
-            self.block_ref_count -= 1;
-        }
+        self.blocks[Self::index(x, y, z)] = 0;
     }
 
-    pub fn get_blockid(&self, x: i32, y: i32, z: i32) -> String {
-        self.block_array[Self::index(x, y, z)].clone()
+    pub fn get_blockid(&self, x: i32, y: i32, z: i32) -> &'static str {
+        if let Some(r) = BLOCK_REGISTRY.number_id_to_name(self.blocks[Self::index(x, y, z)]) {
+            r
+        } else {
+            "minecraft:air"
+        }
     }
 }
 
@@ -90,13 +105,13 @@ impl Chunk {
     }
 
     /// Get the block at (x,y,z) with respect to the chunk-relative coord.
-    pub fn get_block_id(&self, x: i32, y: i32, z: i32) -> String {
+    pub fn get_block_id(&self, x: i32, y: i32, z: i32) -> &'static str {
         let subchunk_index = y.div(SUBCHUNK_SIZE as i32) as usize;
 
         self.storage_array[subchunk_index].get_blockid(x, y % SUBCHUNK_SIZE as i32, z)
     }
 
-    pub fn set_block_id(&mut self, x: i32, y: i32, z: i32, block_id: String) {
+    pub fn set_block_id(&mut self, x: i32, y: i32, z: i32, block_id: &'static str) {
         let subchunk_index = y.div(SUBCHUNK_SIZE as i32) as usize;
 
         self.storage_array[subchunk_index].set_blockid(x, y % SUBCHUNK_SIZE as i32, z, &block_id);
@@ -111,6 +126,8 @@ impl Chunk {
     }
 
     /// for face cull
+    /// this should be in worldwide because one chunk can't see another chunk
+    /// but i put here for now for a while
     pub fn exist_neighbor(&self, x: i32, y: i32, z: i32) -> BitFlags<BlockFaceDirection> {
         let mut m = BitFlags::empty();
         if x == 0

@@ -72,7 +72,10 @@ impl Atlas {
                 atlas.copy_from(&img, x * tile_size, y * tile_size).unwrap();
 
                 let item_name = path.file_stem().unwrap();
-                let r = ResourceLocation::new(item_name.to_str().unwrap());
+
+                let r = ResourceLocation::new(
+                    format!("minecraft:{}", item_name.to_str().unwrap()).as_str(),
+                );
 
                 name_to_xy_map.insert(r, uvec2(x, y));
 
