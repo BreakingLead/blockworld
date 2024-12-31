@@ -28,6 +28,8 @@ pub struct RenderState {
     pub global_timer: Instant,
 
     pub world_renderer: WorldRenderer,
+
+    pub egui_renderer: egui_wgpu::Renderer,
 }
 
 impl RenderState {
@@ -44,6 +46,8 @@ impl RenderState {
 
         let world_renderer = WorldRenderer::new(&device, &config, &queue, size);
 
+        let egui_renderer = egui_wgpu::Renderer::new(&device, wgpu::TextureFormat::Rgba8UnormSrgb, None, 4, true);
+
         Self {
             window: window_arc,
             surface,
@@ -55,6 +59,8 @@ impl RenderState {
             world_renderer,
             dt_timer: Instant::now(),
             global_timer: Instant::now(),
+
+            egui_renderer: 
         }
     }
 

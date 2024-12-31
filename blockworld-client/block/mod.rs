@@ -3,16 +3,12 @@ pub use block::*;
 use blockworld_utils::Registry;
 use once_cell::sync::Lazy;
 
-pub static BLOCK_REGISTRY: Lazy<Registry<&'static dyn Block>> = Lazy::new(|| {
+pub static BLOCK_REGISTRY: Lazy<Registry<Block>> = Lazy::new(|| {
     let mut r = Registry::new();
+    let a0 = Block::new("minecraft:air".into());
+    r.register(a0);
+    let a1 = Block::new("minecraft:stone".into());
+    r.register(a1);
 
-    let mut number_id = 0;
-    r.register("air".into(), &Air as &dyn Block);
-
-    number_id += 1;
-    r.register("stone".into(), &Stone);
-
-    number_id += 1;
-    r.register("grass".into(), &Grass);
     r
 });

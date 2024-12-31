@@ -4,7 +4,6 @@ use once_cell::sync::Lazy;
 
 use crate::renderer::entity::Player;
 
-pub mod block_access;
 pub mod chunk;
 pub mod chunk_array;
 

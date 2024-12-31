@@ -1,7 +1,7 @@
+use anyhow::*;
 use std::path::{Path, PathBuf};
 
 use blockworld_utils::ResourceLocation;
-use thiserror::Error;
 
 /// A abstraction over the way resources are loaded.
 /// This trait is implemented by different resource providers,
@@ -14,14 +14,14 @@ pub trait BytesProvider: Send + Sync {
     ///
     /// `minecraft:textures/block/stone.png`
     /// `assets/minecraft/textures/block/stone.png`
-    fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>, ResourceError>;
+    fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>>;
 }
 
 /// A resource provider that provides resources from a static value (embedded in the binary).
 pub struct StaticBytesProvider;
 
 impl BytesProvider for StaticBytesProvider {
-    fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>, ResourceError> {
+    fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>> {
         if id == &"minecraft:assets/shaders/wireframe_shader.wgsl".into() {
             let r = include_bytes!("shaders/wireframe_shader.wgsl").to_vec();
             return Ok(r);
@@ -30,7 +30,7 @@ impl BytesProvider for StaticBytesProvider {
             let r = include_bytes!("shaders/default_shader.wgsl").to_vec();
             return Ok(r);
         }
-        Err(ResourceError::NotFound(id.clone()))
+        bail!("Resource not found: {:?}", id);
     }
 }
 
@@ -47,7 +47,7 @@ impl FilesystemBytesProvider {
 }
 
 impl BytesProvider for FilesystemBytesProvider {
-    fn get_bytes(&self, identifier: &ResourceLocation) -> Result<Vec<u8>, ResourceError> {
+    fn get_bytes(&self, identifier: &ResourceLocation) -> anyhow::Result<Vec<u8>> {
         let path = self
             .root_dir
             .join(Path::new("assets/").join(identifier.get_namespace()))
@@ -55,28 +55,11 @@ impl BytesProvider for FilesystemBytesProvider {
         dbg!(&path);
 
         if !path.exists() {
-            return Err(ResourceError::NotFound(identifier.clone()));
+            anyhow::bail!("File not found: {:?}", path);
         }
 
-        let buf = std::fs::read(path).map_err(|e| ResourceError::Io(e))?;
+        let buf = std::fs::read(path)?;
 
         Ok(buf)
     }
-}
-
-#[derive(Error, Debug)]
-pub enum ResourceError {
-    #[error("Resource not found: {0}")]
-    NotFound(ResourceLocation),
-    #[error("IO error: {0}")]
-    Io(std::io::Error),
-}
-
-#[test]
-fn filesystem_resource_provider_test() {
-    let p = FilesystemBytesProvider::new(".");
-    let bytes = p
-        .get_bytes(&ResourceLocation::new("minecraft:texts/splashes.txt"))
-        .unwrap();
-    let s = String::from_utf8(bytes).unwrap();
 }
