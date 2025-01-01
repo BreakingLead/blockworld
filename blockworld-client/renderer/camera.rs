@@ -2,9 +2,7 @@ use std::f32::consts::PI;
 
 use glam::*;
 
-use crate::game::{input_manager::InputManager, key_record::MovementRecord};
-
-use super::wgpu::uniform::RawMat4;
+use super::input_manager::InputManager;
 
 #[derive(Debug)]
 pub struct Camera {
@@ -46,12 +44,12 @@ impl Camera {
         .normalize()
     }
 
-    pub fn build_mvp(&self) -> RawMat4 {
+    pub fn build_mvp(&self) -> Mat4 {
         let gaze = self.get_gaze();
         let view = Mat4::look_to_rh(self.position, gaze, self.up);
         let projection = Mat4::perspective_rh(self.fovy, self.aspect_ratio, self.znear, self.zfar);
 
-        RawMat4((projection * view).to_cols_array_2d())
+        (projection * view)
     }
 
     pub fn update_rotation(&mut self, delta: Vec2) {

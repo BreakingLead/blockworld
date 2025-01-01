@@ -85,7 +85,7 @@ impl ApplicationHandler for WindowApplication {
                 //         error!("err when try_exec_single_instr_from_console {e:?}")
                 //     }
                 // );
-                self.render_state().render();
+                self.render_state_mut().render();
                 self.render_state().window.request_redraw();
             }
             WindowEvent::Resized(size) => {

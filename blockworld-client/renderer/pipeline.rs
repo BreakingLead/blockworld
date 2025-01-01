@@ -24,13 +24,13 @@ impl RegularPipeline {
             layout: Some(&layout),
             vertex: wgpu::VertexState {
                 module: shader.get_vert().0,
-                entry_point: shader.get_vert().1,
+                entry_point: Some(shader.get_vert().1),
                 buffers: &[TexturedVertex::desc()],
                 compilation_options: Default::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 module: shader.get_frag().0,
-                entry_point: shader.get_frag().1,
+                entry_point: Some(shader.get_frag().1),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: surface_config.format,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
@@ -60,6 +60,7 @@ impl RegularPipeline {
                 alpha_to_coverage_enabled: false,
             },
             multiview: None,
+            cache: None,
         });
         Self { layout, pipeline }
     }
@@ -89,13 +90,13 @@ impl WireframePipeline {
             layout: Some(&layout),
             vertex: wgpu::VertexState {
                 module: shader.get_vert().0,
-                entry_point: shader.get_vert().1,
+                entry_point: Some(shader.get_vert().1),
                 buffers: &[TexturedVertex::desc()],
                 compilation_options: Default::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 module: shader.get_frag().0,
-                entry_point: shader.get_frag().1,
+                entry_point: Some(shader.get_frag().1),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),
@@ -125,6 +126,7 @@ impl WireframePipeline {
                 alpha_to_coverage_enabled: false,
             },
             multiview: None,
+            cache: None,
         });
         Self { layout, pipeline }
     }

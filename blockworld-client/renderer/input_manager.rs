@@ -7,7 +7,15 @@ use winit::{
     keyboard::{Key, NamedKey},
 };
 
-use super::key_record::MovementRecord;
+#[derive(Default)]
+pub struct MovementRecord {
+    pub forward: bool,
+    pub backward: bool,
+    pub ascend: bool,
+    pub descend: bool,
+    pub left: bool,
+    pub right: bool,
+}
 
 pub static mut GLOBAL_INPUT_MANAGER: Lazy<InputManager> = Lazy::new(|| InputManager::default());
 

@@ -1,4 +1,5 @@
-mod block;
+pub mod block;
+pub mod block_face_direction;
 pub use block::*;
 use blockworld_utils::Registry;
 use once_cell::sync::Lazy;
