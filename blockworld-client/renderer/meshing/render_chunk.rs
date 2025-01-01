@@ -1,22 +1,16 @@
 use std::ops::Deref;
 
+use blockworld_server::world::{
+    chunk::{CHUNK_HEIGHT, CHUNK_SIZE},
+    chunk_access::WorldAccess,
+};
 use glam::*;
 use log::info;
 use wgpu::{util::DeviceExt, Device};
 
-use crate::{
-    block::BLOCK_REGISTRY,
-    renderer::{block::BlockFaceDirection, resource_manager::BLOCK_ATLAS},
-    world::chunk::{Chunk, CHUNK_HEIGHT, CHUNK_SIZE},
-};
+use crate::{block::BLOCK_REGISTRY, renderer::resource_manager::BLOCK_ATLAS};
 
 use super::super::vertex::TexturedVertex;
-
-#[derive(Debug)]
-pub struct RenderChunk {
-    pub vertex_count: u32,
-    pub vertex_buffer: wgpu::Buffer,
-}
 
 impl RenderChunk {
     pub fn new(device: &Device, chunk: &Chunk) -> Self {
@@ -79,7 +73,7 @@ impl RenderChunk {
     }
 
     // Preserved
-    pub fn update_mesh(&mut self) {
+    pub fn update_mesh<T: WorldAccess>(&mut self, chunk_access: T) {
         let _ = 1;
     }
 }

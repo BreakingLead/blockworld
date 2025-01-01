@@ -1,5 +1,3 @@
-mod buffer_builder;
-
 use std::mem::size_of;
 
 use glam::{Vec2, Vec3};

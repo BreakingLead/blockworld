@@ -1,14 +1,20 @@
 pub mod atlas_image;
-pub mod block;
 pub mod bytes_provider;
 pub mod camera;
-pub mod chunk;
+mod debug_gui;
 pub mod entity;
 pub mod gui;
+pub mod meshing;
 pub mod resource_manager;
 mod shaders;
 pub mod vertex;
-pub mod wgpu;
 pub mod world_renderer;
 
-pub use wgpu::window_init::run;
+pub mod pipeline;
+pub mod render_state;
+pub mod texture;
+pub mod uniform;
+pub mod vertex;
+pub mod window_init;
+
+pub use window_init::run;

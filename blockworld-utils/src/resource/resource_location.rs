@@ -1,51 +1,53 @@
-use std::path::PathBuf;
+use std::{borrow::Borrow, ops::Deref, path::PathBuf};
 
 /// Same as Minecraft's `ResourceLocation` or `Identifier` in yarn mappings.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ResourceLocation {
-    namespace: String,
-    path: PathBuf,
+    id: String,
+    // we can't set 2 fields (namespace and path)
+    // otherwise we can't turn this into a &str, and it will be a pain that we even can't turn this into a &'static str
+}
+
+pub trait HasResourceLocation {
+    fn get_id(&self) -> ResourceLocation;
+}
+
+impl Default for ResourceLocation {
+    fn default() -> Self {
+        Self {
+            id: "minecraft:air".to_string(),
+        }
+    }
 }
 
 impl ResourceLocation {
     pub fn new(id: &str) -> Self {
-        if let Some((a, b)) = id.split_once(':') {
-            Self {
-                namespace: a.to_string(),
-                path: b.into(),
-            }
+        if let Some((_, _)) = id.split_once(":") {
+            Self { id: id.to_string() }
         } else {
-            Self {
-                namespace: "minecraft".to_string(),
-                path: id.into(),
-            }
+            log::error!("Invalid ResourceLocation: {}", id);
+            Self::default()
         }
     }
 
     pub fn get_namespace(&self) -> String {
-        self.namespace.clone()
+        self.id
+            .split_once(":")
+            .unwrap_or(("minecraft", "air"))
+            .0
+            .to_string()
     }
 
-    pub fn get_path(&self) -> PathBuf {
-        self.path.clone()
-    }
-
-    pub fn with_namespace(self, namespace: String) -> Self {
-        Self {
-            namespace,
-            path: self.path,
-        }
-    }
-
-    pub fn with_path(self, path: PathBuf) -> Self {
-        Self {
-            namespace: self.namespace,
-            path,
-        }
+    pub fn get_path(&self) -> String {
+        self.id
+            .split_once(":")
+            .unwrap_or(("minecraft", "air"))
+            .1
+            .to_string()
     }
 
     pub fn to_string(&self) -> String {
-        format!("{}:{:?}", self.namespace, self.path)
+        self.id.clone()
     }
 }
 
@@ -55,8 +57,10 @@ impl From<&str> for ResourceLocation {
     }
 }
 
-impl std::fmt::Display for ResourceLocation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{:?}", self.namespace, self.path)
+impl Deref for ResourceLocation {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.id
     }
 }

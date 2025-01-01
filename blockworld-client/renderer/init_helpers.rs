@@ -54,6 +54,7 @@ pub fn create_device_and_queue(adapter: &wgpu::Adapter) -> (wgpu::Device, wgpu::
                 label: None,
                 required_features: wgpu::Features::POLYGON_MODE_LINE,
                 required_limits: wgpu::Limits::default(),
+                ..Default::default()
             },
             None,
         )

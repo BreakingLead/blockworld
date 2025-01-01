@@ -1,15 +1,9 @@
-use crate::block::Block;
-use crate::game::input_manager::InputManager;
-use crate::renderer::wgpu::init_helpers::*;
 use crate::renderer::world_renderer::{self, WorldRenderer};
-use crate::renderer::{camera::*, wgpu::pipeline::*};
-use blockworld_utils::Registry;
-use glam::Mat4;
+use egui_winit_platform::Platform;
 use std::{sync::Arc, time::Instant};
 use wgpu::{include_wgsl, Device, Queue, Surface, SurfaceConfiguration};
 use winit::{dpi::PhysicalSize, window::Window};
 
-use super::texture::TextureWithView;
 use super::uniform::{RawMat4, Uniform};
 
 /// The RenderState struct holds all the state needed to render the game's user interface and game world.
@@ -29,7 +23,7 @@ pub struct RenderState {
 
     pub world_renderer: WorldRenderer,
 
-    pub egui_renderer: egui_wgpu::Renderer,
+    pub game: Blockw,
 }
 
 impl RenderState {
@@ -46,8 +40,6 @@ impl RenderState {
 
         let world_renderer = WorldRenderer::new(&device, &config, &queue, size);
 
-        let egui_renderer = egui_wgpu::Renderer::new(&device, wgpu::TextureFormat::Rgba8UnormSrgb, None, 4, true);
-
         Self {
             window: window_arc,
             surface,
@@ -59,8 +51,6 @@ impl RenderState {
             world_renderer,
             dt_timer: Instant::now(),
             global_timer: Instant::now(),
-
-            egui_renderer: 
         }
     }
 
@@ -94,10 +84,10 @@ impl RenderState {
             .as_str(),
         );
 
-        self.world_renderer.update(&self.queue, &self.input_manager);
+        self.world_renderer.update(&self.queue);
     }
 
-    pub fn render(&self) {
+    pub fn render(&mut self) {
         let output_texture = self
             .surface
             .get_current_texture()
@@ -113,48 +103,36 @@ impl RenderState {
                 label: Some("Blockworld Render Encoder"),
             });
 
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Blockworld Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &output_texture_view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            // #82a9f9 minecraft's sky blue
-                            r: 0.509804,
-                            g: 0.662745,
-                            b: 0.976471,
-                            a: 1.0,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.world_renderer.depth_texture.view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: wgpu::StoreOp::Store,
+        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Blockworld Render Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view: &output_texture_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        // #82a9f9 minecraft's sky blue
+                        r: 0.509804,
+                        g: 0.662745,
+                        b: 0.976471,
+                        a: 1.0,
                     }),
-                    stencil_ops: None,
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                view: &self.world_renderer.depth_texture.view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: wgpu::StoreOp::Store,
                 }),
-                ..Default::default()
-            });
-            self.world_renderer.render(&mut render_pass)
-        }
+                stencil_ops: None,
+            }),
+            ..Default::default()
+        });
+        self.world_renderer.render(&mut render_pass);
 
         let command_buffer = encoder.finish();
         self.queue.submit([command_buffer]);
         output_texture.present();
     }
-
-    // read a line from cmd synchronously. It should't be run on main displaying thread
-    // pub async fn try_exec_single_instr_from_console(&mut self) -> anyhow::Result<()> {
-    //     let stdin = std::io::stdin();
-    //     let mut handle = stdin.lock();
-    //     let mut console_string = String::new();
-    //     handle.read_line(&mut console_string)?;
-    //     // exec_instr_from_string(console_string, self).await?;
-    //     Ok(())
-    // }
 }

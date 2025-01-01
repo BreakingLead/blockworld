@@ -1,19 +1,14 @@
 use glam::Mat4;
 use wgpu::*;
 
-use crate::{game::input_manager::InputManager, world::chunk_array::ChunkArray};
-
 use super::{
     bytes_provider::StaticBytesProvider,
     camera::Camera,
-    chunk::render_chunk::RenderChunk,
+    pipeline::{RegularPipeline, WireframePipeline},
     resource_manager::BLOCK_ATLAS,
     shaders::WgslShader,
-    wgpu::{
-        pipeline::{RegularPipeline, WireframePipeline},
-        texture::{BindableTexture, TextureWithView},
-        uniform::{RawMat4, Uniform},
-    },
+    texture::{BindableTexture, TextureWithView},
+    uniform::Uniform,
 };
 
 pub struct WorldRenderer {
@@ -26,12 +21,7 @@ pub struct WorldRenderer {
     pub depth_texture: TextureWithView,
 
     pub camera: Camera,
-    matrix_uniform: Uniform<RawMat4>,
-
-    /// temporary storage for the chunks
-    /// move later
-    chunks: Box<ChunkArray>,
-    render_array: Vec<RenderChunk>,
+    matrix_uniform: Uniform<[[f32; 4]; 4]>,
 }
 
 impl WorldRenderer {
@@ -112,7 +102,7 @@ impl WorldRenderer {
         }
     }
 
-    pub fn update(&mut self, queue: &Queue, input: &InputManager) {
+    pub fn update(&mut self, queue: &Queue) {
         // Move the camera based on user input
         self.camera.update(input);
 
