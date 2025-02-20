@@ -19,7 +19,7 @@ fn world_blockpos_to_chunkpos(pos: IVec3) -> (IVec3, IVec3) {
 }
 
 /// The place which holds all loaded chunks
-pub struct DiskChunkAccess {
+pub struct DiskChunkArray {
     pub chunks: HashMap<IVec3, SubChunk>,
     /// Set this with the view distance
     view_distance: u32,
@@ -31,7 +31,7 @@ pub struct DiskChunkAccess {
     pub need_rerender: Vec<IVec3>,
 }
 
-impl DiskChunkAccess {
+impl DiskChunkArray {
     /// Create a default chunk array with view distance.
     ///
     /// Look up for settings to get the view distance.
@@ -73,7 +73,7 @@ impl DiskChunkAccess {
     }
 }
 
-impl WorldAccess for DiskChunkAccess {
+impl WorldAccess for DiskChunkArray {
     fn is_chunk_loaded(&self, pos: IVec3) -> bool {
         self.chunks.contains_key(&pos)
     }

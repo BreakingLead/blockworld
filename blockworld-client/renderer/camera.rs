@@ -2,6 +2,8 @@ use std::f32::consts::PI;
 
 use glam::*;
 
+use super::input_manager::InputManager;
+
 #[derive(Debug)]
 pub struct Camera {
     pub position: Vec3,
@@ -42,12 +44,12 @@ impl Camera {
         .normalize()
     }
 
-    pub fn build_mvp(&self) -> [[f32; 4]; 4] {
+    pub fn build_mvp(&self) -> Mat4 {
         let gaze = self.get_gaze();
         let view = Mat4::look_to_rh(self.position, gaze, self.up);
         let projection = Mat4::perspective_rh(self.fovy, self.aspect_ratio, self.znear, self.zfar);
 
-        ((projection * view).to_cols_array_2d())
+        (projection * view)
     }
 
     pub fn update_rotation(&mut self, delta: Vec2) {

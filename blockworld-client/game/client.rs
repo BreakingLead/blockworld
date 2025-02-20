@@ -1,15 +1,21 @@
-use bevy_ecs::{schedule::Schedule, system::Res, world::World};
-use bevy_input::{keyboard::KeyCode, ButtonInput};
+use bevy_ecs::{schedule::Schedule, world::World};
+use blockworld_server::world::disk_chunk_access::DiskChunkArray;
 
-struct BlockworldClient {
+pub struct BlockworldClient {
     ecs: World,
     schedule: Schedule,
+
+    chunks: DiskChunkArray,
 }
 
 impl BlockworldClient {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let ecs = World::default();
         let schedule = Schedule::default();
-        Self { ecs, schedule }
+        Self {
+            ecs,
+            schedule,
+            chunks: DiskChunkArray::new(4),
+        }
     }
 }

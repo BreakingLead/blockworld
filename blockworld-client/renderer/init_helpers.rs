@@ -1,4 +1,3 @@
-use crate::get_cli_args;
 use pollster::FutureExt;
 use wgpu::*;
 use winit::{
@@ -10,13 +9,8 @@ use winit::{
 /// Create the window instance for creating the surface of `wgpu`.
 pub fn create_window(event_loop: &EventLoop<()>) -> Window {
     let mut window_attrs = Window::default_attributes().with_title("Blockworld Indev");
-    let args = get_cli_args();
     // set screen size based on boot_args
-    if args.full_screen {
-        window_attrs = window_attrs.with_fullscreen(Some(Fullscreen::Borderless(None)));
-    } else {
-        window_attrs = window_attrs.with_inner_size(PhysicalSize::new(args.width, args.height))
-    }
+    window_attrs = window_attrs.with_inner_size(PhysicalSize::new(1280, 720));
     let window = event_loop.create_window(window_attrs).unwrap();
     window
         .set_cursor_grab(winit::window::CursorGrabMode::Confined)

@@ -706,6 +706,7 @@ dependencies = [
  "egui",
  "egui-wgpu",
  "egui_winit_platform",
+ "enumflags2",
  "env_logger",
  "glam",
  "glyphon",

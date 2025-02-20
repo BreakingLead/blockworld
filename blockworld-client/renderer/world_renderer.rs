@@ -1,27 +1,45 @@
+use bytemuck::{Pod, Zeroable};
 use glam::Mat4;
 use wgpu::*;
+
+use crate::game::client::BlockworldClient;
 
 use super::{
     bytes_provider::StaticBytesProvider,
     camera::Camera,
+    input_manager::InputManager,
+    meshing::meshing_manager::{self, MeshingManager},
     pipeline::{RegularPipeline, WireframePipeline},
     resource_manager::BLOCK_ATLAS,
     shaders::WgslShader,
     texture::{BindableTexture, TextureWithView},
-    uniform::Uniform,
+    uniform::{ToBytes, Uniform},
 };
 
+#[derive(Pod, Zeroable, Clone, Copy)]
+#[repr(C)]
+pub struct RawMat4(pub [[f32; 4]; 4]);
+impl ToBytes for RawMat4 {}
+impl From<Mat4> for RawMat4 {
+    fn from(mat: Mat4) -> Self {
+        Self(mat.to_cols_array_2d())
+    }
+}
+
 pub struct WorldRenderer {
+    pub camera: Camera,
+
     pub debug_mode: bool,
-
-    main_pipeline: RegularPipeline,
-    wireframe_pipeline: WireframePipeline,
-
-    diffuse_texture: BindableTexture,
     pub depth_texture: TextureWithView,
 
-    pub camera: Camera,
-    matrix_uniform: Uniform<[[f32; 4]; 4]>,
+    diffuse_texture: BindableTexture,
+    game: BlockworldClient,
+
+    main_pipeline: RegularPipeline,
+    matrix_uniform: Uniform<RawMat4>,
+
+    meshing_manager: MeshingManager,
+    wireframe_pipeline: WireframePipeline,
 }
 
 impl WorldRenderer {
@@ -40,7 +58,7 @@ impl WorldRenderer {
             30,
             Some("Matrix Uniform"),
         );
-        matrix_uniform.update(queue, camera.build_mvp());
+        matrix_uniform.update(queue, camera.build_mvp().into());
 
         let diffuse_texture = BindableTexture::new(
             &device,
@@ -83,11 +101,8 @@ impl WorldRenderer {
             &config,
         );
 
-        let chunks = Box::new(ChunkArray::new(8));
-        let mut render_array = vec![];
-        for (loc, chunk) in chunks.chunks.iter() {
-            render_array.push(RenderChunk::new(device, chunk));
-        }
+        let game = BlockworldClient::new();
+        let meshing_manager = MeshingManager::new();
 
         Self {
             debug_mode: false,
@@ -97,17 +112,18 @@ impl WorldRenderer {
             depth_texture,
             camera,
             matrix_uniform,
-            render_array,
-            chunks,
+            game,
+            meshing_manager,
         }
     }
 
-    pub fn update(&mut self, queue: &Queue) {
+    pub fn update(&mut self, queue: &Queue, input: &InputManager) {
         // Move the camera based on user input
         self.camera.update(input);
 
         // Update the uniform buffer with the new camera matrix
-        self.matrix_uniform.update(queue, self.camera.build_mvp());
+        self.matrix_uniform
+            .update(queue, self.camera.build_mvp().into());
     }
 
     pub fn resize(
@@ -133,9 +149,6 @@ impl WorldRenderer {
         rpass.set_bind_group(0, &self.diffuse_texture.bind_group, &[]);
         rpass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
-        for chunk in self.render_array.iter() {
-            rpass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
-            rpass.draw(0..chunk.vertex_count, 0..1);
-        }
+        self.meshing_manager.render(rpass);
     }
 }

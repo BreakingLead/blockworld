@@ -42,18 +42,6 @@ const QUADS: &'static [[usize; 4]; 6] = &[
     [1, 0, 4, 5], // Z-
 ];
 
-/// Generate direction vector.
-fn direction_vector(face: BlockFaceDirection) -> Vec3 {
-    match face {
-        BlockFaceDirection::XP => Vec3::X,
-        BlockFaceDirection::YP => Vec3::Y,
-        BlockFaceDirection::ZP => Vec3::Z,
-        BlockFaceDirection::XN => -Vec3::X,
-        BlockFaceDirection::YN => -Vec3::Y,
-        BlockFaceDirection::ZN => -Vec3::Z,
-    }
-}
-
 /// Get the four vectors prependicular to self
 /// and along the crossline of the face in order to move vertices.
 /// return order:
