@@ -129,7 +129,9 @@ impl RenderState {
             }),
             ..Default::default()
         });
+
         self.world_renderer.render(&mut render_pass);
+        drop(render_pass);
 
         let command_buffer = encoder.finish();
         self.queue.submit([command_buffer]);

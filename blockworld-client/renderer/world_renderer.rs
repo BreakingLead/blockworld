@@ -149,6 +149,8 @@ impl WorldRenderer {
         rpass.set_bind_group(0, &self.diffuse_texture.bind_group, &[]);
         rpass.set_bind_group(1, &self.matrix_uniform.bind_group, &[]);
 
-        self.meshing_manager.render(rpass);
+        {
+            self.meshing_manager.render(rpass);
+        }
     }
 }
