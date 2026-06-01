@@ -9,7 +9,6 @@ use std::{collections::HashMap, fmt::Display, path::Path};
 use blockworld_utils::ResourceLocation;
 use glam::{ivec2, uvec2, vec2, IVec2, UVec2, Vec2};
 use image::{GenericImage, GenericImageView, ImageBuffer};
-use wgpu::hal::auxil::db;
 
 /// This is a wrapper around an image::RgbaImage that contains the contents of a sprite. It also will handle its mipmaps.
 pub struct Atlas {

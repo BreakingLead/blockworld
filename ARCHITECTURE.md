@@ -28,7 +28,7 @@ blockworld/
 ```
 blockworld-utils     (独立，不依赖其他 crate)
     ↑
-blockworld-server    (依赖 blockworld-utils + bevy_ecs + glam + tokio)
+blockworld-server    (依赖 blockworld-utils + glam + tokio)
     ↑
 blockworld-client    (依赖 blockworld-utils + blockworld-server + wgpu + winit + egui)
 ```
@@ -93,8 +93,6 @@ blockworld-server/src/
 │   ├── mod.rs               # BLOCK_REGISTRY 懒静态初始化
 │   ├── block.rs             # Block 结构体 + Material 枚举
 │   └── block_face_direction.rs  # 6 方向 bitflags
-├── components/
-│   └── mod.rs               # ECS 元件：HasView、Player
 └── world/
     ├── mod.rs
     ├── chunk.rs             # SubChunk（16×16×16，YZX 编排）
@@ -167,9 +165,7 @@ pub trait WorldAccess {
 #### Blockworld 主结构体（lib.rs）
 ```rust
 pub struct Blockworld {
-    chunks: DiskChunkArray,  // 区块存储（view_distance=8）
-    ecs: World,               // Bevy ECS 世界
-    schedule: Schedule,       // Bevy 排程器
+    pub chunks: DiskChunkArray,  // 区块存储（view_distance=8）
 }
 ```
 
@@ -352,8 +348,8 @@ Fragment Shader
 
 ## 五、设计模式与约定
 
-### 1. ECS 架构
-客户端和服务端都使用 Bevy ECS（`bevy_ecs::World` + `Schedule`）。目前排程器尚未接入实际系统，只是预留了架构。
+### 1. 依赖最小化
+刻意保持外部依赖精简。不使用 Bevy ECS，实体系统待后续按需实现。
 
 ### 2. Trait 抽象
 - `WorldAccess`：抽象世界存取，允许不同后端实现（内存 HashMap、磁盘、网络同步）

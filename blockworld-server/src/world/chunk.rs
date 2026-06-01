@@ -3,7 +3,6 @@ use std::{
     ops::Div,
 };
 
-use bevy_ecs::system::Res;
 use blockworld_utils::ResourceLocation;
 use enumflags2::{BitFlag, BitFlags};
 use glam::*;

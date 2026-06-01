@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.102"
-bevy_ecs = "0.18.1"
 blockworld-utils = { path = "../blockworld-utils" }
 futures-util = "0.3.32"
 glam = "0.33.0"

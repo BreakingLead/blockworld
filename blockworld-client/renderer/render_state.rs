@@ -1,12 +1,12 @@
 use crate::renderer::init_helpers::*;
-use crate::renderer::world_renderer::{self, WorldRenderer};
-use egui_winit_platform::Platform;
-use std::{sync::Arc, time::Instant};
-use wgpu::{include_wgsl, Device, Queue, Surface, SurfaceConfiguration};
-use winit::{dpi::PhysicalSize, window::Window};
+use crate::renderer::world_renderer::WorldRenderer;
+use std::sync::Arc;
+use std::time::Instant;
+use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
+use winit::dpi::PhysicalSize;
+use winit::window::Window;
 
 use super::input_manager::InputManager;
-use super::uniform::{RawMat4, Uniform};
 
 /// The RenderState struct holds all the state needed to render the game's user interface and game world.
 pub struct RenderState {
