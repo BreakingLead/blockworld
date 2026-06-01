@@ -82,7 +82,9 @@ impl WorldAccess for DiskChunkArray {
     }
 
     fn get_chunk(&self, pos: IVec3) -> &SubChunk {
-        self.chunks.get(&pos).unwrap()
+        self.chunks
+            .get(&pos)
+            .expect("Chunk not loaded - call is_chunk_loaded() first")
     }
 
     fn load_chunk(&mut self, pos: IVec3) {
@@ -122,12 +124,16 @@ impl WorldAccess for DiskChunkArray {
     }
 
     fn is_air(&self, pos: IVec3) -> bool {
+        let (chunk_pos, _) = world_blockpos_to_chunkpos(pos);
+        if !self.is_chunk_loaded(chunk_pos) {
+            return true;
+        }
         self.get_block(pos) == "minecraft:air".into()
     }
 
     fn get_block(&self, pos: IVec3) -> blockworld_utils::ResourceLocation {
-        let (a, b) = world_blockpos_to_chunkpos(pos);
-        self.get_chunk(a).get_blockid(b).into()
+        let (chunk_pos, block_pos) = world_blockpos_to_chunkpos(pos);
+        self.get_chunk(chunk_pos).get_blockid(block_pos).into()
     }
 
     fn set_block(&mut self, pos: IVec3, id: &blockworld_utils::ResourceLocation) {

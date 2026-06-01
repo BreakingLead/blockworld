@@ -30,8 +30,9 @@ impl MeshingManager {
                 for x in 0..16 {
                     for y in 0..16 {
                         for z in 0..16 {
-                            let block_id = chunk.get_blockid(pos);
-                            let blockpos = pos * 16 + ivec3(x, y, z);
+                            let block_local = ivec3(x, y, z);
+                            let block_id = chunk.get_blockid(block_local);
+                            let blockpos = pos * 16 + block_local;
 
                             let mut cull = 0b111111 as u32;
 
@@ -46,9 +47,10 @@ impl MeshingManager {
                                 }
                                 for k in BlockFaceDirection::iter() {
                                     if k as u32 & cull == 0 {
+                                        let center = blockpos.as_vec3() + vec3(0.5, 0.5, 0.5);
                                         let vtxs = to_quad_mesh(
                                             k,
-                                            vec3(pos.x as f32, pos.y as f32, pos.z as f32),
+                                            center,
                                             a,
                                             b,
                                         );
