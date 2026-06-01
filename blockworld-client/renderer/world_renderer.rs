@@ -103,7 +103,12 @@ impl WorldRenderer {
 
         let mut game = BlockworldClient::new();
         // Generate initial terrain around origin
-        game.chunks.generate_chunk(glam::ivec3(0, 0, 0));
+        for x in -1..=1 {
+            for z in -1..=1 {
+                game.chunks.generate_chunk(glam::ivec3(x, 0, z));
+            }
+        }
+        log::info!("Generated {} chunks", game.chunks.chunks.len());
         let mut meshing_manager = MeshingManager::new();
 
         Self {

@@ -97,9 +97,15 @@ impl Atlas {
             }
         } else {
             log::warn!(
-                "Texture atlas directory not found: {:?}. Using empty atlas.",
+                "Texture atlas directory not found: {:?}.",
                 assets_path.as_ref()
             );
+        }
+
+        if counter == 0 {
+            log::warn!("No textures loaded, filling with default patterns");
+            name_to_xy_map = Self::fill_default_texture(&mut atlas, tile_size);
+            counter = 1;
         }
 
         Self {
@@ -108,6 +114,25 @@ impl Atlas {
             tile_size,
             name_to_xy_map,
         }
+    }
+
+    fn fill_default_texture(atlas: &mut image::RgbaImage, tile_size: u32) -> HashMap<ResourceLocation, UVec2> {
+        use image::Rgba;
+        let mut map = HashMap::new();
+        // Create a simple stone-like texture for the default tile
+        for y in 0..tile_size {
+            for x in 0..tile_size {
+                let base = 128u8;
+                let noise = ((x as f32 * 0.3).sin() * (y as f32 * 0.3).cos() * 20.0) as u8;
+                let v = base.wrapping_add(noise);
+                atlas.put_pixel(x, y, Rgba([v, v, v, 255]));
+            }
+        }
+        map.insert(
+            ResourceLocation::new("minecraft:stone"),
+            uvec2(0, 0),
+        );
+        map
     }
 
     pub fn get_image(&self) -> &image::RgbaImage {

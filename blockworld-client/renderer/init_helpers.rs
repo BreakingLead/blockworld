@@ -23,7 +23,7 @@ pub fn create_window(event_loop: &EventLoop<()>) -> Window {
 /// Create the `wgpu` instance.
 pub fn create_instance() -> Instance {
     Instance::new(wgpu::InstanceDescriptor {
-        backends: wgpu::Backends::all(),
+        backends: wgpu::Backends::PRIMARY,
         flags: wgpu::InstanceFlags::default(),
         memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
         backend_options: wgpu::BackendOptions::from_env_or_default(),
