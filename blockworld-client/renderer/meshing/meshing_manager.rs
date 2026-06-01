@@ -21,8 +21,9 @@ pub struct MeshingManager {
 
 impl MeshingManager {
     pub fn update<T: WorldAccess>(&mut self, device: &Device, chunks: &T) {
+        self.render_array.clear();
         // loaded chunks
-        for (ind, chunk) in chunks.iter_loaded_chunks().enumerate() {
+        for chunk in chunks.iter_loaded_chunks() {
             let pos = chunk.pos();
             if chunks.need_rerender(chunk.pos()) {
                 let mut vertices = vec![];
