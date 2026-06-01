@@ -27,10 +27,11 @@ pub struct Atlas {
 
 impl Atlas {
     pub fn new<Q: AsRef<Path>>(assets_path: Q) -> Self {
-        let width_pixels = 512;
-        let height_pixels = 512;
+        let width_pixels = 1024;
+        let height_pixels = 1024;
         let tile_size = 16;
         let count_per_row = width_pixels / tile_size;
+        let max_tiles = count_per_row * (height_pixels / tile_size);
         let mut atlas = ImageBuffer::new(width_pixels, height_pixels);
 
         // there is an optional .mcmeta file of a texture
@@ -56,10 +57,18 @@ impl Atlas {
                     Err(_) => continue,
                 };
                 let path = entry.path();
+                let has_mcmeta = {
+                    let mcmeta = format!("{}.mcmeta", path.display());
+                    std::path::Path::new(&mcmeta).exists()
+                };
                 if path.is_file()
                     && path.extension().map_or(false, |e| e == "png")
-                    && !path.join(".mcmeta").exists()
+                    && !has_mcmeta
                 {
+                    if counter as u32 >= max_tiles {
+                        log::warn!("Atlas full ({} tiles), skipping remaining textures", max_tiles);
+                        break;
+                    }
                     let x = counter as u32 % count_per_row;
                     let y = counter as u32 / count_per_row;
                     let img = match image::open(&path) {
@@ -71,7 +80,7 @@ impl Atlas {
                     };
 
                     if img.dimensions().0 > tile_size || img.dimensions().1 > tile_size {
-                        // TODO: read meta, then reimpelement this
+                        // TODO: read meta, then reimplement this
                         log::warn!(
                             "Image {} is too big for the tile size, ignoring",
                             path.display()
