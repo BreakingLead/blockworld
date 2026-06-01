@@ -38,9 +38,16 @@ impl ApplicationHandler for WindowApplication {
                 .with_resizable(false),
         );
         match window {
-            Ok(window) => {
-                self.render_state = Some(RenderState::new(window));
-            }
+            Ok(window) => match RenderState::new(window) {
+                Some(state) => {
+                    self.render_state = Some(state);
+                }
+                None => {
+                    error!("Failed to initialize render state (no GPU adapter found)");
+                    self.exiting(event_loop);
+                    exit(-1);
+                }
+            },
             Err(_) => {
                 error!("Failed to create window");
                 self.exiting(event_loop);
@@ -144,8 +151,11 @@ pub async fn run() {
 
     let mut state = WindowApplication::default();
 
-    event_loop
-        .run_app(&mut state)
-        .with_context(|| "Failed to run app".to_string())
-        .unwrap();
+    match event_loop.run_app(&mut state) {
+        Ok(()) => {}
+        Err(e) => {
+            error!("Application exited with error: {e:?}");
+            std::process::exit(1);
+        }
+    }
 }

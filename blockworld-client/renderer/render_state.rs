@@ -27,12 +27,12 @@ pub struct RenderState {
 }
 
 impl RenderState {
-    pub fn new(window: Window) -> RenderState {
+    pub fn new(window: Window) -> Option<RenderState> {
         let window_arc = Arc::new(window);
         let size = window_arc.inner_size();
         let instance = create_instance();
         let surface = instance.create_surface(window_arc.clone()).unwrap();
-        let adapter = create_adapter(&instance, &surface);
+        let adapter = create_adapter(&instance, &surface)?;
         let (device, queue) = create_device_and_queue(&adapter);
         let config = create_surface_config(size, &surface, &adapter);
         surface.configure(&device, &config);
@@ -40,7 +40,7 @@ impl RenderState {
 
         let world_renderer = WorldRenderer::new(&device, &config, &queue, size);
 
-        Self {
+        Some(Self {
             window: window_arc,
             surface,
             device,
@@ -51,7 +51,7 @@ impl RenderState {
             world_renderer,
             dt_timer: Instant::now(),
             global_timer: Instant::now(),
-        }
+        })
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {

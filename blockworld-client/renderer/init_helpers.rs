@@ -29,15 +29,24 @@ pub fn create_instance() -> Instance {
 }
 
 /// Create the `wgpu` adapter from the instance and surface.
-pub fn create_adapter(instance: &Instance, surface: &Surface<'_>) -> wgpu::Adapter {
-    instance
+pub fn create_adapter(instance: &Instance, surface: &Surface<'_>) -> Option<wgpu::Adapter> {
+    match instance
         .request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::default(),
             compatible_surface: Some(surface),
             force_fallback_adapter: false,
         })
         .block_on()
-        .unwrap()
+    {
+        Ok(adapter) => Some(adapter),
+        Err(e) => {
+            log::error!(
+                "Failed to get a wgpu adapter: {e:?}. \
+                 Make sure Vulkan/Metal/DX12 drivers are installed."
+            );
+            None
+        }
+    }
 }
 
 /// Create the `wgpu` device and queue from the adapter.
