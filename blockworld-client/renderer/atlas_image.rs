@@ -200,7 +200,11 @@ impl Display for Atlas {
 
 #[test]
 fn atlas_generation() {
-    let atlas = Atlas::new(Path::new("assets/minecraft/textures/block"));
-    dbg!(&atlas.name_to_xy_map);
-    atlas.save("run/");
+    // Tests run from crate root (blockworld-client/), assets are at workspace root
+    let atlas = Atlas::new(Path::new("../assets/minecraft/textures/block"));
+    let count = atlas.name_to_xy_map.len();
+    assert!(count > 100, "Expected >100 textures, got {}", count);
+    dbg!(count);
+    std::fs::create_dir_all("run").ok();
+    atlas.save("run/atlas.png");
 }
