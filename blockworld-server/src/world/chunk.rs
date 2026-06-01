@@ -50,9 +50,9 @@ impl SubChunk {
             x >= 0
                 && y >= 0
                 && z >= 0
-                && x <= SUBCHUNK_SIZE as i32
-                && y <= SUBCHUNK_SIZE as i32
-                && z <= SUBCHUNK_SIZE as i32
+                && x < SUBCHUNK_SIZE as i32
+                && y < SUBCHUNK_SIZE as i32
+                && z < SUBCHUNK_SIZE as i32
         );
 
         (y * CHUNK_SIZE as i32 * CHUNK_SIZE as i32 + z * CHUNK_SIZE as i32 + x) as usize

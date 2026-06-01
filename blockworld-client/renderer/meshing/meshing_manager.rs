@@ -60,8 +60,9 @@ impl MeshingManager {
                     }
                 }
 
+                let vertex_count = vertices.len() as u32;
                 let render_chunk = RenderChunk {
-                    vertex_count: 0,
+                    vertex_count,
                     vertex_buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                         label: Some(&format!("Chunk{} Vertex Buffer", pos)),
                         contents: bytemuck::cast_slice(&vertices),

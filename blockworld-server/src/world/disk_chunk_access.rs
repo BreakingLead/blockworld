@@ -60,7 +60,7 @@ impl DiskChunkArray {
                 for z in 0..=15 {
                     let [wx, wy, wz] = (IVec3::new(x, y, z) + pos * 16).to_array();
                     if (wy as f32) < (wy as f32).sin() * 30.0 {
-                        sc.set_blockid(pos, "minecraft:stone".into());
+                        sc.set_blockid(IVec3::new(x, y, z), "minecraft:stone".into());
                     }
                 }
             }
