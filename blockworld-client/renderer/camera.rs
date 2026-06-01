@@ -20,10 +20,10 @@ pub struct Camera {
 impl Camera {
     pub fn new(aspect_ratio: f32) -> Self {
         Self {
-            position: vec3(0.0, 10.0, 5.0),
+            position: vec3(0.0, 20.0, -10.0),
             up: vec3(0.0, 1.0, 0.0),
             yaw: 0.0,
-            pitch: 0.0,
+            pitch: -0.5,
             aspect_ratio,
             fovy: PI / 2.0,
             znear: 0.01,
