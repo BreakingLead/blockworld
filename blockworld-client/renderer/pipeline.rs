@@ -15,8 +15,8 @@ impl RegularPipeline {
     ) -> Self {
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Blockworld Render Pipeline Layout"),
-            bind_group_layouts,
-            push_constant_ranges: &[],
+            bind_group_layouts: &bind_group_layouts.iter().map(|l| Some(*l)).collect::<Vec<_>>(),
+            immediate_size: 0,
         });
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -49,8 +49,8 @@ impl RegularPipeline {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: wgpu::TextureFormat::Depth32Float,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
+                depth_write_enabled: Some(true),
+                depth_compare: Some(wgpu::CompareFunction::Less),
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),
@@ -59,7 +59,7 @@ impl RegularPipeline {
                 mask: !0,
                 alpha_to_coverage_enabled: false,
             },
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
         Self { layout, pipeline }
@@ -81,8 +81,8 @@ impl WireframePipeline {
     ) -> Self {
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Blockworld Debug Pipeline Layout"),
-            bind_group_layouts,
-            push_constant_ranges: &[],
+            bind_group_layouts: &bind_group_layouts.iter().map(|l| Some(*l)).collect::<Vec<_>>(),
+            immediate_size: 0,
         });
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -115,8 +115,8 @@ impl WireframePipeline {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: wgpu::TextureFormat::Depth32Float,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
+                depth_write_enabled: Some(true),
+                depth_compare: Some(wgpu::CompareFunction::Less),
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),
@@ -125,7 +125,7 @@ impl WireframePipeline {
                 mask: !0,
                 alpha_to_coverage_enabled: false,
             },
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
         Self { layout, pipeline }
