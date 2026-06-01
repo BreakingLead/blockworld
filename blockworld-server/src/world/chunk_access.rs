@@ -1,6 +1,6 @@
 use std::slice::Iter;
 
-use blockworld_utils::ResourceLocation;
+use blockworld_utils::Identifier;
 use glam::IVec3;
 
 use crate::{packet::Packet, world::chunk::SubChunk};
@@ -25,6 +25,6 @@ pub trait WorldAccess {
     // block coord
     fn is_air(&self, pos: IVec3) -> bool;
 
-    fn get_block(&self, pos: IVec3) -> ResourceLocation;
-    fn set_block(&mut self, pos: IVec3, id: &ResourceLocation);
+    fn get_block(&self, pos: IVec3) -> Identifier;
+    fn set_block(&mut self, pos: IVec3, id: &Identifier);
 }

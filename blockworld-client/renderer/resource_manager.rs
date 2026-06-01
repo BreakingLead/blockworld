@@ -1,4 +1,4 @@
-use blockworld_utils::ResourceLocation;
+use blockworld_utils::Identifier;
 use once_cell::sync::Lazy;
 
 use super::atlas_image::Atlas;

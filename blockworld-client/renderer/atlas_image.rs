@@ -6,7 +6,7 @@
 
 use std::{collections::HashMap, fmt::Display, path::Path};
 
-use blockworld_utils::ResourceLocation;
+use blockworld_utils::Identifier;
 use glam::{ivec2, uvec2, vec2, IVec2, UVec2, Vec2};
 use image::{GenericImage, GenericImageView, ImageBuffer};
 
@@ -16,13 +16,13 @@ pub struct Atlas {
     /// - "minecraft:atlas/item"
     /// - "ic2:atlas/item"
     /// - etc.
-    // self_name: ResourceLocation,
+    // self_name: Identifier,
     atlas: image::RgbaImage,
     /// Mipmaps of the image, if they were generated.
     by_mip_level: Option<Vec<image::RgbaImage>>,
 
     tile_size: u32,
-    name_to_xy_map: HashMap<ResourceLocation, UVec2>,
+    name_to_xy_map: HashMap<Identifier, UVec2>,
 }
 
 impl Atlas {
@@ -61,12 +61,12 @@ impl Atlas {
                     let mcmeta = format!("{}.mcmeta", path.display());
                     std::path::Path::new(&mcmeta).exists()
                 };
-                if path.is_file()
-                    && path.extension().map_or(false, |e| e == "png")
-                    && !has_mcmeta
-                {
+                if path.is_file() && path.extension().map_or(false, |e| e == "png") && !has_mcmeta {
                     if counter as u32 >= max_tiles {
-                        log::warn!("Atlas full ({} tiles), skipping remaining textures", max_tiles);
+                        log::warn!(
+                            "Atlas full ({} tiles), skipping remaining textures",
+                            max_tiles
+                        );
                         break;
                     }
                     let x = counter as u32 % count_per_row;
@@ -94,7 +94,7 @@ impl Atlas {
                     }
 
                     if let Some(item_name) = path.file_stem() {
-                        let r = ResourceLocation::new(
+                        let r = Identifier::new(
                             format!("minecraft:{}", item_name.to_str().unwrap_or("unknown"))
                                 .as_str(),
                         );
@@ -125,7 +125,10 @@ impl Atlas {
         }
     }
 
-    fn fill_default_texture(atlas: &mut image::RgbaImage, tile_size: u32) -> HashMap<ResourceLocation, UVec2> {
+    fn fill_default_texture(
+        atlas: &mut image::RgbaImage,
+        tile_size: u32,
+    ) -> HashMap<Identifier, UVec2> {
         use image::Rgba;
         let mut map = HashMap::new();
         // Create a simple stone-like texture for the default tile
@@ -137,10 +140,7 @@ impl Atlas {
                 atlas.put_pixel(x, y, Rgba([v, v, v, 255]));
             }
         }
-        map.insert(
-            ResourceLocation::new("minecraft:stone"),
-            uvec2(0, 0),
-        );
+        map.insert(Identifier::new("minecraft:stone"), uvec2(0, 0));
         map
     }
 
@@ -186,7 +186,7 @@ impl Atlas {
         )
     }
 
-    pub fn query_uv(&self, name: &ResourceLocation) -> Option<(Vec2, Vec2)> {
+    pub fn query_uv(&self, name: &Identifier) -> Option<(Vec2, Vec2)> {
         let xy = self.name_to_xy_map.get(name).cloned()?;
         Some(self.from_xy_to_uvs(xy))
     }
@@ -205,6 +205,6 @@ fn atlas_generation() {
     let count = atlas.name_to_xy_map.len();
     assert!(count > 100, "Expected >100 textures, got {}", count);
     dbg!(count);
-    std::fs::create_dir_all("run").ok();
+    std::fs::create_dir_all("test_run").ok();
     atlas.save("run/atlas.png");
 }

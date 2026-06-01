@@ -10,8 +10,8 @@ mod resource;
 
 pub use constants::*;
 pub use registry::Registry;
-pub use resource::resource_location::HasResourceLocation;
-pub use resource::resource_location::ResourceLocation;
+pub use resource::resource_location::HasIdentifier;
+pub use resource::resource_location::Identifier;
 
 pub type AM<T> = Arc<Mutex<T>>;
 pub type RR<T> = Rc<RefCell<T>>;

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use anyhow::*;
-use blockworld_utils::ResourceLocation;
+use blockworld_utils::Identifier;
 use wgpu::*;
 
 use super::bytes_provider::BytesProvider;
@@ -20,7 +20,7 @@ pub struct WgslShader {
 
 impl WgslShader {
     pub fn new(
-        resource: &ResourceLocation,
+        resource: &Identifier,
         rp: &dyn BytesProvider,
         device: &wgpu::Device,
         frag_entry: &str,

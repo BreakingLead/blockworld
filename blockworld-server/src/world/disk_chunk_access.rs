@@ -131,12 +131,12 @@ impl WorldAccess for DiskChunkArray {
         self.get_block(pos) == "minecraft:air".into()
     }
 
-    fn get_block(&self, pos: IVec3) -> blockworld_utils::ResourceLocation {
+    fn get_block(&self, pos: IVec3) -> blockworld_utils::Identifier {
         let (chunk_pos, block_pos) = world_blockpos_to_chunkpos(pos);
         self.get_chunk(chunk_pos).get_blockid(block_pos).into()
     }
 
-    fn set_block(&mut self, pos: IVec3, id: &blockworld_utils::ResourceLocation) {
+    fn set_block(&mut self, pos: IVec3, id: &blockworld_utils::Identifier) {
         let (a, b) = world_blockpos_to_chunkpos(pos);
         if self.is_chunk_loaded(a) {
             self.chunks

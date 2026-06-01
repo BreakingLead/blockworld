@@ -1,7 +1,7 @@
 use anyhow::*;
 use std::path::{Path, PathBuf};
 
-use blockworld_utils::ResourceLocation;
+use blockworld_utils::Identifier;
 
 /// A abstraction over the way resources are loaded.
 /// This trait is implemented by different resource providers,
@@ -14,14 +14,14 @@ pub trait BytesProvider: Send + Sync {
     ///
     /// `minecraft:textures/block/stone.png`
     /// `assets/minecraft/textures/block/stone.png`
-    fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>>;
+    fn get_bytes(&self, id: &Identifier) -> Result<Vec<u8>>;
 }
 
 /// A resource provider that provides resources from a static value (embedded in the binary).
 pub struct StaticBytesProvider;
 
 impl BytesProvider for StaticBytesProvider {
-    fn get_bytes(&self, id: &ResourceLocation) -> Result<Vec<u8>> {
+    fn get_bytes(&self, id: &Identifier) -> Result<Vec<u8>> {
         if id == &"minecraft:assets/shaders/wireframe_shader.wgsl".into() {
             let r = include_bytes!("shaders/wireframe_shader.wgsl").to_vec();
             return Ok(r);
@@ -47,7 +47,7 @@ impl FilesystemBytesProvider {
 }
 
 impl BytesProvider for FilesystemBytesProvider {
-    fn get_bytes(&self, identifier: &ResourceLocation) -> anyhow::Result<Vec<u8>> {
+    fn get_bytes(&self, identifier: &Identifier) -> anyhow::Result<Vec<u8>> {
         let path = self
             .root_dir
             .join(Path::new("assets/").join(identifier.get_namespace()))

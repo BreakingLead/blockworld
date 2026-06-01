@@ -3,7 +3,7 @@ use std::{
     ops::Div,
 };
 
-use blockworld_utils::ResourceLocation;
+use blockworld_utils::Identifier;
 use enumflags2::{BitFlag, BitFlags};
 use glam::*;
 

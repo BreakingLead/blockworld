@@ -45,27 +45,27 @@ blockworld-client    (依赖 blockworld-utils + blockworld-server + wgpu + winit
 blockworld-utils/src/
 ├── lib.rs               # 重导出 + 型別別名
 ├── constants.rs         # GAME_NAME = "blockworld"
-├── registry.rs          # 泛型注册表 Registry<V: HasResourceLocation>
+├── registry.rs          # 泛型注册表 Registry<V: HasIdentifier>
 └── resource/
     ├── mod.rs
-    └── resource_location.rs  # ResourceLocation（命名空间:路径）
+    └── resource_location.rs  # Identifier（命名空间:路径）
 ```
 
 ### 核心类型
 
-#### `ResourceLocation`（resource_location.rs）
-类似 Minecraft 的 `Identifier`。用单个 `String id` 存储 `namespace:path` 格式（如 `minecraft:stone`）。
+#### `Identifier`（resource_location.rs）
+与 Minecraft 的 `Identifier` 一致。用单个 `String id` 存储 `namespace:path` 格式（如 `minecraft:stone`）。
 
 ```rust
-pub struct ResourceLocation { id: String }
+pub struct Identifier { id: String }
 ```
 
 支持 `Deref<Target=str>`，可直接当作 `&str` 使用。实现了 `From<&str>`、`Default`。
 
-#### `Registry<V: HasResourceLocation>`（registry.rs）
+#### `Registry<V: HasIdentifier>`（registry.rs）
 双向映射表，同时支持：
-- `ResourceLocation` → `V`（名称查询值）
-- `u32` ↔ `ResourceLocation`（数字 ID ↔ 名称，使用 BiMap）
+- `Identifier` → `V`（名称查询值）
+- `u32` ↔ `Identifier`（数字 ID ↔ 名称，使用 BiMap）
 
 用于方块注册表等场景。
 
@@ -105,7 +105,7 @@ blockworld-server/src/
 #### 方块系统
 ```rust
 pub struct Block {
-    pub id: ResourceLocation,  // 如 "minecraft:stone"
+    pub id: Identifier,  // 如 "minecraft:stone"
 }
 
 pub enum Material {
@@ -134,8 +134,8 @@ pub trait WorldAccess {
     fn load_chunk(&mut self, pos: IVec3);
     fn unload_chunk(&mut self, pos: IVec3);
     fn is_air(&self, pos: IVec3) -> bool;
-    fn get_block(&self, pos: IVec3) -> ResourceLocation;
-    fn set_block(&mut self, pos: IVec3, id: &ResourceLocation);
+    fn get_block(&self, pos: IVec3) -> Identifier;
+    fn set_block(&mut self, pos: IVec3, id: &Identifier);
     fn need_rerender(&self, pos: IVec3) -> bool;
     fn iter_loaded_chunks(&self) -> impl Iterator<Item = &SubChunk>;
     fn update(&mut self, packet: Packet);
@@ -353,14 +353,14 @@ Fragment Shader
 
 ### 2. Trait 抽象
 - `WorldAccess`：抽象世界存取，允许不同后端实现（内存 HashMap、磁盘、网络同步）
-- `HasResourceLocation`：任何可被注册表的物件
+- `HasIdentifier`：任何可被注册表的物件
 - `BytesProvider`：抽象资源载入（静态嵌入、文件系统、未来 HTTP/资源包）
 - `ToBytes` / `ToWgpuShader`：GPU 数据传送抽象
 
 ### 3. Minecraft 命名约定
 代码刻意沿用 Minecraft 内部类名，以便 mod 作者更容易理解和移植：
 - `DiskChunkArray` ≈ `ClientChunkProvider.java`
-- `ResourceLocation` ≈ `Identifier`
+- `Identifier` ≡ Minecraft `Identifier`
 - `SubChunk` ≈ `LevelChunkSection`
 - YZX 区块格式 ≈ Minecraft 区块格式
 

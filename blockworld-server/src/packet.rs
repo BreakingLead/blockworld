@@ -1,4 +1,3 @@
-use blockworld_utils::ResourceLocation;
 use glam::{IVec3, Vec3};
 
 pub enum Packet {

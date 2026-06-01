@@ -1,19 +1,19 @@
-use blockworld_utils::{HasResourceLocation, ResourceLocation};
+use blockworld_utils::{HasIdentifier, Identifier};
 
 pub type NumberID = u32;
 
 pub struct Block {
-    pub id: ResourceLocation,
+    pub id: Identifier,
 }
 
-impl HasResourceLocation for Block {
-    fn get_id(&self) -> ResourceLocation {
+impl HasIdentifier for Block {
+    fn get_id(&self) -> Identifier {
         self.id.clone()
     }
 }
 
 impl Block {
-    pub fn new(id: ResourceLocation) -> Self {
+    pub fn new(id: Identifier) -> Self {
         Self { id }
     }
 }
