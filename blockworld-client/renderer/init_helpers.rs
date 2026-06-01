@@ -24,7 +24,10 @@ pub fn create_window(event_loop: &EventLoop<()>) -> Window {
 pub fn create_instance() -> Instance {
     Instance::new(wgpu::InstanceDescriptor {
         backends: wgpu::Backends::PRIMARY,
-        ..Default::default()
+        flags: wgpu::InstanceFlags::default(),
+        memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
+        backend_options: wgpu::BackendOptions::from_env_or_default(),
+        display: None,
     })
 }
 
@@ -59,7 +62,6 @@ pub fn create_device_and_queue(adapter: &wgpu::Adapter) -> (wgpu::Device, wgpu::
                 required_limits: wgpu::Limits::default(),
                 ..Default::default()
             },
-            None,
         )
         .block_on()
         .unwrap();
