@@ -88,10 +88,24 @@ impl RenderState {
     }
 
     pub fn render(&mut self) {
-        let output_texture = self
-            .surface
-            .get_current_texture()
-            .expect("Failed to get window surface texture");
+        let output_texture = match self.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Suboptimal(texture) => {
+                self.surface.configure(&self.device, &self.config);
+                texture
+            }
+            wgpu::CurrentSurfaceTexture::Outdated | wgpu::CurrentSurfaceTexture::Lost => {
+                self.surface.configure(&self.device, &self.config);
+                return;
+            }
+            wgpu::CurrentSurfaceTexture::Timeout | wgpu::CurrentSurfaceTexture::Occluded => {
+                return;
+            }
+            wgpu::CurrentSurfaceTexture::Validation => {
+                log::error!("Surface validation error");
+                return;
+            }
+        };
 
         let output_texture_view = output_texture
             .texture
@@ -118,6 +132,7 @@ impl RenderState {
                     }),
                     store: wgpu::StoreOp::Store,
                 },
+                depth_slice: None,
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                 view: &self.world_renderer.depth_texture.view,
