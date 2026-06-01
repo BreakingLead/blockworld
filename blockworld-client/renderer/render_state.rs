@@ -84,7 +84,7 @@ impl RenderState {
             .as_str(),
         );
 
-        self.world_renderer.update(&self.queue, &self.input_manager);
+        self.world_renderer.update(&self.queue, &self.device, &self.input_manager);
     }
 
     pub fn render(&mut self) {

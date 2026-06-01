@@ -101,8 +101,14 @@ impl WorldRenderer {
             &config,
         );
 
-        let game = BlockworldClient::new();
-        let meshing_manager = MeshingManager::new();
+        let mut game = BlockworldClient::new();
+        // Generate initial terrain around origin
+        for x in -2..=2 {
+            for z in -2..=2 {
+                game.chunks.generate_chunk(glam::ivec3(x, 0, z));
+            }
+        }
+        let mut meshing_manager = MeshingManager::new();
 
         Self {
             debug_mode: false,
@@ -117,13 +123,16 @@ impl WorldRenderer {
         }
     }
 
-    pub fn update(&mut self, queue: &Queue, input: &InputManager) {
+    pub fn update(&mut self, queue: &Queue, device: &Device, input: &InputManager) {
         // Move the camera based on user input
         self.camera.update(input);
 
         // Update the uniform buffer with the new camera matrix
         self.matrix_uniform
             .update(queue, self.camera.build_mvp().into());
+
+        // Regenerate meshes for chunks that need it
+        self.meshing_manager.update(device, &self.game.chunks);
     }
 
     pub fn resize(

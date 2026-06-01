@@ -53,21 +53,24 @@ impl DiskChunkArray {
             && (chunk_z - self.center.y).abs() <= self.view_distance as i32
     }
 
-    fn generator(&mut self, pos: IVec3) -> SubChunk {
+    pub fn generate_chunk(&mut self, pos: IVec3) {
         let mut sc = SubChunk::new(pos);
-        for x in 0..=15 {
-            for y in 0..=15 {
-                for z in 0..=15 {
-                    let [wx, wy, wz] = (IVec3::new(x, y, z) + pos * 16).to_array();
-                    if (wy as f32) < (wy as f32).sin() * 30.0 {
+        for x in 0..16 {
+            for y in 0..16 {
+                for z in 0..16 {
+                    let world_y = (pos.y * 16 + y) as f32;
+                    let height = 8.0
+                        + (pos.x as f32 * 0.3).sin() * 3.0
+                        + (pos.z as f32 * 0.3).cos() * 3.0;
+                    if world_y < height {
                         sc.set_blockid(IVec3::new(x, y, z), "minecraft:stone".into());
                     }
                 }
             }
         }
-        sc
+        self.chunks.insert(pos, sc);
+        self.need_rerender.push(pos);
     }
-
     pub fn recenter(&mut self, pos: IVec3) {
         self.center = pos;
     }

@@ -20,7 +20,7 @@ pub struct MeshingManager {
 }
 
 impl MeshingManager {
-    pub fn update<T: WorldAccess>(&mut self, device: &Device, chunks: T) {
+    pub fn update<T: WorldAccess>(&mut self, device: &Device, chunks: &T) {
         // loaded chunks
         for (ind, chunk) in chunks.iter_loaded_chunks().enumerate() {
             let pos = chunk.pos();
