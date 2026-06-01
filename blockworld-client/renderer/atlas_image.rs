@@ -49,38 +49,58 @@ impl Atlas {
 
         let mut name_to_xy_map = HashMap::new();
         let mut counter = 0;
-        for entry in assets_path.as_ref().read_dir().unwrap() {
-            let entry = entry.unwrap();
-            let path = entry.path();
-            if path.is_file()
-                && path.extension().unwrap() == "png"
-                && !path.join(".mcmeta").exists()
-            {
-                let x = counter as u32 % count_per_row;
-                let y = counter as u32 / count_per_row;
-                let img = image::open(&path).unwrap();
 
-                if img.dimensions().0 > tile_size || img.dimensions().1 > tile_size {
-                    // TODO: read meta, then reimpelement this
-                    log::warn!(
-                        "Image {} is too big for the tile size, ignoring",
-                        path.display()
-                    );
-                    continue;
+        if let Ok(dir) = assets_path.as_ref().read_dir() {
+            for entry in dir {
+                let entry = match entry {
+                    Ok(e) => e,
+                    Err(_) => continue,
+                };
+                let path = entry.path();
+                if path.is_file()
+                    && path.extension().map_or(false, |e| e == "png")
+                    && !path.join(".mcmeta").exists()
+                {
+                    let x = counter as u32 % count_per_row;
+                    let y = counter as u32 / count_per_row;
+                    let img = match image::open(&path) {
+                        Ok(i) => i,
+                        Err(e) => {
+                            log::warn!("Failed to open image {}: {}", path.display(), e);
+                            continue;
+                        }
+                    };
+
+                    if img.dimensions().0 > tile_size || img.dimensions().1 > tile_size {
+                        // TODO: read meta, then reimpelement this
+                        log::warn!(
+                            "Image {} is too big for the tile size, ignoring",
+                            path.display()
+                        );
+                        continue;
+                    }
+
+                    if let Err(e) = atlas.copy_from(&img, x * tile_size, y * tile_size) {
+                        log::warn!("Failed to copy image {} into atlas: {}", path.display(), e);
+                        continue;
+                    }
+
+                    if let Some(item_name) = path.file_stem() {
+                        let r = ResourceLocation::new(
+                            format!("minecraft:{}", item_name.to_str().unwrap_or("unknown"))
+                                .as_str(),
+                        );
+                        name_to_xy_map.insert(r, uvec2(x, y));
+                    }
+
+                    counter += 1;
                 }
-
-                atlas.copy_from(&img, x * tile_size, y * tile_size).unwrap();
-
-                let item_name = path.file_stem().unwrap();
-
-                let r = ResourceLocation::new(
-                    format!("minecraft:{}", item_name.to_str().unwrap()).as_str(),
-                );
-
-                name_to_xy_map.insert(r, uvec2(x, y));
-
-                counter += 1;
             }
+        } else {
+            log::warn!(
+                "Texture atlas directory not found: {:?}. Using empty atlas.",
+                assets_path.as_ref()
+            );
         }
 
         Self {
