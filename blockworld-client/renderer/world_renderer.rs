@@ -278,8 +278,7 @@ impl WorldRenderer {
         );
 
         // --- game ---
-        let mut game = BlockworldClient::new();
-        game.generate_initial_terrain();
+        let mut game = BlockworldClient::new(4);
 
         let meshing_manager = MeshingManager::new();
 
@@ -307,6 +306,9 @@ impl WorldRenderer {
         // Upload new MVP matrix to GPU uniform buffer
         let mvp: RawMat4 = self.camera.build_mvp().into();
         queue.write_buffer(&self.matrix_buffer, 0, bytemuck::cast_slice(&[mvp]));
+
+        // Load/unload chunks around the player
+        self.game.update_view(self.camera.position);
 
         // Rebuild any stale chunk meshes
         self.meshing_manager.update(device, &mut self.game.chunks);

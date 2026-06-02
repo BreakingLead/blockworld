@@ -95,6 +95,9 @@ impl MeshingManager {
                 chunks.clear_need_rerender(pos);
             }
         }
+
+        // Remove entries for chunks that have been unloaded
+        self.render_map.retain(|pos, _| chunks.is_chunk_loaded(*pos));
     }
 
     /// Draw all cached chunk meshes.
