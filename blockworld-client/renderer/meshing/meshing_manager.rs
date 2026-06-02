@@ -7,8 +7,7 @@
 use std::collections::HashMap;
 
 use blockworld_server::{
-    block::block_face_direction::BlockFaceDirection,
-    world::chunk_access::WorldAccess,
+    block::block_face_direction::BlockFaceDirection, world::chunk_access::WorldAccess,
 };
 use glam::*;
 use once_cell::sync::Lazy;
@@ -19,8 +18,7 @@ use crate::renderer::resource_manager::BLOCK_ATLAS;
 use super::block_meshing::to_quad_mesh;
 
 /// The identifier string for air blocks, computed once from `GAME_NAME`.
-static AIR_STR: Lazy<String> =
-    Lazy::new(|| format!("{}:air", blockworld_utils::GAME_NAME));
+static AIR_STR: Lazy<String> = Lazy::new(|| format!("{}:air", blockworld_utils::GAME_NAME));
 
 /// A GPU vertex buffer for one subchunk, plus the number of vertices to draw.
 #[derive(Debug)]
@@ -42,7 +40,6 @@ pub struct MeshingManager {
 impl MeshingManager {
     /// Rebuild meshes for chunks marked `need_rerender`.
     ///
-    /// For each non-air block, generates all 6 faces.
     /// Face culling is handled by the GPU via `CullMode::Back`.
     pub fn update<T: WorldAccess>(&mut self, device: &Device, chunks: &mut T) {
         // Collect positions first to release the immutable borrow before

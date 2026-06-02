@@ -25,9 +25,9 @@ pub const CHUNK_BLOCK_NUM: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT;
 /// Uses `rem_euclid` so negative coordinates wrap correctly
 /// (e.g. block at `-1` → local `15` in chunk `-1`).
 pub fn world_blockpos_to_chunkpos(pos: IVec3) -> (IVec3, IVec3) {
-    let x = pos.x / 16;
-    let y = pos.y / 16;
-    let z = pos.z / 16;
+    let x = pos.x.div_euclid(16);
+    let y = pos.y.div_euclid(16);
+    let z = pos.z.div_euclid(16);
     let sub_x = pos.x.rem_euclid(16);
     let sub_y = pos.y.rem_euclid(16);
     let sub_z = pos.z.rem_euclid(16);
