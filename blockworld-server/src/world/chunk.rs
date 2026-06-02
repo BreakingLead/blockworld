@@ -97,6 +97,12 @@ impl SubChunk {
             "missing"
         }
     }
+
+    /// Fast path: return the raw numeric block ID without registry lookup.
+    pub fn get_raw_blockid(&self, pos: IVec3) -> u32 {
+        let (x, y, z) = (pos.x, pos.y, pos.z);
+        self.blocks[Self::index(x, y, z)]
+    }
 }
 
 // pub struct Chunk {

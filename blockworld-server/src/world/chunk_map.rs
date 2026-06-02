@@ -28,16 +28,13 @@ impl ChunkMap {
         Self::default()
     }
 
-    /// Check if a block position is air.
-    ///
-    /// Unloaded chunks are treated as air (nothing to collide with).
+    /// Check if a block position is air (fast path, no Identifier allocation).
     pub fn is_air_block(&self, pos: IVec3) -> bool {
-        let (chunk_pos, _) = world_blockpos_to_chunkpos(pos);
-        if !self.chunks.contains_key(&chunk_pos) {
-            return true;
+        let (chunk_pos, block_pos) = world_blockpos_to_chunkpos(pos);
+        match self.chunks.get(&chunk_pos) {
+            Some(chunk) => chunk.get_raw_blockid(block_pos) == 0,
+            None => true, // unloaded chunks are treated as air
         }
-        self.get_block(pos)
-            == Identifier::new(&format!("{}:air", blockworld_utils::GAME_NAME))
     }
 
     /// Get the block identifier at a world position.
