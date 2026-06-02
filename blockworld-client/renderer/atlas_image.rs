@@ -159,14 +159,18 @@ impl Atlas {
     ///        to map each of the 6 faces to different texture references.
     ///        Once block models are supported, this fallback should be removed.
     pub fn query_uv(&self, name: &Identifier) -> Option<(Vec2, Vec2)> {
-        // Exact match first (e.g. stone → stone.png)
         if let Some(xy) = self.name_to_xy_map.get(name) {
             return Some(self.from_xy_to_uvs(*xy));
         }
-        // Fallback: try {name}_top (e.g. grass_block → grass_block_top.png)
-        let top_id = Identifier::new(&format!("{}_top", &**name));
-        if let Some(xy) = self.name_to_xy_map.get(&top_id) {
-            return Some(self.from_xy_to_uvs(*xy));
+        // Fallback: try {name}_top without allocating if already in map
+        // (e.g. grass_block → grass_block_top)
+        if let Some(idx) = name.rfind(':') {
+            let (ns, path) = name.split_at(idx + 1);
+            let top_str = format!("{}{}_top", ns, path);
+            let top_id = Identifier::new(&top_str);
+            if let Some(xy) = self.name_to_xy_map.get(&top_id) {
+                return Some(self.from_xy_to_uvs(*xy));
+            }
         }
         None
     }

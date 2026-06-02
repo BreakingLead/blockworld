@@ -47,7 +47,7 @@ impl MeshingManager {
         // calling `clear_need_rerender` (which requires `&mut`).
         let positions: Vec<IVec3> = chunks.iter_loaded_chunks().map(|c| c.pos()).collect();
 
-        let max_per_frame = 2;
+        let max_per_frame = 1;
         let mut built = 0;
 
         for pos in positions {
@@ -73,8 +73,15 @@ impl MeshingManager {
                                 // Block center in world space
                                 let center = blockpos.as_vec3() + vec3(0.5, 0.5, 0.5);
                                 for face in BlockFaceDirection::iter() {
-                                    // CPU face culling: skip faces hidden by solid neighbors
-                                    if !chunks.is_air(blockpos + face.to_vec()) {
+                                    // Same-chunk fast path: direct array read (no hashmap)
+                                    let neighbor_local = block_local + face.to_vec();
+                                    if neighbor_local.cmpge(IVec3::ZERO).all()
+                                        && neighbor_local.cmplt(IVec3::splat(16)).all()
+                                    {
+                                        if chunk.get_raw_blockid(neighbor_local) != 0 {
+                                            continue;
+                                        }
+                                    } else if !chunks.is_air(blockpos + face.to_vec()) {
                                         continue;
                                     }
                                     let vtxs = to_quad_mesh(face, center, a, b);

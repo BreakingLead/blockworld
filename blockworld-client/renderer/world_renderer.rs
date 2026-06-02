@@ -309,7 +309,7 @@ impl WorldRenderer {
 
         // Load/unload chunks around the player, generate at most 2 new chunks
         self.game.update_view(self.camera.position);
-        self.game.process_queue(2);
+        self.game.process_queue(1);
 
         // Rebuild at most 2 stale chunk meshes per frame
         self.meshing_manager.update(device, &mut self.game.chunks);
