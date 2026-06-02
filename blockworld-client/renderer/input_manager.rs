@@ -1,3 +1,8 @@
+//! Keyboard input tracking.
+//!
+//! Maintains a set of currently-pressed keys and converts them
+//! into a `MovementRecord` each frame for camera movement.
+
 use std::collections::HashSet;
 
 use glam::{vec2, Vec2};
@@ -7,6 +12,7 @@ use winit::{
     keyboard::{Key, NamedKey},
 };
 
+/// Which movement directions are currently active.
 #[derive(Default)]
 pub struct MovementRecord {
     pub forward: bool,
@@ -17,15 +23,17 @@ pub struct MovementRecord {
     pub right: bool,
 }
 
-pub static mut GLOBAL_INPUT_MANAGER: Lazy<InputManager> = Lazy::new(|| InputManager::default());
-
-/// Tracker for the pressing keys
+/// Tracks currently-held keys via a set of `Key` values.
+///
+/// `window_init` calls `handle_key_event()` on each keyboard event;
+/// `Camera::update()` calls `to_key_record()` to read movement state.
 #[derive(Default, Debug)]
 pub struct InputManager {
     pressing_keys: HashSet<Key>,
 }
 
 impl InputManager {
+    /// Convert the current key state into a `MovementRecord` for camera movement.
     pub fn to_key_record(&self) -> MovementRecord {
         let mut s = MovementRecord::default();
         if self.is_key_pressing(Key::Character("w".into())) {
@@ -53,6 +61,7 @@ impl InputManager {
         self.pressing_keys.contains(&key)
     }
 
+    /// Register a key press or release.
     pub fn handle_key_event(&mut self, event: &KeyEvent) {
         let key = &event.logical_key;
         match event.state {

@@ -17,6 +17,10 @@ use super::{
     vertex::TexturedVertex,
 };
 
+// -- RawMat4: GPU-compatible 4x4 matrix -----------------------------------
+
+/// Column-major 4x4 matrix matching WGSL's `mat4x4<f32>` layout.
+/// Converted from `glam::Mat4` via `to_cols_array_2d()`.
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 struct RawMat4([[f32; 4]; 4]);
@@ -27,28 +31,49 @@ impl From<Mat4> for RawMat4 {
     }
 }
 
+// -- WorldRenderer ---------------------------------------------------------
+
+/// Holds all GPU resources and orchestrates rendering.
+///
+/// ## Bind group layout
+///
+/// ```ignore
+/// @group(0)  binding 0  — texture_2d    (block atlas)
+///            binding 1  — sampler       (nearest-neighbor)
+/// @group(1)  binding 30 — uniform mat4  (MVP matrix)
+/// ```
+///
+/// ## Per-frame flow
+///
+/// `update()` → camera movement → upload MVP to GPU → chunk mesh regeneration
+/// `render()` → bind pipeline → bind groups → draw all chunk meshes
 pub struct WorldRenderer {
     pub camera: Camera,
+    /// Toggle wireframe mode (F1 key).
     pub debug_mode: bool,
 
-    // depth
+    // --- depth buffer ---
+    /// The depth texture (must be kept alive so the view remains valid).
     depth_texture: Texture,
+    /// Exposed publicly so `RenderState` can attach it to the render pass.
     pub depth_view: TextureView,
 
-    // diffuse texture (atlas)
+    // --- block atlas texture ---
+    /// `@group(0)`: texture view + sampler, pre-baked into one bind group.
     diffuse_bind_group: BindGroup,
     diffuse_bind_group_layout: BindGroupLayout,
 
-    // matrix uniform
+    // --- camera matrix uniform ---
+    /// `@group(1) @binding(30)`: model-view-projection matrix buffer.
     matrix_buffer: Buffer,
     matrix_bind_group: BindGroup,
     matrix_bind_group_layout: BindGroupLayout,
 
-    // pipelines
+    // --- pipelines ---
     main_pipeline: RenderPipeline,
     wireframe_pipeline: RenderPipeline,
 
-    // game
+    // --- world ---
     game: BlockworldClient,
     meshing_manager: MeshingManager,
 }
@@ -281,9 +306,14 @@ impl WorldRenderer {
     }
 
     pub fn update(&mut self, queue: &Queue, device: &Device, input: &InputManager) {
+        // Move camera based on keyboard input
         self.camera.update(input);
+
+        // Upload new MVP matrix to GPU uniform buffer
         let mvp: RawMat4 = self.camera.build_mvp().into();
         queue.write_buffer(&self.matrix_buffer, 0, bytemuck::cast_slice(&[mvp]));
+
+        // Rebuild any stale chunk meshes
         self.meshing_manager.update(device, &mut self.game.chunks);
     }
 
@@ -306,6 +336,8 @@ impl WorldRenderer {
         self.camera.update_aspect_ratio(aspect_ratio);
     }
 
+    /// Bind pipeline and draw all chunk meshes.
+    /// `rpass` is set up by `RenderState` with the correct color/depth attachments.
     pub fn render<'rpass>(&'rpass self, rpass: &mut RenderPass<'rpass>) {
         if self.debug_mode {
             rpass.set_pipeline(&self.wireframe_pipeline);
@@ -318,6 +350,10 @@ impl WorldRenderer {
     }
 }
 
+/// Build a `RenderPipeline` from a shader.
+///
+/// Shared by both the regular (filled) and wireframe (line) pipelines.
+/// The only differences are `polygon_mode` and `cull_mode`.
 fn create_render_pipeline(
     device: &Device,
     layout: &PipelineLayout,

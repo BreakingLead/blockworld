@@ -1,3 +1,9 @@
+//! Window creation and winit event loop.
+//!
+//! Wires up `WindowApplication` (the `ApplicationHandler` impl) to
+//! forward winit events into `RenderState`. Exports `run()` which is
+//! the binary entry point called from `main.rs`.
+
 use glam::vec2;
 use log::*;
 use winit::application::ApplicationHandler;
@@ -8,12 +14,18 @@ use winit::window::{Window, WindowId};
 
 use super::render_state::RenderState;
 
+/// The application struct.
+///
+/// Holds an `Option<RenderState>` because winit guarantees
+/// `resumed()` is called before any other events, so `RenderState`
+/// is always `Some` by the time events fire.
 #[derive(Default)]
 struct App {
     state: Option<RenderState>,
 }
 
 impl ApplicationHandler for App {
+    /// Called once at startup. Creates the window and initializes wgpu.
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = event_loop
             .create_window(
@@ -23,6 +35,7 @@ impl ApplicationHandler for App {
             )
             .expect("Failed to create window");
 
+        // Lock cursor for FPS-style camera
         window
             .set_cursor_grab(winit::window::CursorGrabMode::Confined)
             .ok();
@@ -37,6 +50,7 @@ impl ApplicationHandler for App {
         }
     }
 
+    /// Raw device events (mouse motion for camera rotation).
     fn device_event(
         &mut self,
         _event_loop: &ActiveEventLoop,
@@ -52,6 +66,7 @@ impl ApplicationHandler for App {
         }
     }
 
+    /// Window-level events: close, resize, redraw, keyboard.
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -65,18 +80,23 @@ impl ApplicationHandler for App {
 
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
+
+            // Continuous redraw loop via ControlFlow::Poll
             WindowEvent::RedrawRequested => {
                 s.update();
                 s.render().ok();
                 s.window.request_redraw();
             }
+
             WindowEvent::Resized(size) => s.resize(size),
+
             WindowEvent::KeyboardInput { event, .. } => {
                 if event.physical_key == KeyCode::Escape {
                     event_loop.exit();
                 }
                 s.input_manager.handle_key_event(&event);
 
+                // Debug: F1 toggles wireframe, F2 toggles cursor grab (removed)
                 if let PhysicalKey::Code(key) = event.physical_key {
                     if key == KeyCode::F1 && event.state == ElementState::Released {
                         s.world_renderer.debug_mode = !s.world_renderer.debug_mode;
@@ -88,6 +108,8 @@ impl ApplicationHandler for App {
     }
 }
 
+/// Entry point. Initializes logging, creates the event loop, and blocks.
+/// Uses `ControlFlow::Poll` for continuous rendering (max FPS).
 pub async fn run() {
     env_logger::init();
     let event_loop = EventLoop::new().unwrap();

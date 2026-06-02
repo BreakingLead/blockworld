@@ -1,21 +1,58 @@
-﻿use std::collections::HashMap;
+﻿//! Game resource management system.
+//!
+//! ## Architecture
+//!
+//! Minecraft uses a layered resource system:
+//!   PackResources (single source)
+//!     → ResourceManager (merged view of all sources)
+//!       → Consumers (TextureManager, SoundManager, etc.)
+//!
+//! Our equivalents:
+//!   PackSource trait   ← PackResources
+//!   ResourceManager    ← MultiPackResourceManager
+//!   RESOURCE_MANAGER   ← Minecraft.getInstance().getResourceManager()
+//!
+//! ## Priority
+//!
+//! Last-added source has highest priority. Currently:
+//!   1. FilesystemSource(".")  — highest, can override embedded
+//!   2. EmbeddedSource         — lowest, shaders baked into binary
+//!
+//! Mods register via:
+//!   RESOURCE_MANAGER.lock().unwrap().add_source(FilesystemSource::new("mod_foo/"));
+
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use blockworld_utils::Identifier;
 use once_cell::sync::Lazy;
 
-/// A single source of game assets (filesystem dir, zip, embedded bytes, mod).
+// -- PackSource trait -------------------------------------------------------
+
+/// A single source of game assets.
+///
+/// Equivalent to Minecraft's `PackResources` interface.
+/// Implementations: `FilesystemSource` (disk), `EmbeddedSource` (binary),
+/// future: `ZipSource` (resource packs), mod-provided sources.
 pub trait PackSource: Send + Sync {
-    /// Return raw bytes for a resource, or None if not provided by this source.
+    /// Return raw bytes for a resource, or `None` if not provided by this source.
     fn get(&self, id: &Identifier) -> Option<Vec<u8>>;
 
     /// List all identifiers under `namespace:prefix/`.
+    ///
+    /// Example: `list("blockworld", "textures/block")` returns
+    /// `[blockworld:textures/block/stone, blockworld:textures/block/dirt, ...]`.
     fn list(&self, namespace: &str, prefix: &str) -> Vec<Identifier>;
 }
 
-/// Merged view of multiple PackSources.
-/// Last-added source has highest priority.
+// -- ResourceManager --------------------------------------------------------
+
+/// Merged view of multiple `PackSource`s.
+///
+/// Walk sources in reverse order (last-added = highest priority).
+/// When multiple sources provide the same resource identifier,
+/// the higher-priority source wins.
 pub struct ResourceManager {
     sources: Vec<Box<dyn PackSource>>,
 }
@@ -25,16 +62,18 @@ impl ResourceManager {
         Self { sources: vec![] }
     }
 
+    /// Append a source. Later additions override earlier ones.
     pub fn add_source(&mut self, source: impl PackSource + 'static) {
         self.sources.push(Box::new(source));
     }
 
-    /// Walk sources bottom-to-top, return first match.
+    /// Walk sources from highest to lowest priority, return first match.
     pub fn get(&self, id: &Identifier) -> Option<Vec<u8>> {
         self.sources.iter().rev().find_map(|s| s.get(id))
     }
 
-    /// All identifiers across sources. Higher-priority sources win for duplicates.
+    /// Collect all identifiers across sources.
+    /// Higher-priority sources win for duplicates (last-added overwrites).
     pub fn list(&self, namespace: &str, prefix: &str) -> Vec<Identifier> {
         let mut seen = HashMap::new();
         for source in &self.sources {
@@ -46,8 +85,12 @@ impl ResourceManager {
     }
 }
 
-// 鈹€鈹€ FilesystemSource 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// -- FilesystemSource -------------------------------------------------------
 
+/// Reads assets from the filesystem under `{root}/assets/{namespace}/{path}`.
+///
+/// Example: for `Identifier("blockworld:textures/block/stone.png")`,
+/// reads `{root}/assets/blockworld/textures/block/stone.png`.
 pub struct FilesystemSource {
     root: PathBuf,
 }
@@ -59,6 +102,8 @@ impl FilesystemSource {
         }
     }
 
+    /// Convert an identifier to a filesystem path:
+    /// `{root}/assets/{namespace}/{path}`
     fn resolve(&self, id: &Identifier) -> PathBuf {
         self.root
             .join("assets")
@@ -73,20 +118,14 @@ impl PackSource for FilesystemSource {
     }
 
     fn list(&self, namespace: &str, prefix: &str) -> Vec<Identifier> {
-        let dir = self
-            .root
-            .join("assets")
-            .join(namespace)
-            .join(prefix);
+        let dir = self.root.join("assets").join(namespace).join(prefix);
         let mut out = vec![];
         if let Ok(entries) = std::fs::read_dir(&dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_file() {
                     if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                        let id = Identifier::new(
-                            &format!("{}:{}/{}", namespace, prefix, stem),
-                        );
+                        let id = Identifier::new(&format!("{}:{}/{}", namespace, prefix, stem));
                         out.push(id);
                     }
                 }
@@ -96,8 +135,13 @@ impl PackSource for FilesystemSource {
     }
 }
 
-// 鈹€鈹€ EmbeddedSource 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// -- EmbeddedSource ---------------------------------------------------------
 
+/// Provides resources baked into the binary at compile time via `include_bytes!`.
+///
+/// Used for shaders so the client binary is self-contained without
+/// requiring external shader files at runtime. Filesystem sources
+/// override embedded ones at higher priority.
 pub struct EmbeddedSource {
     data: HashMap<Identifier, &'static [u8]>,
 }
@@ -109,6 +153,7 @@ impl EmbeddedSource {
         }
     }
 
+    /// Builder-style: associate an identifier with static bytes.
     pub fn with(mut self, id: Identifier, bytes: &'static [u8]) -> Self {
         self.data.insert(id, bytes);
         self
@@ -125,8 +170,16 @@ impl PackSource for EmbeddedSource {
     }
 }
 
-// 鈹€鈹€ Global singleton 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// -- Global singleton -------------------------------------------------------
 
+/// The global resource manager.
+///
+/// Wrapped in `Lazy<Mutex<...>>` so mods can call `lock()` and
+/// `add_source()` at runtime to register their own asset directories.
+///
+/// Priority order (lowest to highest):
+///   1. EmbeddedSource — shaders baked into binary
+///   2. FilesystemSource(".") — runtime overrides from the working directory
 pub static RESOURCE_MANAGER: Lazy<Mutex<ResourceManager>> = Lazy::new(|| {
     let mut rm = ResourceManager::new();
 
@@ -149,7 +202,7 @@ pub static RESOURCE_MANAGER: Lazy<Mutex<ResourceManager>> = Lazy::new(|| {
             ),
     );
 
-    // Filesystem (highest priority 鈥?can override embedded)
+    // Filesystem (highest priority — can override embedded)
     rm.add_source(FilesystemSource::new("."));
 
     Mutex::new(rm)

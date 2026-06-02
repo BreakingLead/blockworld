@@ -1,3 +1,9 @@
+//! Central render state: owns the wgpu device, surface, and `WorldRenderer`.
+//!
+//! This is the glue between `window_init` (event loop) and `world_renderer`
+//! (actual rendering). It manages the swapchain lifecycle and delegates
+//! per-frame work.
+
 use std::sync::Arc;
 use std::time::Instant;
 use wgpu::*;
@@ -8,6 +14,11 @@ use super::init_helpers;
 use super::input_manager::InputManager;
 use super::world_renderer::WorldRenderer;
 
+/// The top-level renderer state.
+///
+/// Owns the wgpu device/queue/surface and the `WorldRenderer`.
+/// `RenderState` is created once in `window_init::resumed()` and
+/// lives for the lifetime of the window.
 pub struct RenderState {
     pub window: Arc<Window>,
     pub surface: Surface<'static>,
@@ -19,10 +30,13 @@ pub struct RenderState {
     pub input_manager: InputManager,
     pub world_renderer: WorldRenderer,
 
+    /// Time of last frame, for delta-time / FPS calculation.
     dt_timer: Instant,
 }
 
 impl RenderState {
+    /// Initialize wgpu, create the surface, and wire up the `WorldRenderer`.
+    /// Returns `None` if no suitable GPU adapter is found.
     pub fn new(window: Window) -> Option<Self> {
         let window = Arc::new(window);
         let size = window.inner_size();
@@ -49,6 +63,8 @@ impl RenderState {
         })
     }
 
+    /// Handle window resize: reconfigure the swapchain and
+    /// recreate the depth buffer to match the new size.
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         if new_size.width == 0 || new_size.height == 0 {
             return;
@@ -64,15 +80,23 @@ impl RenderState {
         self.size = new_size;
     }
 
+    /// Advance one frame: compute delta-time, update camera, rebuild meshes.
     pub fn update(&mut self) {
         let dt = self.dt_timer.elapsed();
         self.dt_timer = Instant::now();
-        self.window.set_title(format!("Blockworld Dev [fps: {:.0}]", 1.0 / dt.as_secs_f32()).as_str());
+        self.window
+            .set_title(format!("Blockworld Dev [fps: {:.0}]", 1.0 / dt.as_secs_f32()).as_str());
         self.world_renderer
             .update(&self.queue, &self.device, &self.input_manager);
     }
 
+    /// Draw one frame.
+    ///
+    /// Acquires the next swapchain texture, clears it to sky blue,
+    /// runs the render pass (depth + color), and presents.
+    /// Returns `Err(())` if the surface is lost/outdated/timeout.
     pub fn render(&mut self) -> Result<(), ()> {
+        // Acquire next swapchain image
         let output = match self.surface.get_current_texture() {
             CurrentSurfaceTexture::Success(tex) => tex,
             CurrentSurfaceTexture::Suboptimal(tex) => {
@@ -101,6 +125,7 @@ impl RenderState {
             });
 
         {
+            // Build the render pass: clear color to sky blue, clear depth to 1.0
             let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(RenderPassColorAttachment {
@@ -108,6 +133,7 @@ impl RenderState {
                     resolve_target: None,
                     ops: Operations {
                         load: LoadOp::Clear(Color {
+                            // Minecraft-style sky blue (#82a9f9)
                             r: 0.51,
                             g: 0.66,
                             b: 0.98,
