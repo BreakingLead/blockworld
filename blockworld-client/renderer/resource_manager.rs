@@ -1,9 +1,9 @@
-use blockworld_utils::Identifier;
 use once_cell::sync::Lazy;
 
 use super::atlas_image::Atlas;
+use super::resource::RESOURCE_MANAGER;
 
-/// temporarily use this global variable to store the block atlas
-///
-/// TODO: use a resource manager to load and store atlases
-pub static BLOCK_ATLAS: Lazy<Atlas> = Lazy::new(|| Atlas::new("assets/minecraft/textures/block/"));
+pub static BLOCK_ATLAS: Lazy<Atlas> = Lazy::new(|| {
+    let rm = RESOURCE_MANAGER.lock().unwrap();
+    Atlas::from_resource_manager(&rm, "minecraft", "textures/block")
+});

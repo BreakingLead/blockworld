@@ -4,12 +4,7 @@ use anyhow::*;
 use blockworld_utils::Identifier;
 use wgpu::*;
 
-use super::bytes_provider::BytesProvider;
-
-pub trait ToWgpuShader: Send + Sync {
-    fn get_frag(&self) -> (&ShaderModule, &str);
-    fn get_vert(&self) -> (&ShaderModule, &str);
-}
+use super::resource::ResourceManager;
 
 #[derive(Debug)]
 pub struct WgslShader {
@@ -21,18 +16,18 @@ pub struct WgslShader {
 impl WgslShader {
     pub fn new(
         resource: &Identifier,
-        rp: &dyn BytesProvider,
-        device: &wgpu::Device,
+        rm: &ResourceManager,
+        device: &Device,
         frag_entry: &str,
         vert_entry: &str,
     ) -> Result<Self> {
-        let shader_src = rp.get_bytes(resource)?;
-
-        let shader_src = std::str::from_utf8(&shader_src)?;
-
+        let bytes = rm
+            .get(resource)
+            .ok_or_else(|| anyhow!("Shader not found: {:?}", resource))?;
+        let src = std::str::from_utf8(&bytes)?;
         let module = device.create_shader_module(ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(Cow::from(shader_src)),
+            source: ShaderSource::Wgsl(Cow::from(src)),
         });
 
         Ok(Self {
@@ -40,14 +35,5 @@ impl WgslShader {
             frag_entry: frag_entry.to_string(),
             vert_entry: vert_entry.to_string(),
         })
-    }
-}
-impl ToWgpuShader for WgslShader {
-    fn get_frag(&self) -> (&ShaderModule, &str) {
-        (&self.module, &self.frag_entry)
-    }
-
-    fn get_vert(&self) -> (&ShaderModule, &str) {
-        (&self.module, &self.vert_entry)
     }
 }

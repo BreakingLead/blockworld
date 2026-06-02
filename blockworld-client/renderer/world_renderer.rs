@@ -6,10 +6,10 @@ use wgpu::util::DeviceExt;
 use crate::game::client::BlockworldClient;
 
 use super::{
-    bytes_provider::StaticBytesProvider,
     camera::Camera,
     input_manager::InputManager,
     meshing::meshing_manager::MeshingManager,
+    resource::RESOURCE_MANAGER,
     resource_manager::BLOCK_ATLAS,
     shaders::WgslShader,
     vertex::TexturedVertex,
@@ -196,9 +196,10 @@ impl WorldRenderer {
         let depth_view = depth_texture.create_view(&TextureViewDescriptor::default());
 
         // --- shaders ---
+        let rm = RESOURCE_MANAGER.lock().unwrap();
         let shader = WgslShader::new(
             &"minecraft:assets/shaders/default_shader.wgsl".into(),
-            &StaticBytesProvider,
+            &rm,
             device,
             "fs",
             "vs",
@@ -207,12 +208,13 @@ impl WorldRenderer {
 
         let wireframe_shader = WgslShader::new(
             &"minecraft:assets/shaders/wireframe_shader.wgsl".into(),
-            &StaticBytesProvider,
+            &rm,
             device,
             "fs",
             "vs",
         )
         .expect("Failed to load wireframe shader");
+        drop(rm);
 
         // --- pipeline layout (shared) ---
         let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {

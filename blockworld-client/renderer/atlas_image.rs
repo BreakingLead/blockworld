@@ -7,16 +7,12 @@
 use std::{collections::HashMap, fmt::Display, path::Path};
 
 use blockworld_utils::Identifier;
-use glam::{ivec2, uvec2, vec2, IVec2, UVec2, Vec2};
+use glam::{uvec2, vec2, UVec2, Vec2};
 use image::{GenericImage, GenericImageView, ImageBuffer};
 
-/// This is a wrapper around an image::RgbaImage that contains the contents of a sprite. It also will handle its mipmaps.
+use super::resource::ResourceManager;
+
 pub struct Atlas {
-    /// - "minecraft:atlas/block"
-    /// - "minecraft:atlas/item"
-    /// - "ic2:atlas/item"
-    /// - etc.
-    // self_name: Identifier,
     atlas: image::RgbaImage,
     /// Mipmaps of the image, if they were generated.
     by_mip_level: Option<Vec<image::RgbaImage>>,
@@ -26,7 +22,11 @@ pub struct Atlas {
 }
 
 impl Atlas {
-    pub fn new<Q: AsRef<Path>>(assets_path: Q) -> Self {
+    pub fn from_resource_manager(
+        rm: &ResourceManager,
+        namespace: &str,
+        prefix: &str,
+    ) -> Self {
         let width_pixels = 1024;
         let height_pixels = 1024;
         let tile_size = 16;
@@ -34,87 +34,52 @@ impl Atlas {
         let max_tiles = count_per_row * (height_pixels / tile_size);
         let mut atlas = ImageBuffer::new(width_pixels, height_pixels);
 
-        // there is an optional .mcmeta file of a texture
-        // e.g. textures/blocks/grass_block.png with textures/blocks/grass_block.png.mcmeta
-        // read every png and ignore the pngs with optional .mcmeta, since we haven't finished
-        // implementing the mcmeta parsing yet.
-
-        // in this function we just use the picture's name as the resource location,
-        // and it's not ideal since we haven't implemented reading resource packs.
-
-        log::warn!(
-            "Creating new texture atlas, reading from {:?}",
-            assets_path.as_ref()
-        );
+        log::warn!("Creating atlas from ResourceManager: {namespace}:{prefix}/");
 
         let mut name_to_xy_map = HashMap::new();
         let mut counter = 0;
 
-        if let Ok(dir) = assets_path.as_ref().read_dir() {
-            for entry in dir {
-                let entry = match entry {
-                    Ok(e) => e,
-                    Err(_) => continue,
-                };
-                let path = entry.path();
-                let has_mcmeta = {
-                    let mcmeta = format!("{}.mcmeta", path.display());
-                    std::path::Path::new(&mcmeta).exists()
-                };
-                if path.is_file() && path.extension().map_or(false, |e| e == "png") && !has_mcmeta {
-                    if counter as u32 >= max_tiles {
-                        log::warn!(
-                            "Atlas full ({} tiles), skipping remaining textures",
-                            max_tiles
-                        );
-                        break;
-                    }
-                    let x = counter as u32 % count_per_row;
-                    let y = counter as u32 / count_per_row;
-                    let img = match image::open(&path) {
-                        Ok(i) => i,
-                        Err(e) => {
-                            log::warn!("Failed to open image {}: {}", path.display(), e);
-                            continue;
-                        }
-                    };
-
-                    if img.dimensions().0 > tile_size || img.dimensions().1 > tile_size {
-                        // TODO: read meta, then reimplement this
-                        log::warn!(
-                            "Image {} is too big for the tile size, ignoring",
-                            path.display()
-                        );
-                        continue;
-                    }
-
-                    if let Err(e) = atlas.copy_from(&img, x * tile_size, y * tile_size) {
-                        log::warn!("Failed to copy image {} into atlas: {}", path.display(), e);
-                        continue;
-                    }
-
-                    if let Some(item_name) = path.file_stem() {
-                        let r = Identifier::new(
-                            format!("minecraft:{}", item_name.to_str().unwrap_or("unknown"))
-                                .as_str(),
-                        );
-                        name_to_xy_map.insert(r, uvec2(x, y));
-                    }
-
-                    counter += 1;
-                }
+        let ids = rm.list(namespace, prefix);
+        for id in ids {
+            if counter as u32 >= max_tiles {
+                log::warn!("Atlas full ({} tiles), stopping", max_tiles);
+                break;
             }
-        } else {
-            log::warn!(
-                "Texture atlas directory not found: {:?}.",
-                assets_path.as_ref()
-            );
+
+            // TODO: skip textures with .mcmeta files
+            let bytes = match rm.get(&id) {
+                Some(b) => b,
+                None => continue,
+            };
+
+            let img = match image::load_from_memory(&bytes) {
+                Ok(i) => i,
+                Err(e) => {
+                    log::warn!("Failed to decode {:?}: {}", id, e);
+                    continue;
+                }
+            };
+
+            if img.dimensions().0 > tile_size || img.dimensions().1 > tile_size {
+                log::warn!("Image {:?} too big for tile, skipping", id);
+                continue;
+            }
+
+            let x = counter as u32 % count_per_row;
+            let y = counter as u32 / count_per_row;
+
+            if let Err(e) = atlas.copy_from(&img, x * tile_size, y * tile_size) {
+                log::warn!("Failed to copy {:?} into atlas: {}", id, e);
+                continue;
+            }
+
+            name_to_xy_map.insert(id, uvec2(x, y));
+            counter += 1;
         }
 
         if counter == 0 {
-            log::warn!("No textures loaded, filling with default patterns");
+            log::warn!("No textures loaded, filling with default stone pattern");
             name_to_xy_map = Self::fill_default_texture(&mut atlas, tile_size);
-            counter = 1;
         }
 
         Self {
@@ -131,7 +96,6 @@ impl Atlas {
     ) -> HashMap<Identifier, UVec2> {
         use image::Rgba;
         let mut map = HashMap::new();
-        // Create a simple stone-like texture for the default tile
         for y in 0..tile_size {
             for x in 0..tile_size {
                 let base = 128u8;
@@ -166,23 +130,14 @@ impl Atlas {
     fn from_xy_to_uvs(&self, xy: UVec2) -> (Vec2, Vec2) {
         let x = xy.x;
         let y = xy.y;
-        assert!(
-            x < self.width() / self.tile_size && y < self.height() / self.tile_size,
-            "xy out of bounds"
-        );
+        assert!(x < self.width() / self.tile_size && y < self.height() / self.tile_size);
         let u1 = x * self.tile_size;
         let v1 = y * self.tile_size;
         let u2 = u1 + self.tile_size;
         let v2 = v1 + self.tile_size;
         (
-            vec2(
-                u1 as f32 / (self.width() as f32),
-                v1 as f32 / (self.height() as f32),
-            ),
-            vec2(
-                u2 as f32 / (self.width() as f32),
-                v2 as f32 / (self.height() as f32),
-            ),
+            vec2(u1 as f32 / self.width() as f32, v1 as f32 / self.height() as f32),
+            vec2(u2 as f32 / self.width() as f32, v2 as f32 / self.height() as f32),
         )
     }
 
@@ -200,11 +155,13 @@ impl Display for Atlas {
 
 #[test]
 fn atlas_generation() {
-    // Tests run from crate root (blockworld-client/), assets are at workspace root
-    let atlas = Atlas::new(Path::new("../assets/minecraft/textures/block"));
+    use super::resource::{FilesystemSource, ResourceManager};
+    let mut rm = ResourceManager::new();
+    rm.add_source(FilesystemSource::new("../"));
+    let atlas = Atlas::from_resource_manager(&rm, "minecraft", "textures/block");
     let count = atlas.name_to_xy_map.len();
     assert!(count > 100, "Expected >100 textures, got {}", count);
     dbg!(count);
     std::fs::create_dir_all("test_run").ok();
-    atlas.save("run/atlas.png");
+    atlas.save("test_run/atlas.png");
 }

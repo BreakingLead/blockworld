@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use blockworld_server::{
-    block::block_face_direction::BlockFaceDirection,
-    world::chunk_access::WorldAccess,
-};
+use blockworld_server::world::chunk_access::WorldAccess;
 use glam::*;
 use wgpu::{util::DeviceExt, Device, RenderPass};
 
@@ -37,23 +34,14 @@ impl MeshingManager {
                             let block_id = chunk.get_blockid(block_local);
                             let blockpos = pos * 16 + block_local;
 
-                            let mut visible_faces = 0b111111 as u32;
-
                             if block_id != "minecraft:air" {
                                 let (a, b) = BLOCK_ATLAS
                                     .query_uv(&block_id.into())
                                     .unwrap_or((vec2(0.0, 0.0), vec2(1.0, 1.0)));
-                                for k in BlockFaceDirection::iter() {
-                                    if !chunks.is_air(blockpos + k.to_vec()) {
-                                        visible_faces &= !(k as u32);
-                                    }
-                                }
-                                for k in BlockFaceDirection::iter() {
-                                    if k as u32 & visible_faces != 0 {
-                                        let center = blockpos.as_vec3() + vec3(0.5, 0.5, 0.5);
-                                        let vtxs = to_quad_mesh(k, center, a, b);
-                                        vertices.extend(vtxs);
-                                    }
+                                let center = blockpos.as_vec3() + vec3(0.5, 0.5, 0.5);
+                                for face in blockworld_server::block::block_face_direction::BlockFaceDirection::iter() {
+                                    let vtxs = to_quad_mesh(face, center, a, b);
+                                    vertices.extend(vtxs);
                                 }
                             }
                         }

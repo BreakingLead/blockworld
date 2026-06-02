@@ -1,7 +1,7 @@
 pub mod atlas_image;
-pub mod bytes_provider;
 pub mod camera;
 pub mod meshing;
+pub mod resource;
 pub mod resource_manager;
 mod shaders;
 pub mod vertex;
