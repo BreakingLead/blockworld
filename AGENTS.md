@@ -36,9 +36,9 @@ cargo fmt --all -- --check
 cargo clippy --workspace -- -D warnings
 ```
 
-## CI gotcha
+## CI
 
-The GitHub Actions workflow (`rust.yml`) builds and tests by `cd`-ing into each crate directory individually rather than using `--workspace`. If you add a new crate, update both `Cargo.toml` members AND the CI file.
+GitHub Actions (`.github/workflows/rust.yml`) builds and tests everything from workspace root with `--workspace`. Includes `cargo fmt --check` and `cargo clippy` lint steps. If you add a new crate, update `Cargo.toml` members — the CI will pick it up automatically.
 
 ## Key facts
 

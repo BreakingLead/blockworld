@@ -2,26 +2,61 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build and test server
-      run: cd blockworld-server && cargo build && cargo test && cd ..
-    - name: Build and test client
-      run: cd blockworld-client && cargo build && cargo test && cd ..
-    - name: Archive code coverage results
-      uses: actions/upload-artifact@v3
-      with:
-          name: debug builds
-          path: blockworld-client/target/debug/* && blockworld-server/target/debug/*
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            blockworld-client/target/
+            blockworld-server/target/
+            blockworld-utils/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Build
+        run: cargo build --workspace --verbose
+
+      - name: Test
+        run: cargo test --workspace --verbose
+
+      - name: Lint (fmt)
+        run: cargo fmt --all -- --check
+
+      - name: Lint (clippy)
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Upload client binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockworld-client
+          path: target/debug/blockworld-client*
+
+      - name: Upload server library
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockworld-server
+          path: target/debug/libblockworld_server*
+
+      - name: Upload utils library
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockworld-utils
+          path: target/debug/libblockworld_utils*
