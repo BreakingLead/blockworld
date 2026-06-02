@@ -279,12 +279,7 @@ impl WorldRenderer {
 
         // --- game ---
         let mut game = BlockworldClient::new();
-        for x in -1..=1 {
-            for z in -1..=1 {
-                game.chunks.generate_chunk(glam::ivec3(x, 0, z));
-            }
-        }
-        log::info!("Generated {} chunks", game.chunks.chunks.len());
+        game.generate_initial_terrain();
 
         let meshing_manager = MeshingManager::new();
 
