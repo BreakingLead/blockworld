@@ -74,8 +74,8 @@ pub struct WorldRenderer {
     wireframe_pipeline: RenderPipeline,
 
     // --- world ---
-    game: BlockworldClient,
-    meshing_manager: MeshingManager,
+    pub game: BlockworldClient,
+    pub meshing_manager: MeshingManager,
 }
 
 impl WorldRenderer {

@@ -10,15 +10,11 @@ use wgpu::*;
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
+use super::debug_ui::DebugUi;
 use super::init_helpers;
 use super::input_manager::InputManager;
 use super::world_renderer::WorldRenderer;
 
-/// The top-level renderer state.
-///
-/// Owns the wgpu device/queue/surface and the `WorldRenderer`.
-/// `RenderState` is created once in `window_init::resumed()` and
-/// lives for the lifetime of the window.
 pub struct RenderState {
     pub window: Arc<Window>,
     pub surface: Surface<'static>,
@@ -29,14 +25,13 @@ pub struct RenderState {
 
     pub input_manager: InputManager,
     pub world_renderer: WorldRenderer,
+    pub debug_ui: DebugUi,
 
-    /// Time of last frame, for delta-time / FPS calculation.
     dt_timer: Instant,
+    fps: f32,
 }
 
 impl RenderState {
-    /// Initialize wgpu, create the surface, and wire up the `WorldRenderer`.
-    /// Returns `None` if no suitable GPU adapter is found.
     pub fn new(window: Window) -> Option<Self> {
         let window = Arc::new(window);
         let size = window.inner_size();
@@ -49,6 +44,7 @@ impl RenderState {
         surface.configure(&device, &config);
 
         let world_renderer = WorldRenderer::new(&device, &config, &queue, size);
+        let debug_ui = DebugUi::new(&device, config.format);
 
         Some(Self {
             window,
@@ -59,12 +55,12 @@ impl RenderState {
             size,
             input_manager: InputManager::default(),
             world_renderer,
+            debug_ui,
             dt_timer: Instant::now(),
+            fps: 0.0,
         })
     }
 
-    /// Handle window resize: reconfigure the swapchain and
-    /// recreate the depth buffer to match the new size.
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         if new_size.width == 0 || new_size.height == 0 {
             return;
@@ -80,23 +76,16 @@ impl RenderState {
         self.size = new_size;
     }
 
-    /// Advance one frame: compute delta-time, update camera, rebuild meshes.
     pub fn update(&mut self) {
         let dt = self.dt_timer.elapsed();
         self.dt_timer = Instant::now();
-        self.window
-            .set_title(format!("Blockworld Dev [fps: {:.0}]", 1.0 / dt.as_secs_f32()).as_str());
+        self.fps = 1.0 / dt.as_secs_f32();
+
         self.world_renderer
             .update(&self.queue, &self.device, &self.input_manager);
     }
 
-    /// Draw one frame.
-    ///
-    /// Acquires the next swapchain texture, clears it to sky blue,
-    /// runs the render pass (depth + color), and presents.
-    /// Returns `Err(())` if the surface is lost/outdated/timeout.
     pub fn render(&mut self) -> Result<(), ()> {
-        // Acquire next swapchain image
         let output = match self.surface.get_current_texture() {
             CurrentSurfaceTexture::Success(tex) => tex,
             CurrentSurfaceTexture::Suboptimal(tex) => {
@@ -124,16 +113,15 @@ impl RenderState {
                 label: Some("Encoder"),
             });
 
+        // Pass 1: 3D world
         {
-            // Build the render pass: clear color to sky blue, clear depth to 1.0
             let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
-                label: Some("Render Pass"),
+                label: Some("World"),
                 color_attachments: &[Some(RenderPassColorAttachment {
                     view: &view,
                     resolve_target: None,
                     ops: Operations {
                         load: LoadOp::Clear(Color {
-                            // Minecraft-style sky blue (#82a9f9)
                             r: 0.51,
                             g: 0.66,
                             b: 0.98,
@@ -153,9 +141,20 @@ impl RenderState {
                 }),
                 ..Default::default()
             });
-
             self.world_renderer.render(&mut rpass);
         }
+
+        // Pass 2: egui debug overlay (Load, not Clear — preserves 3D scene)
+        self.debug_ui.begin_frame(
+            &self.window,
+            self.fps,
+            self.world_renderer.game.chunks.chunks.len(),
+            self.world_renderer.game.pending_generation_count(),
+            self.world_renderer.meshing_manager.render_map_len(),
+            self.world_renderer.camera.position,
+        );
+        self.debug_ui
+            .render(&self.device, &self.queue, &mut encoder, &self.window, &view);
 
         self.queue.submit([encoder.finish()]);
         output.present();
