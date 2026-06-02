@@ -103,6 +103,11 @@ impl SubChunk {
         let (x, y, z) = (pos.x, pos.y, pos.z);
         self.blocks[Self::index(x, y, z)]
     }
+
+    /// Clone the raw block data array (for sending to mesh worker thread).
+    pub fn clone_blocks(&self) -> Box<[u32; 4096]> {
+        self.blocks.clone()
+    }
 }
 
 // pub struct Chunk {
