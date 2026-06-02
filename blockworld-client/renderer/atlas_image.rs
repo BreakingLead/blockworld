@@ -141,6 +141,13 @@ impl Atlas {
         )
     }
 
+    /// Look up UV coordinates for a block identifier.
+    ///
+    /// FIXME: This fallback to `{id}_top` is a stopgap until we implement
+    ///        block models (JSON files defining per-face textures).
+    ///        Minecraft uses `assets/{namespace}/models/block/{name}.json`
+    ///        to map each of the 6 faces to different texture references.
+    ///        Once block models are supported, this fallback should be removed.
     pub fn query_uv(&self, name: &Identifier) -> Option<(Vec2, Vec2)> {
         // Exact match first (e.g. stone → stone.png)
         if let Some(xy) = self.name_to_xy_map.get(name) {
