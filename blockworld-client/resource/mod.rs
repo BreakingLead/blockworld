@@ -114,7 +114,20 @@ impl FilesystemSource {
 
 impl PackSource for FilesystemSource {
     fn get(&self, id: &Identifier) -> Option<Vec<u8>> {
-        std::fs::read(self.resolve(id)).ok()
+        // Try the exact path first, then common image extensions.
+        // Identifiers don't carry file extensions (like Minecraft).
+        let base = self.resolve(id);
+        for ext in &["", ".png", ".wgsl", ".json"] {
+            let p = if ext.is_empty() {
+                base.clone()
+            } else {
+                base.with_extension(&ext[1..])
+            };
+            if p.exists() {
+                return std::fs::read(p).ok();
+            }
+        }
+        None
     }
 
     fn list(&self, namespace: &str, prefix: &str) -> Vec<Identifier> {
@@ -124,11 +137,17 @@ impl PackSource for FilesystemSource {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_file() {
-                    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                        let id = Identifier::new(&format!("{}:{}/{}", namespace, prefix, stem));
-                        out.push(id);
-                    }
+                let stem = match path.file_stem().and_then(|s| s.to_str()) {
+                    Some(s) => s,
+                    None => continue,
+                };
+                // Skip .mcmeta metadata files
+                if stem.ends_with(".png") {
+                    continue;
                 }
+                let id = Identifier::new(&format!("{}:{}/{}", namespace, prefix, stem));
+                out.push(id);
+            }
             }
         }
         out
