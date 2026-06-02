@@ -142,8 +142,16 @@ impl Atlas {
     }
 
     pub fn query_uv(&self, name: &Identifier) -> Option<(Vec2, Vec2)> {
-        let xy = self.name_to_xy_map.get(name).cloned()?;
-        Some(self.from_xy_to_uvs(xy))
+        // Exact match first (e.g. stone → stone.png)
+        if let Some(xy) = self.name_to_xy_map.get(name) {
+            return Some(self.from_xy_to_uvs(*xy));
+        }
+        // Fallback: try {name}_top (e.g. grass_block → grass_block_top.png)
+        let top_id = Identifier::new(&format!("{}_top", &**name));
+        if let Some(xy) = self.name_to_xy_map.get(&top_id) {
+            return Some(self.from_xy_to_uvs(*xy));
+        }
+        None
     }
 }
 

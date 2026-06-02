@@ -3,7 +3,7 @@
 //! Produces terrain with:
 //!   - stone base
 //!   - 3-block dirt layer
-//!   - grass surface (uses `grass_block_top` texture for all sides)
+//!   - grass block surface
 //!
 //! Uses a simple hash-based value noise — no external dependencies.
 
@@ -97,7 +97,7 @@ impl ChunkGenerator {
                     } else if wy < h + 1.0 {
                         // grass block on top (only if there's solid below)
                         if wy >= h {
-                            sc.set_blockid(local, &format!("{}:grass_block_top", blockworld_utils::GAME_NAME));
+                            sc.set_blockid(local, &format!("{}:grass_block", blockworld_utils::GAME_NAME));
                         }
                     }
                     // else: air (already zero by default)
