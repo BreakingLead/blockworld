@@ -1,7 +1,6 @@
 pub mod atlas_image;
 pub mod bytes_provider;
 pub mod camera;
-mod debug_gui;
 pub mod gui;
 pub mod meshing;
 pub mod resource_manager;

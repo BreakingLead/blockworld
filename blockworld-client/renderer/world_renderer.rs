@@ -58,6 +58,7 @@ impl WorldRenderer {
             30,
             Some("Matrix Uniform"),
         );
+
         matrix_uniform.update(queue, camera.build_mvp().into());
 
         let diffuse_texture = BindableTexture::new(
@@ -102,6 +103,7 @@ impl WorldRenderer {
         );
 
         let mut game = BlockworldClient::new();
+
         // Generate initial terrain around origin
         for x in -1..=1 {
             for z in -1..=1 {
@@ -133,7 +135,7 @@ impl WorldRenderer {
             .update(queue, self.camera.build_mvp().into());
 
         // Regenerate meshes for chunks that need it
-        self.meshing_manager.update(device, &self.game.chunks);
+        self.meshing_manager.update(device, &mut self.game.chunks);
     }
 
     pub fn resize(

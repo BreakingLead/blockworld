@@ -18,6 +18,7 @@ pub trait WorldAccess {
     fn unload_chunk(&mut self, pos: IVec3);
 
     fn need_rerender(&self, pos: IVec3) -> bool;
+    fn clear_need_rerender(&mut self, pos: IVec3);
 
     fn update(&mut self, packet: Packet);
     fn iter_loaded_chunks(&self) -> impl Iterator<Item = &SubChunk>;

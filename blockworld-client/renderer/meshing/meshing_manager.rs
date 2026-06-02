@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use blockworld_server::{
     block::block_face_direction::BlockFaceDirection,
-    world::{chunk::SubChunk, chunk_access::WorldAccess, disk_chunk_access::DiskChunkArray},
+    world::chunk_access::WorldAccess,
 };
 use glam::*;
 use wgpu::{util::DeviceExt, Device, RenderPass};
@@ -16,16 +18,16 @@ pub struct RenderChunk {
 }
 
 pub struct MeshingManager {
-    render_array: Vec<RenderChunk>,
+    render_map: HashMap<IVec3, RenderChunk>,
 }
 
 impl MeshingManager {
-    pub fn update<T: WorldAccess>(&mut self, device: &Device, chunks: &T) {
-        self.render_array.clear();
-        // loaded chunks
-        for chunk in chunks.iter_loaded_chunks() {
-            let pos = chunk.pos();
-            if chunks.need_rerender(chunk.pos()) {
+    pub fn update<T: WorldAccess>(&mut self, device: &Device, chunks: &mut T) {
+        let positions: Vec<IVec3> = chunks.iter_loaded_chunks().map(|c| c.pos()).collect();
+
+        for pos in positions {
+            if chunks.need_rerender(pos) {
+                let chunk = chunks.get_chunk(pos);
                 let mut vertices = vec![];
 
                 for x in 0..16 {
@@ -35,7 +37,7 @@ impl MeshingManager {
                             let block_id = chunk.get_blockid(block_local);
                             let blockpos = pos * 16 + block_local;
 
-                                let mut visible_faces = 0b111111 as u32;
+                            let mut visible_faces = 0b111111 as u32;
 
                             if block_id != "minecraft:air" {
                                 let (a, b) = BLOCK_ATLAS
@@ -49,12 +51,7 @@ impl MeshingManager {
                                 for k in BlockFaceDirection::iter() {
                                     if k as u32 & visible_faces != 0 {
                                         let center = blockpos.as_vec3() + vec3(0.5, 0.5, 0.5);
-                                        let vtxs = to_quad_mesh(
-                                            k,
-                                            center,
-                                            a,
-                                            b,
-                                        );
+                                        let vtxs = to_quad_mesh(k, center, a, b);
                                         vertices.extend(vtxs);
                                     }
                                 }
@@ -72,19 +69,22 @@ impl MeshingManager {
                         usage: wgpu::BufferUsages::VERTEX,
                     }),
                 };
-                self.render_array.push(render_chunk);
+                self.render_map.insert(pos, render_chunk);
+                chunks.clear_need_rerender(pos);
             }
         }
     }
+
     pub fn render<'rpass>(&'rpass self, rpass: &mut RenderPass<'rpass>) {
-        for chunk in self.render_array.iter() {
+        for chunk in self.render_map.values() {
             rpass.set_vertex_buffer(0, chunk.vertex_buffer.slice(..));
             rpass.draw(0..chunk.vertex_count, 0..1);
         }
     }
+
     pub fn new() -> Self {
         Self {
-            render_array: vec![],
+            render_map: HashMap::new(),
         }
     }
 }

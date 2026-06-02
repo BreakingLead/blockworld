@@ -150,4 +150,8 @@ impl WorldAccess for DiskChunkArray {
     fn need_rerender(&self, pos: IVec3) -> bool {
         self.need_rerender.contains(&pos)
     }
+
+    fn clear_need_rerender(&mut self, pos: IVec3) {
+        self.need_rerender.retain(|&p| p != pos);
+    }
 }
