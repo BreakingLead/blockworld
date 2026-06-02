@@ -41,12 +41,16 @@ impl Atlas {
 
         let ids = rm.list(namespace, prefix);
         for id in ids {
+            // Only process .png files; .mcmeta and others are skipped by image decoding
+            if !id.ends_with(".png") {
+                continue;
+            }
+
             if counter as u32 >= max_tiles {
                 log::warn!("Atlas full ({} tiles), stopping", max_tiles);
                 break;
             }
 
-            // TODO: skip textures with .mcmeta files
             let bytes = match rm.get(&id) {
                 Some(b) => b,
                 None => continue,
@@ -73,7 +77,13 @@ impl Atlas {
                 continue;
             }
 
-            name_to_xy_map.insert(id, uvec2(x, y));
+            // Build clean block key: strip "textures/block/" prefix and ".png" suffix
+            // "blockworld:textures/block/stone.png" → "blockworld:stone"
+            let clean_name = &id[..id.len() - ".png".len()]
+                .strip_prefix(&format!("{}:{}/", namespace, prefix))
+                .unwrap_or(&*id);
+            let key = Identifier::new(&format!("{}:{}", namespace, clean_name));
+            name_to_xy_map.insert(key, uvec2(x, y));
             counter += 1;
         }
 
