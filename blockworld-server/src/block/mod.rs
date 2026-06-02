@@ -10,6 +10,10 @@ pub static BLOCK_REGISTRY: Lazy<Registry<Block>> = Lazy::new(|| {
     r.register(a0);
     let a1 = Block::new(blockworld_utils::Identifier::new(&format!("{}:stone", blockworld_utils::GAME_NAME)));
     r.register(a1);
+    let a2 = Block::new(blockworld_utils::Identifier::new(&format!("{}:dirt", blockworld_utils::GAME_NAME)));
+    r.register(a2);
+    let a3 = Block::new(blockworld_utils::Identifier::new(&format!("{}:grass_block", blockworld_utils::GAME_NAME)));
+    r.register(a3);
 
     r
 });

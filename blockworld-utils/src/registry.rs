@@ -19,7 +19,6 @@ pub struct Registry<V: HasIdentifier> {
     /// `Identifier → value` lookup.
     data: HashMap<Identifier, V>,
     /// Bidirectional mapping between numeric IDs and identifiers.
-    /// Equivalent to Minecraft's `BiMap<ResourceLocation, Integer>`.
     id_bimap: BiMap<u32, Identifier>,
     counter: u32,
 }
