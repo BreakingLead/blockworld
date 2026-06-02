@@ -1,19 +1,17 @@
 pub mod atlas_image;
 pub mod bytes_provider;
 pub mod camera;
-pub mod gui;
 pub mod meshing;
 pub mod resource_manager;
 mod shaders;
 pub mod vertex;
-pub mod world_renderer;
 
 pub mod init_helpers;
 pub mod input_manager;
-pub mod pipeline;
+
+// --- being rewritten below ---
 pub mod render_state;
-pub mod texture;
-pub mod uniform;
 pub mod window_init;
+pub mod world_renderer;
 
 pub use window_init::run;

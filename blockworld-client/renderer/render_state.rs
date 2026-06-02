@@ -1,155 +1,138 @@
-use crate::renderer::init_helpers::*;
-use crate::renderer::world_renderer::WorldRenderer;
 use std::sync::Arc;
 use std::time::Instant;
-use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
+use wgpu::*;
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
+use super::init_helpers;
 use super::input_manager::InputManager;
+use super::world_renderer::WorldRenderer;
 
-/// The RenderState struct holds all the state needed to render the game's user interface and game world.
 pub struct RenderState {
     pub window: Arc<Window>,
     pub surface: Surface<'static>,
-
     pub device: Device,
     pub queue: Queue,
     pub config: SurfaceConfiguration,
     pub size: PhysicalSize<u32>,
 
     pub input_manager: InputManager,
-
-    pub dt_timer: Instant,
-    pub global_timer: Instant,
-
     pub world_renderer: WorldRenderer,
+
+    dt_timer: Instant,
 }
 
 impl RenderState {
-    pub fn new(window: Window) -> Option<RenderState> {
-        let window_arc = Arc::new(window);
-        let size = window_arc.inner_size();
-        let instance = create_instance();
-        let surface = instance.create_surface(window_arc.clone()).unwrap();
-        let adapter = create_adapter(&instance, &surface)?;
-        let (device, queue) = create_device_and_queue(&adapter);
-        let config = create_surface_config(size, &surface, &adapter);
+    pub fn new(window: Window) -> Option<Self> {
+        let window = Arc::new(window);
+        let size = window.inner_size();
+
+        let instance = init_helpers::create_instance();
+        let surface = instance.create_surface(window.clone()).unwrap();
+        let adapter = init_helpers::create_adapter(&instance, &surface)?;
+        let (device, queue) = init_helpers::create_device_and_queue(&adapter);
+        let config = init_helpers::create_surface_config(size, &surface, &adapter);
         surface.configure(&device, &config);
-        let input_manager = InputManager::default();
 
         let world_renderer = WorldRenderer::new(&device, &config, &queue, size);
 
         Some(Self {
-            window: window_arc,
+            window,
             surface,
             device,
             queue,
             config,
             size,
-            input_manager,
+            input_manager: InputManager::default(),
             world_renderer,
             dt_timer: Instant::now(),
-            global_timer: Instant::now(),
         })
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
-        if new_size.width > 0 && new_size.height > 0 {
-            self.config.width = new_size.width;
-            self.config.height = new_size.height;
-
-            self.world_renderer.resize(
-                &self.queue,
-                &self.device,
-                &self.config,
-                new_size.width as f32 / new_size.height as f32,
-            );
-            self.surface.configure(&self.device, &self.config);
-            self.size = new_size;
+        if new_size.width == 0 || new_size.height == 0 {
+            return;
         }
+        self.config.width = new_size.width;
+        self.config.height = new_size.height;
+        self.world_renderer.resize(
+            &self.device,
+            &self.config,
+            new_size.width as f32 / new_size.height as f32,
+        );
+        self.surface.configure(&self.device, &self.config);
+        self.size = new_size;
     }
 
     pub fn update(&mut self) {
-        // Time between this and the previous frame
-        let delta_time = self.dt_timer.elapsed();
-        // Set the timer to 0
+        let dt = self.dt_timer.elapsed();
         self.dt_timer = Instant::now();
-
-        self.window.set_title(
-            format!(
-                "Blockworld Dev [fps: {:.0}]",
-                1.0 / delta_time.as_secs_f32()
-            )
-            .as_str(),
-        );
-
-        self.world_renderer.update(&self.queue, &self.device, &self.input_manager);
+        self.window.set_title(format!("Blockworld Dev [fps: {:.0}]", 1.0 / dt.as_secs_f32()).as_str());
+        self.world_renderer
+            .update(&self.queue, &self.device, &self.input_manager);
     }
 
-    pub fn render(&mut self) {
-        let output_texture = match self.surface.get_current_texture() {
-            wgpu::CurrentSurfaceTexture::Success(texture) => texture,
-            wgpu::CurrentSurfaceTexture::Suboptimal(texture) => {
+    pub fn render(&mut self) -> Result<(), ()> {
+        let output = match self.surface.get_current_texture() {
+            CurrentSurfaceTexture::Success(tex) => tex,
+            CurrentSurfaceTexture::Suboptimal(tex) => {
                 self.surface.configure(&self.device, &self.config);
-                texture
+                tex
             }
-            wgpu::CurrentSurfaceTexture::Outdated | wgpu::CurrentSurfaceTexture::Lost => {
+            CurrentSurfaceTexture::Outdated | CurrentSurfaceTexture::Lost => {
                 self.surface.configure(&self.device, &self.config);
-                return;
+                return Err(());
             }
-            wgpu::CurrentSurfaceTexture::Timeout | wgpu::CurrentSurfaceTexture::Occluded => {
-                return;
-            }
-            wgpu::CurrentSurfaceTexture::Validation => {
+            CurrentSurfaceTexture::Timeout | CurrentSurfaceTexture::Occluded => return Err(()),
+            CurrentSurfaceTexture::Validation => {
                 log::error!("Surface validation error");
-                return;
+                return Err(());
             }
         };
 
-        let output_texture_view = output_texture
+        let view = output
             .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+            .create_view(&TextureViewDescriptor::default());
 
         let mut encoder = self
             .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Blockworld Render Encoder"),
+            .create_command_encoder(&CommandEncoderDescriptor {
+                label: Some("Encoder"),
             });
 
-        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Blockworld Render Pass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &output_texture_view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        // #82a9f9 minecraft's sky blue
-                        r: 0.509804,
-                        g: 0.662745,
-                        b: 0.976471,
-                        a: 1.0,
+        {
+            let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: Operations {
+                        load: LoadOp::Clear(Color {
+                            r: 0.51,
+                            g: 0.66,
+                            b: 0.98,
+                            a: 1.0,
+                        }),
+                        store: StoreOp::Store,
+                    },
+                    depth_slice: None,
+                })],
+                depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
+                    view: &self.world_renderer.depth_view,
+                    depth_ops: Some(Operations {
+                        load: LoadOp::Clear(1.0),
+                        store: StoreOp::Store,
                     }),
-                    store: wgpu::StoreOp::Store,
-                },
-                depth_slice: None,
-            })],
-            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                view: &self.world_renderer.depth_texture.view,
-                depth_ops: Some(wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(1.0),
-                    store: wgpu::StoreOp::Store,
+                    stencil_ops: None,
                 }),
-                stencil_ops: None,
-            }),
-            ..Default::default()
-        });
+                ..Default::default()
+            });
 
-        self.world_renderer.render(&mut render_pass);
-        drop(render_pass);
+            self.world_renderer.render(&mut rpass);
+        }
 
-        let command_buffer = encoder.finish();
-        self.queue.submit([command_buffer]);
-        output_texture.present();
+        self.queue.submit([encoder.finish()]);
+        output.present();
+        Ok(())
     }
 }

@@ -20,7 +20,7 @@ impl TexturedVertex {
         }
     }
 
-    pub fn desc() -> wgpu::VertexBufferLayout<'static> {
+    pub fn get_layout() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
             array_stride: size_of::<TexturedVertex>() as u64,
             step_mode: wgpu::VertexStepMode::Vertex,
