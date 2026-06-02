@@ -6,6 +6,8 @@ pub struct BlockworldClient {
     pub chunks: ChunkMap,
     view_distance: u32,
     last_center_chunk: Option<IVec3>,
+    /// Chunks waiting to be generated (processed 2 per frame).
+    pending_generation: Vec<IVec3>,
 }
 
 impl BlockworldClient {
@@ -14,13 +16,14 @@ impl BlockworldClient {
             chunks: ChunkMap::new(),
             view_distance,
             last_center_chunk: None,
+            pending_generation: Vec::new(),
         }
     }
 
     /// Load/unload chunks based on player world position.
     ///
-    /// Only acts when the player crosses a chunk boundary.
-    /// Newly loaded chunks get terrain generated and queued for meshing.
+    /// When the player crosses a chunk boundary, this queues new chunks
+    /// for generation. Actual generation happens 2 per frame in `process_queue()`.
     pub fn update_view(&mut self, player_world_pos: glam::Vec3) {
         let center = IVec3::new(
             player_world_pos.x.div_euclid(16.0) as i32,
@@ -50,21 +53,30 @@ impl BlockworldClient {
             self.chunks.need_rerender.retain(|&p| p != pos);
         }
 
-        // Load & generate new chunks within view distance
+        // Queue all new chunks for generation
         for dx in -vd..=vd {
             for dz in -vd..=vd {
                 let chunk_pos = IVec3::new(center.x + dx, 0, center.z + dz);
                 if !self.chunks.chunks.contains_key(&chunk_pos) {
-                    ChunkGenerator::generate(&mut self.chunks, chunk_pos);
+                    self.pending_generation.push(chunk_pos);
                 }
             }
         }
 
         log::info!(
-            "Chunks: {}/{} loaded at center {:?}",
+            "Chunks: {}/{} ({} pending) at center {:?}",
             self.chunks.chunks.len(),
             (vd * 2 + 1).pow(2),
+            self.pending_generation.len(),
             center
         );
+    }
+
+    /// Generate at most `budget` pending chunks per frame.
+    pub fn process_queue(&mut self, budget: usize) {
+        let count = budget.min(self.pending_generation.len());
+        for chunk_pos in self.pending_generation.drain(..count) {
+            ChunkGenerator::generate(&mut self.chunks, chunk_pos);
+        }
     }
 }

@@ -307,10 +307,11 @@ impl WorldRenderer {
         let mvp: RawMat4 = self.camera.build_mvp().into();
         queue.write_buffer(&self.matrix_buffer, 0, bytemuck::cast_slice(&[mvp]));
 
-        // Load/unload chunks around the player
+        // Load/unload chunks around the player, generate at most 2 new chunks
         self.game.update_view(self.camera.position);
+        self.game.process_queue(2);
 
-        // Rebuild any stale chunk meshes
+        // Rebuild at most 2 stale chunk meshes per frame
         self.meshing_manager.update(device, &mut self.game.chunks);
     }
 

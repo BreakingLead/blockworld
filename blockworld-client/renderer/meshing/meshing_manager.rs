@@ -40,14 +40,19 @@ pub struct MeshingManager {
 impl MeshingManager {
     /// Rebuild meshes for chunks marked `need_rerender`.
     ///
-    /// Face culling is handled by the GPU via `CullMode::Back`.
+    /// Limits work per frame to `max_chunks` to avoid stutter.
+    /// Remaining chunks stay queued for future frames.
     pub fn update<T: WorldAccess>(&mut self, device: &Device, chunks: &mut T) {
         // Collect positions first to release the immutable borrow before
         // calling `clear_need_rerender` (which requires `&mut`).
         let positions: Vec<IVec3> = chunks.iter_loaded_chunks().map(|c| c.pos()).collect();
 
+        let max_per_frame = 2;
+        let mut built = 0;
+
         for pos in positions {
-            if chunks.need_rerender(pos) {
+            if chunks.need_rerender(pos) && built < max_per_frame {
+                built += 1;
                 let chunk = chunks.get_chunk(pos);
                 let mut vertices = vec![];
 
