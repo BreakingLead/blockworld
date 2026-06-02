@@ -1,3 +1,4 @@
+use crate::constants::GAME_NAME;
 use std::{borrow::Borrow, ops::Deref, path::PathBuf};
 
 /// Same as Minecraft's `Identifier` in official mappings.
@@ -15,7 +16,7 @@ pub trait HasIdentifier {
 impl Default for Identifier {
     fn default() -> Self {
         Self {
-            id: "minecraft:air".to_string(),
+            id: format!("{GAME_NAME}:air"),
         }
     }
 }
@@ -33,7 +34,7 @@ impl Identifier {
     pub fn get_namespace(&self) -> String {
         self.id
             .split_once(":")
-            .unwrap_or(("minecraft", "air"))
+            .unwrap_or((GAME_NAME, "air"))
             .0
             .to_string()
     }
@@ -41,7 +42,7 @@ impl Identifier {
     pub fn get_path(&self) -> String {
         self.id
             .split_once(":")
-            .unwrap_or(("minecraft", "air"))
+            .unwrap_or((GAME_NAME, "air"))
             .1
             .to_string()
     }

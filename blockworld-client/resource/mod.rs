@@ -134,11 +134,17 @@ pub static RESOURCE_MANAGER: Lazy<Mutex<ResourceManager>> = Lazy::new(|| {
     rm.add_source(
         EmbeddedSource::new()
             .with(
-                Identifier::new("minecraft:assets/shaders/default_shader.wgsl"),
+                Identifier::new(&format!(
+                    "{}:assets/shaders/default_shader.wgsl",
+                    blockworld_utils::GAME_NAME
+                )),
                 include_bytes!("../renderer/shaders/default_shader.wgsl"),
             )
             .with(
-                Identifier::new("minecraft:assets/shaders/wireframe_shader.wgsl"),
+                Identifier::new(&format!(
+                    "{}:assets/shaders/wireframe_shader.wgsl",
+                    blockworld_utils::GAME_NAME
+                )),
                 include_bytes!("../renderer/shaders/wireframe_shader.wgsl"),
             ),
     );

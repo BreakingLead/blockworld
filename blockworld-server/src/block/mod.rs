@@ -6,9 +6,9 @@ use once_cell::sync::Lazy;
 
 pub static BLOCK_REGISTRY: Lazy<Registry<Block>> = Lazy::new(|| {
     let mut r = Registry::new();
-    let a0 = Block::new("minecraft:air".into());
+    let a0 = Block::new(blockworld_utils::Identifier::new(&format!("{}:air", blockworld_utils::GAME_NAME)));
     r.register(a0);
-    let a1 = Block::new("minecraft:stone".into());
+    let a1 = Block::new(blockworld_utils::Identifier::new(&format!("{}:stone", blockworld_utils::GAME_NAME)));
     r.register(a1);
 
     r

@@ -63,7 +63,7 @@ impl DiskChunkArray {
                         + (pos.x as f32 * 0.3).sin() * 3.0
                         + (pos.z as f32 * 0.3).cos() * 3.0;
                     if world_y < height {
-                        sc.set_blockid(IVec3::new(x, y, z), "minecraft:stone".into());
+                        sc.set_blockid(IVec3::new(x, y, z), &format!("{}:stone", blockworld_utils::GAME_NAME));
                     }
                 }
             }
@@ -128,7 +128,7 @@ impl WorldAccess for DiskChunkArray {
         if !self.is_chunk_loaded(chunk_pos) {
             return true;
         }
-        self.get_block(pos) == "minecraft:air".into()
+        self.get_block(pos) == blockworld_utils::Identifier::new(&format!("{}:air", blockworld_utils::GAME_NAME))
     }
 
     fn get_block(&self, pos: IVec3) -> blockworld_utils::Identifier {

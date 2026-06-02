@@ -104,7 +104,7 @@ impl Atlas {
                 atlas.put_pixel(x, y, Rgba([v, v, v, 255]));
             }
         }
-        map.insert(Identifier::new("minecraft:stone"), uvec2(0, 0));
+        map.insert(Identifier::new(&format!("{}:stone", blockworld_utils::GAME_NAME)), uvec2(0, 0));
         map
     }
 
@@ -158,7 +158,7 @@ fn atlas_generation() {
     use crate::resource::{FilesystemSource, ResourceManager};
     let mut rm = ResourceManager::new();
     rm.add_source(FilesystemSource::new("../"));
-    let atlas = Atlas::from_resource_manager(&rm, "minecraft", "textures/block");
+    let atlas = Atlas::from_resource_manager(&rm, blockworld_utils::GAME_NAME, "textures/block");
     let count = atlas.name_to_xy_map.len();
     assert!(count > 100, "Expected >100 textures, got {}", count);
     dbg!(count);

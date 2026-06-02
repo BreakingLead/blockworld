@@ -78,7 +78,7 @@ impl SubChunk {
         if let Some(r) = BLOCK_REGISTRY.number_id_to_name(self.blocks[Self::index(x, y, z)]) {
             r
         } else {
-            "minecraft:air"
+            "missing"
         }
     }
 }
@@ -108,7 +108,7 @@ impl SubChunk {
 //     }
 
 //     pub fn is_air(&self, x: i32, y: i32, z: i32) -> bool {
-//         self.get_block_id(x, y, z) == "minecraft:air"
+//         self.get_block_id(x, y, z) == &format!("{}:air", blockworld_utils::GAME_NAME)
 //     }
 
 //     /// Get the block at (x,y,z) with respect to the chunk-relative coord.

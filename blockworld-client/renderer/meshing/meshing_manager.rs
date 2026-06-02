@@ -2,11 +2,15 @@ use std::collections::HashMap;
 
 use blockworld_server::world::chunk_access::WorldAccess;
 use glam::*;
+use once_cell::sync::Lazy;
 use wgpu::{util::DeviceExt, Device, RenderPass};
 
 use crate::renderer::resource_manager::BLOCK_ATLAS;
 
 use super::block_meshing::to_quad_mesh;
+
+static AIR_STR: Lazy<String> =
+    Lazy::new(|| format!("{}:air", blockworld_utils::GAME_NAME));
 
 #[derive(Debug)]
 pub struct RenderChunk {
@@ -34,7 +38,7 @@ impl MeshingManager {
                             let block_id = chunk.get_blockid(block_local);
                             let blockpos = pos * 16 + block_local;
 
-                            if block_id != "minecraft:air" {
+                            if block_id != AIR_STR.as_str() {
                                 let (a, b) = BLOCK_ATLAS
                                     .query_uv(&block_id.into())
                                     .unwrap_or((vec2(0.0, 0.0), vec2(1.0, 1.0)));

@@ -3,6 +3,7 @@ use glam::Mat4;
 use wgpu::*;
 use wgpu::util::DeviceExt;
 
+use blockworld_utils::Identifier;
 use crate::game::client::BlockworldClient;
 
 use crate::resource::RESOURCE_MANAGER;
@@ -199,7 +200,10 @@ impl WorldRenderer {
         // --- shaders ---
         let rm = RESOURCE_MANAGER.lock().unwrap();
         let shader = WgslShader::new(
-            &"minecraft:assets/shaders/default_shader.wgsl".into(),
+            &Identifier::new(&format!(
+                "{}:assets/shaders/default_shader.wgsl",
+                blockworld_utils::GAME_NAME
+            )),
             &rm,
             device,
             "fs",
@@ -208,7 +212,10 @@ impl WorldRenderer {
         .expect("Failed to load default shader");
 
         let wireframe_shader = WgslShader::new(
-            &"minecraft:assets/shaders/wireframe_shader.wgsl".into(),
+            &Identifier::new(&format!(
+                "{}:assets/shaders/wireframe_shader.wgsl",
+                blockworld_utils::GAME_NAME
+            )),
             &rm,
             device,
             "fs",
