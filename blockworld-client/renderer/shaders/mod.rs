@@ -4,7 +4,7 @@ use anyhow::*;
 use blockworld_utils::Identifier;
 use wgpu::*;
 
-use super::resource::ResourceManager;
+use crate::resource::ResourceManager;
 
 #[derive(Debug)]
 pub struct WgslShader {

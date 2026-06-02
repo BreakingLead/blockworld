@@ -5,6 +5,7 @@ use renderer::run;
 
 mod game;
 mod renderer;
+mod resource;
 
 fn main() {
     pollster::block_on(run());

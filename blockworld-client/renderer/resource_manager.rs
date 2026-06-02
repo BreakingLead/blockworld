@@ -1,7 +1,7 @@
 use once_cell::sync::Lazy;
 
 use super::atlas_image::Atlas;
-use super::resource::RESOURCE_MANAGER;
+use crate::resource::RESOURCE_MANAGER;
 
 pub static BLOCK_ATLAS: Lazy<Atlas> = Lazy::new(|| {
     let rm = RESOURCE_MANAGER.lock().unwrap();

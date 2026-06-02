@@ -10,7 +10,7 @@ use blockworld_utils::Identifier;
 use glam::{uvec2, vec2, UVec2, Vec2};
 use image::{GenericImage, GenericImageView, ImageBuffer};
 
-use super::resource::ResourceManager;
+use crate::resource::ResourceManager;
 
 pub struct Atlas {
     atlas: image::RgbaImage,
@@ -155,7 +155,7 @@ impl Display for Atlas {
 
 #[test]
 fn atlas_generation() {
-    use super::resource::{FilesystemSource, ResourceManager};
+    use crate::resource::{FilesystemSource, ResourceManager};
     let mut rm = ResourceManager::new();
     rm.add_source(FilesystemSource::new("../"));
     let atlas = Atlas::from_resource_manager(&rm, "minecraft", "textures/block");

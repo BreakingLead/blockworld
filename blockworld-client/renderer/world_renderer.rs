@@ -5,11 +5,12 @@ use wgpu::util::DeviceExt;
 
 use crate::game::client::BlockworldClient;
 
+use crate::resource::RESOURCE_MANAGER;
+
 use super::{
     camera::Camera,
     input_manager::InputManager,
     meshing::meshing_manager::MeshingManager,
-    resource::RESOURCE_MANAGER,
     resource_manager::BLOCK_ATLAS,
     shaders::WgslShader,
     vertex::TexturedVertex,
