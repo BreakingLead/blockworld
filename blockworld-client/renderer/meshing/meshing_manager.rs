@@ -6,7 +6,10 @@
 
 use std::collections::HashMap;
 
-use blockworld_server::world::chunk_access::WorldAccess;
+use blockworld_server::{
+    block::block_face_direction::BlockFaceDirection,
+    world::chunk_access::WorldAccess,
+};
 use glam::*;
 use once_cell::sync::Lazy;
 use wgpu::{util::DeviceExt, Device, RenderPass};
@@ -67,9 +70,11 @@ impl MeshingManager {
                                     .unwrap_or((vec2(0.0, 0.0), vec2(1.0, 1.0)));
                                 // Block center in world space
                                 let center = blockpos.as_vec3() + vec3(0.5, 0.5, 0.5);
-                                // Generate all 6 faces (no CPU face culling yet)
-                                for face in blockworld_server::block::block_face_direction::BlockFaceDirection::iter()
-                                {
+                                for face in BlockFaceDirection::iter() {
+                                    // CPU face culling: skip faces hidden by solid neighbors
+                                    if !chunks.is_air(blockpos + face.to_vec()) {
+                                        continue;
+                                    }
                                     let vtxs = to_quad_mesh(face, center, a, b);
                                     vertices.extend(vtxs);
                                 }
