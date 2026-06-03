@@ -87,13 +87,16 @@ impl ApplicationHandler for App {
                 s.render().ok();
                 s.window.request_redraw();
             }
+
             WindowEvent::Resized(size) => s.resize(size),
+
             WindowEvent::KeyboardInput { event, .. } => {
                 if event.physical_key == KeyCode::Escape {
                     event_loop.exit();
                 }
                 s.input_manager.handle_key_event(&event);
 
+                // Debug: F1 toggles wireframe, F2 toggles cursor grab (removed)
                 if let PhysicalKey::Code(key) = event.physical_key {
                     if key == KeyCode::F1 && event.state == ElementState::Released {
                         s.world_renderer.debug_mode = !s.world_renderer.debug_mode;

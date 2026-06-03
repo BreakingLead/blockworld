@@ -171,8 +171,4 @@ impl MeshingManager {
             result_rx,
         }
     }
-
-    pub fn render_map_len(&self) -> usize {
-        self.render_map.len()
-    }
 }

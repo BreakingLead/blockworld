@@ -1,6 +1,5 @@
 pub mod atlas_image;
 pub mod camera;
-pub mod debug_ui;
 pub mod meshing;
 pub mod resource_manager;
 mod shaders;

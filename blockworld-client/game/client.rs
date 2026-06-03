@@ -79,8 +79,4 @@ impl BlockworldClient {
             ChunkGenerator::generate(&mut self.chunks, chunk_pos);
         }
     }
-
-    pub fn pending_generation_count(&self) -> usize {
-        self.pending_generation.len()
-    }
 }
