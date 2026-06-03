@@ -83,16 +83,6 @@ impl RenderState {
 
         self.world_renderer
             .update(&self.queue, &self.device, &self.input_manager);
-
-        // Build egui UI (stored for later render pass)
-        self.debug_ui.run(
-            &self.window,
-            self.fps,
-            self.world_renderer.game.chunks.chunks.len(),
-            self.world_renderer.game.pending_generation_count(),
-            self.world_renderer.meshing_manager.render_map_len(),
-            self.world_renderer.camera.position,
-        );
     }
 
     pub fn render(&mut self) -> Result<(), ()> {
@@ -155,8 +145,16 @@ impl RenderState {
         }
 
         // Pass 2: egui debug overlay (Load, not Clear — preserves 3D scene)
+        self.debug_ui.begin_frame(
+            &self.window,
+            self.fps,
+            self.world_renderer.game.chunks.chunks.len(),
+            self.world_renderer.game.pending_generation_count(),
+            self.world_renderer.meshing_manager.render_map_len(),
+            self.world_renderer.camera.position,
+        );
         self.debug_ui
-            .render(&self.device, &self.queue, &mut encoder, &view);
+            .render(&self.device, &self.queue, &mut encoder, &self.window, &view);
 
         self.queue.submit([encoder.finish()]);
         output.present();
