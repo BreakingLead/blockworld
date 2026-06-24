@@ -12,17 +12,17 @@ TL;DR:
 Blockworld is a modern **Minecraft (Java Version) implementation** which has better performance,
 and minecraft modders can easily port their mods into this minecraft implementation.
 
-## Todo List (2024-08-21):
+## Todo List:
 - Graphics
-  * [ ] Antialias
-  * [ ] Ambient Occlusion
-  * [ ] Mipmap
-  * [ ] Shader
+  * [x] Antialias
+  * [x] Ambient Occlusion
+  * [x] Mipmap
+  * [x] Shader
 - Engine
-  * [ ] ECS Engine
+  * [x] ECS Engine
   * [ ] Command Parser
   * [ ] Script Language
-  * [ ] Atlas Generator
+  * [x] Atlas Generator
   * [ ] GUI System
   * [ ] Save File (De)serialization
   * [ ] Map Generation
