@@ -55,7 +55,7 @@ It's different from rust's module documentation, which the readme is more like a
 - Follow the offical update of minecraft. We think the content of 1.12.2 is enough. But the content of higher version of minecraft may be maintained by mods.
 
 ## Current Progress:
-![](./preview.png)
+WIP in map generation
 
 
 ## Minecraft is Dying
